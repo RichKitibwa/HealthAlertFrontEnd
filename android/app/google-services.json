@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "439985340560",
+    "project_id": "health-app-uganda",
+    "storage_bucket": "health-app-uganda.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:439985340560:android:2662fb3b59b4d342d7d815",
+        "android_client_info": {
+          "package_name": "com.example.health_app_frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCr4DH7y5CVP22oao7oN1V5Plc3Owhikt0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
