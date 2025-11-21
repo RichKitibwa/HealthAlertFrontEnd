@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.example.health_app_frontend"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36  // Required by path_provider_android
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -27,10 +27,11 @@ android {
         applicationId = "com.example.health_app_frontend"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = flutter.minSdkVersion  // Android 5.0 Lollipop - Covers ~95% of devices
+        targetSdk = 34  // Latest Android for best performance
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true  // Required for Firebase
     }
 
     buildTypes {
