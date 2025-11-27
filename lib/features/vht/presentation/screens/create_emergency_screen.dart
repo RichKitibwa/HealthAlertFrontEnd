@@ -13,6 +13,7 @@
 // VHT creates new emergency case
 
 import 'package:flutter/material.dart';
+import 'vht_add_location_screen.dart';
 
 class CreateEmergencyScreen extends StatefulWidget {
   const CreateEmergencyScreen({Key? key}) : super(key: key);
@@ -84,6 +85,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                       ),
                     ),
                     // Blue square with "V"
+                    // TODO: Clickable profile to switch between roles
                     Positioned(
                       left: 10, // ~2.78% of 360
                       top: 12, // ~1.88% of 640
@@ -309,10 +311,11 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                               ),
                             );
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Dispatching $_selectedType case...',
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CaptureLocationScreen(
+                                  emergencyType: _selectedType!,
                                 ),
                               ),
                             );
