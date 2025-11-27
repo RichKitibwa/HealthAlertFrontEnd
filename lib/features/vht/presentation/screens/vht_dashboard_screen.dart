@@ -23,6 +23,19 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
               children: [
                 const SizedBox(height: 12),
 
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Back'),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
                 // TopBar
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 12),

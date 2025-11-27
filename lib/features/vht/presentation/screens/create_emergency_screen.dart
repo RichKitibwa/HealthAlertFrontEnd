@@ -33,98 +33,316 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: const Color(0xFF0077CC),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       // Figma background: #FBFCFD
       backgroundColor: const Color(0xFFFBFCFD),
       body: SafeArea(
-        child: Center(
-          // Figma frame: width 360
-          child: SizedBox(
-            width: 360,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 16),
+        child: Stack(
+          children: [
+            Positioned(
+              left: 26,
+              top: 16,
+              child: SizedBox(
+                width: 360,
+                height: 640,
+                child: Stack(
+                  children: [
+                    // Full frame background (#F7F9FC)
+                    Positioned.fill(
+                      child: Container(color: const Color(0xFFF7F9FC)),
+                    ),
 
-                // "Select Emergency Type" label
-                const Text(
-                  'Select Emergency Type',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black,
-                  ),
-                ),
+                    // Top white bar (Vector: top 0%, bottom ~90.62%)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      height: 60,
+                      child: Container(color: Colors.white),
+                    ),
 
-                const SizedBox(height: 16),
-
-                // Cards
-                _EmergencyTypeCard(
-                  title: 'Birth',
-                  subtitle: 'Complications during labor',
-                  selected: _selectedType == 'Birth',
-                  onTap: () => _selectType('Birth'),
-                ),
-                _EmergencyTypeCard(
-                  title: 'Trauma',
-                  subtitle: 'Severe bleeding, fractures',
-                  selected: _selectedType == 'Trauma',
-                  onTap: () => _selectType('Trauma'),
-                ),
-                _EmergencyTypeCard(
-                  title: 'Infection',
-                  subtitle: 'Fever, sepsis risk',
-                  selected: _selectedType == 'Infection',
-                  onTap: () => _selectType('Infection'),
-                ),
-                _EmergencyTypeCard(
-                  title: 'Other',
-                  subtitle: 'Select and add notes',
-                  selected: _selectedType == 'Other',
-                  onTap: () => _selectType('Other'),
-                ),
-
-                const Spacer(),
-
-                // "Next: Location" button at bottom but centered horizontally
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 16.0,
-                  ),
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: SizedBox(
-                      width: 320,
-                      child: ElevatedButton(
-                        onPressed: _selectedType == null
-                            ? null
-                            : () {
-                                // TODO: Navigate to Location screen, optionally pass _selectedType
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F766E), // #0F766E
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Next: Location',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
+                    // Back button
+                    Positioned(
+                      left: 0,
+                      top: 12,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        color: const Color(0xFF0077CC),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                    // Blue square with "V"
+                    Positioned(
+                      left: 10, // ~2.78% of 360
+                      top: 12, // ~1.88% of 640
+                      width: 36,
+                      height: 36,
+                      child: Container(
+                        color: const Color(0xFF0077CC),
+                        child: const Center(
+                          child: Text(
+                            'V',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              height: 17 / 14,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+
+                    // "Report Emergency" title
+                    const Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 14,
+                      child: Center(
+                        child: Text(
+                          'Report Emergency',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                            height: 24 / 20,
+                            color: Color(0xFF0077CC),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Main white card (Vector: left/right 5.56%, top 12.5%, bottom 31.25%)
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      top: 80,
+                      height: 360,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE3E8EF)),
+                        ),
+                      ),
+                    ),
+
+                    // 🤰 Birth (blue bar)
+                    Positioned(
+                      left: 40, // 11.11%
+                      right: 40,
+                      top: 100, // 15.62%
+                      height: 64,
+                      child: GestureDetector(
+                        onTap: () => _selectType('Birth'),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _selectedType == 'Birth'
+                                ? const Color(0xFF0077CC)
+                                : const Color(0xFF0077CC).withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '🤰 Birth',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 18,
+                              height: 22 / 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 🚑 Trauma (orange-red bar)
+                    Positioned(
+                      left: 40,
+                      right: 40,
+                      top: 180, // 28.12%
+                      height: 64,
+                      child: GestureDetector(
+                        onTap: () => _selectType('Trauma'),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _selectedType == 'Trauma'
+                                ? const Color(0xFFFF6A3D)
+                                : const Color(0xFFFF6A3D).withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '🚑 Trauma',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 18,
+                              height: 22 / 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 🦠 Infection (orange bar)
+                    Positioned(
+                      left: 40,
+                      right: 40,
+                      top: 260, // 40.62%
+                      height: 64,
+                      child: GestureDetector(
+                        onTap: () => _selectType('Infection'),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _selectedType == 'Infection'
+                                ? const Color(0xFFFF8A00)
+                                : const Color(0xFFFF8A00).withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '🦠 Infection',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 18,
+                              height: 22 / 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // ⚡ Other (gray bar)
+                    Positioned(
+                      left: 40,
+                      right: 40,
+                      top: 340, // 53.12%
+                      height: 64,
+                      child: GestureDetector(
+                        onTap: () => _selectType('Other'),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _selectedType == 'Other'
+                                ? const Color(0xFF667085)
+                                : const Color(0xFF667085).withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '⚡ Other',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 18,
+                              height: 22 / 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Add Photo or Voice Note (Optional) panel
+                    Positioned(
+                      left: 20, // 5.56%
+                      right: 20,
+                      top: 460, // 71.88%
+                      height: 80,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F2F5),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE3E8EF)),
+                        ),
+                        child: const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text(
+                              'Add Photo or Voice Note (Optional)',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                height: 17 / 14,
+                                color: Color(0xFF98A2B3),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 🚨 Dispatch Now button
+                    Positioned(
+                      left: 60, // 16.67%
+                      right: 60,
+                      top: 560, // 87.5%
+                      height: 64,
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_selectedType == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please select an emergency type first.',
+                                ),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Dispatching $_selectedType case...',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0077CC),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '🚨 Dispatch Now',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w400,
+                                fontSize: 20,
+                                height: 24 / 20,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
