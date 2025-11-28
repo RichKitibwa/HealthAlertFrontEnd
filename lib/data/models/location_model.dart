@@ -27,3 +27,4 @@ class LocationModel {
   // TODO: hasAddress getter
 }
 
+

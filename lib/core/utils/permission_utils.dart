@@ -37,3 +37,4 @@ class PermissionUtils {
   // TODO: Check multiple permissions status
 }
 
+

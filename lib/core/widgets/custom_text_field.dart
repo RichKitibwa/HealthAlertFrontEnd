@@ -24,3 +24,4 @@ class CustomTextField extends StatelessWidget {
   // TODO: Add character counter if max length set
 }
 
+

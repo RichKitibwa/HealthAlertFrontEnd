@@ -28,3 +28,4 @@ class AmbulanceModel {
   // TODO: isOffline getter
 }
 
+

@@ -34,3 +34,4 @@ class EmergencyCaseRepository {
   // TODO: Search cases by patient name
 }
 
+

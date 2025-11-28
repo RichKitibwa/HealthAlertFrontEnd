@@ -86,3 +86,4 @@ class SyncFailure extends Failure {
       : super(message, 'SYNC_ERROR');
 }
 
+
