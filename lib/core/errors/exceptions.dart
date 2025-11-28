@@ -66,3 +66,4 @@ class LocationException extends AppException {
       : super(message);
 }
 
+

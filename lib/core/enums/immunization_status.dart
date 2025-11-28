@@ -64,3 +64,4 @@ extension ImmunizationStatusExtension on ImmunizationStatus {
   }
 }
 
+

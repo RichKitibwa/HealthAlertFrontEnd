@@ -59,4 +59,5 @@ class DefaultFirebaseOptions {
     projectId: 'health-app-uganda',
     storageBucket: 'health-app-uganda.firebasestorage.app',
   );
+
 }

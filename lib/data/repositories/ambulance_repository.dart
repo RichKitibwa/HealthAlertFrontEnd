@@ -34,3 +34,4 @@ class AmbulanceRepository {
   // TODO: Sync when connection available
 }
 
+

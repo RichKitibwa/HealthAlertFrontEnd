@@ -48,3 +48,4 @@ class AppLocalizations {
   // TODO: Change language
 }
 
+

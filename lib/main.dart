@@ -3,16 +3,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
-import 'features/vht/presentation/screens/vht_welcome_screen.dart';
 import 'features/ambulance/presentation/screens/ambulance_welcome_screen.dart';
 import 'features/clinic/presentation/screens/clinic_welcome_screen.dart';
 import 'features/admin/presentation/screens/admin_welcome_screen.dart';
+import 'features/vht/presentation/screens/vht_welcome_screen.dart';
+import 'features/vht/presentation/screens/vht_dashboard_screen.dart';
+import 'features/vht/presentation/screens/create_emergency_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const HealthCommApp());
 }
 
@@ -24,15 +24,14 @@ class HealthCommApp extends StatelessWidget {
     return MaterialApp(
       title: 'Emergency Health System',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primarySwatch: Colors.red, useMaterial3: true),
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/vht-dashboard': (context) => const VHTWelcomeScreen(),
+        '/vht-main': (context) => const VHTDashboardScreen(),
+        '/vht-create-emergency': (context) => const CreateEmergencyScreen(),
         '/ambulance-dashboard': (context) => const AmbulanceWelcomeScreen(),
         '/clinic-dashboard': (context) => const ClinicWelcomeScreen(),
         '/admin-dashboard': (context) => const AdminWelcomeScreen(),

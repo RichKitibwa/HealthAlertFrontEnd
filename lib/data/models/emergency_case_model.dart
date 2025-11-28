@@ -40,3 +40,4 @@ class EmergencyCaseModel {
   // TODO: urgencyColor getter
 }
 
+
