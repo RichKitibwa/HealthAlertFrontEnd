@@ -78,7 +78,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           .collection('users')
           .doc(uid)
           .get();
-      
+
       final role = userDoc.data()?['role'] ?? 'VHT';
 
       setState(() => _isLoading = false);
@@ -108,10 +108,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -132,7 +129,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     String route;
     switch (role) {
       case 'VHT':
-        route = '/vht-dashboard';
+        route = '/create-emergency';
         break;
       case 'Ambulance Driver':
         route = '/ambulance-dashboard';
@@ -144,7 +141,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         route = '/admin-dashboard';
         break;
       default:
-        route = '/vht-dashboard';
+        route = '/create-emergency';
     }
 
     Navigator.pushNamedAndRemoveUntil(context, route, (route) => false);
@@ -165,27 +162,17 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.message,
-                  size: 80,
-                  color: Colors.red,
-                ),
+                const Icon(Icons.message, size: 80, color: Colors.red),
                 const SizedBox(height: 32),
                 const Text(
                   'Enter Verification Code',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'We sent a code to ${widget.phoneNumber}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),

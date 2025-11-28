@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'vht_dispatch_confirmation_screen.dart';
+import 'vht_add_location_screen.dart';
 
 class AddMediaScreen extends StatelessWidget {
   final String emergencyType;
@@ -24,37 +24,19 @@ class AddMediaScreen extends StatelessWidget {
       // Figma background: #FBFCFD
       backgroundColor: const Color(0xFFFBFCFD),
       body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              left: 26,
-              top: 16,
-              child: SizedBox(
-                width: 360,
-                height: 640,
-                child: Stack(
-                  children: [
-                    // Full frame background (#F7F9FC)
-                    Positioned.fill(
-                      child: Container(color: const Color(0xFFF7F9FC)),
-                    ),
-
-                    // Top white bar
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      height: 60,
-                      child: Container(color: Colors.white),
-                    ),
-
-                    // Blue circle with "V"
-                    Positioned(
-                      left: 10, // ~2.78% of 360
-                      top: 12, // ~1.88% of 640
-                      width: 36,
-                      height: 36,
-                      child: Container(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header row with V circle and title
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
                         decoration: const BoxDecoration(
                           color: Color(0xFF0077CC),
                           shape: BoxShape.circle,
@@ -72,16 +54,11 @@ class AddMediaScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-
-                    // "Add Media" title
-                    const Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 14,
-                      child: Center(
+                      const SizedBox(width: 12),
+                      const Expanded(
                         child: Text(
                           'Add Media',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontStyle: FontStyle.italic,
@@ -92,89 +69,157 @@ class AddMediaScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-
-                    // Main white card for media placeholders
-                    Positioned(
-                      left: 20, // 5.56%
-                      right: 20, // 5.56%
-                      top: 100, // ~15.62%
-                      height: 360,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: const Color(0xFFE3E8EF)),
-                        ),
+                      const SizedBox(width: 48), // visual balance spacer
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Main white card that scales with height
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE3E8EF)),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 24,
+                      ),
+                      child: SingleChildScrollView(
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text(
-                              'Photo Placeholder',
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'Photo / Video (optional)',
                               style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w600,
                                 fontSize: 16,
                                 height: 19 / 16,
                                 color: Color(0xFF0077CC),
                               ),
                             ),
-                            SizedBox(height: 16),
-                            Text(
-                              'Voice Note Placeholder',
+                            const SizedBox(height: 8),
+                            TextField(
+                              maxLines: 3,
+                              decoration: InputDecoration(
+                                hintText:
+                                    'Type a short description of any photo or video you took…',
+                                hintStyle: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  height: 18 / 14,
+                                  color: Color(0xFF98A2B3),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE3E8EF),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF0077CC),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.all(12),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'Notes / Voice Note (optional)',
                               style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w600,
                                 fontSize: 16,
                                 height: 19 / 16,
                                 color: Color(0xFF0077CC),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              maxLines: 4,
+                              decoration: InputDecoration(
+                                hintText:
+                                    'Type any important notes or a summary of a voice note…',
+                                hintStyle: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  height: 18 / 14,
+                                  color: Color(0xFF98A2B3),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE3E8EF),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF0077CC),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.all(12),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'These details will help clinic and ambulance staff prepare.',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w400,
+                                fontSize: 12,
+                                height: 16 / 12,
+                                color: Color(0xFF667085),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-
-                    // "Next → Dispatch" button
-                    Positioned(
-                      left: 60, // 16.67%
-                      right: 60,
-                      top: 560, // 75% of 640 + a bit
-                      height: 64,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0077CC),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0077CC),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DispatchConfirmationScreen(
-                                emergencyType: emergencyType,
-                              ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CaptureLocationScreen(
+                              emergencyType: emergencyType,
                             ),
-                          );
-                        },
-                        child: const Text(
-                          'Next → Dispatch',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 20,
-                            height: 24 / 20,
-                            color: Colors.white,
                           ),
+                        );
+                      },
+                      child: const Text(
+                        'Next → Confirm Location',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 20,
+                          height: 24 / 20,
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
