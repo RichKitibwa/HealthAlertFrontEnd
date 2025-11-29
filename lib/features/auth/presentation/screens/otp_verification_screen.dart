@@ -126,6 +126,19 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   void _navigateToRoleDashboard(String role) {
+    // Special-case: test number ending in 00003 should go directly
+    // to the clinic incoming case screen instead of the clinic welcome.
+    // Adjust the `.endsWith('00003')` check if your stored test number format differs.
+    final phone = widget.phoneNumber;
+    if (phone.endsWith('00003')) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/clinic-incoming-case',
+        (route) => false,
+      );
+      return;
+    }
+
     String route;
     switch (role) {
       case 'VHT':

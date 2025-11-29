@@ -6,6 +6,7 @@ import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/ambulance/presentation/screens/ambulance_welcome_screen.dart';
 import 'features/ambulance/presentation/screens/ambulance_incoming_dispatch_screen.dart';
 import 'features/clinic/presentation/screens/clinic_welcome_screen.dart';
+import 'features/clinic/presentation/screens/clinic_incoming_case_screen.dart';
 import 'features/admin/presentation/screens/admin_welcome_screen.dart';
 import 'features/vht/presentation/screens/vht_welcome_screen.dart';
 import 'features/vht/presentation/screens/vht_dashboard_screen.dart';
@@ -37,6 +38,7 @@ class HealthCommApp extends StatelessWidget {
         '/ambulance-incoming-dispatch': (context) =>
             const AmbulanceIncomingDispatchScreen(),
         '/clinic-dashboard': (context) => const ClinicWelcomeScreen(),
+        '/clinic-incoming-case': (context) => const ClinicIncomingCaseScreen(),
         '/admin-dashboard': (context) => const AdminWelcomeScreen(),
       },
     );
