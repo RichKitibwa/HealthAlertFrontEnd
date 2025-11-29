@@ -132,7 +132,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         route = '/create-emergency';
         break;
       case 'Ambulance Driver':
-        route = '/ambulance-dashboard';
+        route = '/ambulance-incoming-dispatch';
         break;
       case 'Clinic Staff':
         route = '/clinic-dashboard';
