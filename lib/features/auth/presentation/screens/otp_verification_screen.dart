@@ -139,6 +139,17 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       return;
     }
 
+    // Special-case: test number ending in 0004 should go directly
+    // to the admin active cases dashboard.
+    if (phone.endsWith('0004')) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/admin-case-dashboard',
+        (route) => false,
+      );
+      return;
+    }
+
     String route;
     switch (role) {
       case 'VHT':
