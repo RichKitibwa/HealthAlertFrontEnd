@@ -1,19 +1,8 @@
 // Create Emergency Case Screen
 // VHT creates new emergency case
 
-// class CreateEmergencyScreen extends StatefulWidget {
-//   // TODO: Create stateful widget
-// }
-
-// class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
-
-// }
-
-// Create Emergency Case Screen
-// VHT creates new emergency case
-
 import 'package:flutter/material.dart';
-import 'vht_add_location_screen.dart';
+import 'vht_add_media_screen.dart';
 
 class CreateEmergencyScreen extends StatefulWidget {
   const CreateEmergencyScreen({Key? key}) : super(key: key);
@@ -263,42 +252,11 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                       ),
                     ),
 
-                    // Add Photo or Voice Note (Optional) panel
-                    Positioned(
-                      left: 20, // 5.56%
-                      right: 20,
-                      top: 460, // 71.88%
-                      height: 80,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0F2F5),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE3E8EF)),
-                        ),
-                        child: const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16.0),
-                            child: Text(
-                              'Add Photo or Voice Note (Optional)',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w400,
-                                fontSize: 14,
-                                height: 17 / 14,
-                                color: Color(0xFF98A2B3),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
                     // 🚨 Dispatch Now button
                     Positioned(
                       left: 60, // 16.67%
                       right: 60,
-                      top: 560, // 87.5%
+                      bottom: 16, // anchor to bottom of the 640 frame
                       height: 64,
                       child: GestureDetector(
                         onTap: () {
@@ -314,7 +272,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CaptureLocationScreen(
+                                builder: (context) => AddMediaScreen(
                                   emergencyType: _selectedType!,
                                 ),
                               ),

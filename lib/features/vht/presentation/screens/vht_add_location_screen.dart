@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'vht_add_media_screen.dart';
+import 'vht_dispatch_confirmation_screen.dart';
 
 class CaptureLocationScreen extends StatelessWidget {
   final String emergencyType;
@@ -24,37 +24,19 @@ class CaptureLocationScreen extends StatelessWidget {
       // Figma background: #FBFCFD
       backgroundColor: const Color(0xFFFBFCFD),
       body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              left: 26,
-              top: 16,
-              child: SizedBox(
-                width: 360,
-                height: 640,
-                child: Stack(
-                  children: [
-                    // Full frame background (#F7F9FC)
-                    Positioned.fill(
-                      child: Container(color: const Color(0xFFF7F9FC)),
-                    ),
-
-                    // Top white bar
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      height: 60,
-                      child: Container(color: Colors.white),
-                    ),
-
-                    // Blue circle with "V"
-                    Positioned(
-                      left: 10, // ~2.78% of 360
-                      top: 12, // ~1.88% of 640
-                      width: 36,
-                      height: 36,
-                      child: Container(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header row with V circle and title
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
                         decoration: const BoxDecoration(
                           color: Color(0xFF0077CC),
                           shape: BoxShape.circle,
@@ -72,16 +54,11 @@ class CaptureLocationScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-
-                    // "Capture Location" title
-                    const Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 14,
-                      child: Center(
+                      const SizedBox(width: 12),
+                      const Expanded(
                         child: Text(
                           'Capture Location',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontStyle: FontStyle.italic,
@@ -92,76 +69,100 @@ class CaptureLocationScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-
-                    // Main white card for map
-                    Positioned(
-                      left: 20,
-                      right: 20,
-                      top: 80,
-                      height: 360,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: const Color(0xFFE3E8EF)),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Map Placeholder',
-                            //TODO: Add map feature
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 16,
-                              height: 19 / 16,
+                      const SizedBox(width: 48), // visual balance
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Main white card that scales with height
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE3E8EF)),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 24,
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.my_location,
+                              size: 48,
                               color: Color(0xFF0077CC),
                             ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // "Confirm Location" button
-                    Positioned(
-                      left: 60, // 16.67%
-                      right: 60,
-                      top: 560, // 87.5%
-                      height: 64,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0077CC),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
-                          // TODO: integrate with map and capture real location
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  AddMediaScreen(emergencyType: emergencyType),
+                            SizedBox(height: 16),
+                            Text(
+                              'Automatically capturing location…',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                                height: 22 / 18,
+                                color: Color(0xFF0077CC),
+                              ),
                             ),
-                          );
-                        },
-                        child: const Text(
-                          'Confirm Location',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 20,
-                            height: 24 / 20,
-                            color: Colors.white,
-                          ),
+                            SizedBox(height: 8),
+                            Text(
+                              'This will help responders find you faster.\nNo need to move the map or pin your position.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                height: 18 / 14,
+                                color: Color(0xFF667085),
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            // TODO: Implement GPS-based automatic location capture
+                            // (e.g., GPS/triangulation handled on backend)
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0077CC),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        // TODO: Wire this to real captured coordinates once backend integration is ready.
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DispatchConfirmationScreen(
+                              emergencyType: emergencyType,
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 20,
+                          height: 24 / 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
