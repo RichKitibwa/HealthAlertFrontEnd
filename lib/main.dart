@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/ambulance/presentation/screens/ambulance_welcome_screen.dart';
+import 'features/ambulance/presentation/screens/ambulance_incoming_dispatch_screen.dart';
 import 'features/clinic/presentation/screens/clinic_welcome_screen.dart';
 import 'features/admin/presentation/screens/admin_welcome_screen.dart';
 import 'features/vht/presentation/screens/vht_welcome_screen.dart';
@@ -33,6 +34,8 @@ class HealthCommApp extends StatelessWidget {
         '/vht-main': (context) => const VHTDashboardScreen(),
         '/create-emergency': (context) => const CreateEmergencyScreen(),
         '/ambulance-dashboard': (context) => const AmbulanceWelcomeScreen(),
+        '/ambulance-incoming-dispatch': (context) =>
+            const AmbulanceIncomingDispatchScreen(),
         '/clinic-dashboard': (context) => const ClinicWelcomeScreen(),
         '/admin-dashboard': (context) => const AdminWelcomeScreen(),
       },
