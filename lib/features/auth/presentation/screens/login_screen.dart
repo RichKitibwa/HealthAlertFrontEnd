@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -29,11 +30,53 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         final phoneNumber = _phoneController.text.trim();
         
-        // Check if user exists first
-        final usersQuery = await FirebaseFirestore.instance
-            .collection('users')
-            .where('phoneNumber', isEqualTo: phoneNumber)
-            .get();
+        // Check if user exists first with timeout
+        QuerySnapshot usersQuery;
+        try {
+          usersQuery = await FirebaseFirestore.instance
+              .collection('users')
+              .where('phoneNumber', isEqualTo: phoneNumber)
+              .get()
+              .timeout(
+                const Duration(seconds: 10),
+                onTimeout: () {
+                  throw TimeoutException(
+                    'Connection timeout. Check your internet connection and emulator network settings.',
+                    const Duration(seconds: 10),
+                  );
+                },
+              );
+        } on TimeoutException catch (e) {
+          setState(() => _isLoading = false);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Network error: ${e.message}\n\n'
+                  'The emulator cannot reach Firebase. Please:\n'
+                  '1. Check emulator internet connection\n'
+                  '2. Restart the emulator\n'
+                  '3. Verify Firebase is accessible',
+                ),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 8),
+              ),
+            );
+          }
+          return;
+        } catch (e) {
+          setState(() => _isLoading = false);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Firestore error: ${e.toString()}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+          return;
+        }
         
         if (usersQuery.docs.isEmpty) {
           setState(() => _isLoading = false);
