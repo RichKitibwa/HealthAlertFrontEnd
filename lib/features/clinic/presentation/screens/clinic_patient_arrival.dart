@@ -161,6 +161,12 @@ class _ClinicPatientArrivalHeader extends StatelessWidget {
       decoration: const BoxDecoration(color: Colors.white),
       child: Row(
         children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, size: 22, color: _primaryBlue),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
           // C square
           Container(
             width: 28,
@@ -196,7 +202,7 @@ class _ClinicPatientArrivalHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 28), // spacer to balance the leading icon
+          const SizedBox(width: 8), // small spacer on the right
         ],
       ),
     );

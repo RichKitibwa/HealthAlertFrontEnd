@@ -126,42 +126,22 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   void _navigateToRoleDashboard(String role) {
-    // Special-case: test number ending in 00003 should go directly
-    // to the clinic incoming case screen instead of the clinic welcome.
-    // Adjust the `.endsWith('00003')` check if your stored test number format differs.
-    final phone = widget.phoneNumber;
-    if (phone.endsWith('00003')) {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/clinic-incoming-case',
-        (route) => false,
-      );
-      return;
-    }
-
-    // Special-case: test number ending in 0004 should go directly
-    // to the admin active cases dashboard.
-    if (phone.endsWith('0004')) {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/admin-case-dashboard',
-        (route) => false,
-      );
-      return;
-    }
-
     String route;
     switch (role) {
       case 'VHT':
+        // 001 numbers in your test data
         route = '/create-emergency';
         break;
       case 'Ambulance Driver':
-        route = '/ambulance-incoming-dispatch';
+        // 002 numbers → ambulance dashboard
+        route = '/ambulance-dashboard';
         break;
       case 'Clinic Staff':
+        // 003 numbers → clinic dashboard (or incoming case if you prefer)
         route = '/clinic-dashboard';
         break;
       case 'Admin':
+        // 004 numbers → admin dashboard
         route = '/admin-dashboard';
         break;
       default:

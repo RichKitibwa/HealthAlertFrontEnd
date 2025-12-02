@@ -314,7 +314,17 @@ class _AdminActiveCasesHeader extends StatelessWidget {
       decoration: const BoxDecoration(color: Colors.white),
       child: Row(
         children: [
-          // A square
+          IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: _primaryBlue,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          // A square logo
           Container(
             width: 28,
             height: 28,
@@ -349,7 +359,7 @@ class _AdminActiveCasesHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 28), // spacer to balance the leading icon
+          const SizedBox(width: 8), // small spacer on the right
         ],
       ),
     );
