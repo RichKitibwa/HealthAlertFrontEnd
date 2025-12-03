@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../ambulance/presentation/screens/ambulance_dashboard_screen.dart';
+import '../../../clinic/presentation/screens/clinic_dashboard_screen.dart';
+import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../../vht/presentation/screens/vht_dashboard_screen.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String verificationId;
@@ -79,7 +83,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           .doc(uid)
           .get();
 
-      final role = userDoc.data()?['role'] ?? 'VHT';
+      final roleRaw = userDoc.data()?['role'] ?? 'VHT';
+      final role = roleRaw.toString().trim();
+      
+      // Debug: Print role to verify
+      print('DEBUG: User role from Firestore: "$role" (raw: "$roleRaw")');
 
       setState(() => _isLoading = false);
 
@@ -126,29 +134,81 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   void _navigateToRoleDashboard(String role) {
-    String route;
-    switch (role) {
-      case 'VHT':
-        // 001 numbers in your test data
-        route = '/create-emergency';
-        break;
-      case 'Ambulance Driver':
-        // 002 numbers → ambulance dashboard
-        route = '/ambulance-dashboard';
-        break;
-      case 'Clinic Staff':
-        // 003 numbers → clinic dashboard (or incoming case if you prefer)
-        route = '/clinic-dashboard';
-        break;
-      case 'Admin':
-        // 004 numbers → admin dashboard
-        route = '/admin-dashboard';
-        break;
-      default:
-        route = '/create-emergency';
+    if (!mounted) return;
+    
+    // Trim and normalize the role string
+    final normalizedRole = role.trim();
+    
+    print('DEBUG: Navigating for role: "$normalizedRole"');
+    
+    String routeName;
+    
+    // Use if-else for more flexible matching (handles case variations)
+    if (normalizedRole == 'VHT' || normalizedRole.toLowerCase() == 'vht') {
+      print('DEBUG: Selected VHT dashboard');
+      routeName = '/vht-dashboard';
+    } else if (normalizedRole == 'Ambulance Driver' || 
+               normalizedRole.toLowerCase().contains('ambulance')) {
+      print('DEBUG: Selected Ambulance Driver dashboard');
+      routeName = '/ambulance-dashboard';
+    } else if (normalizedRole == 'Clinic Staff' || 
+               normalizedRole.toLowerCase().contains('clinic')) {
+      print('DEBUG: Selected Clinic Staff dashboard');
+      routeName = '/clinic-dashboard';
+    } else if (normalizedRole == 'Admin' || 
+               normalizedRole.toLowerCase() == 'admin' ||
+               normalizedRole.toLowerCase().contains('admin')) {
+      print('DEBUG: Selected Admin dashboard');
+      routeName = '/admin-dashboard';
+    } else {
+      print('DEBUG: Unknown role "$normalizedRole", defaulting to VHT');
+      routeName = '/vht-dashboard';
     }
 
-    Navigator.pushNamedAndRemoveUntil(context, route, (route) => false);
+    print('DEBUG: About to navigate to route: $routeName');
+    
+    // Use WidgetsBinding to ensure navigation happens after the current frame
+    // This prevents navigation issues when called during build or async operations
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      
+      // Use pushNamedAndRemoveUntil with named routes for reliable navigation
+      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+        routeName,
+        (route) => false,
+      ).then((_) {
+        print('DEBUG: Navigation completed successfully');
+      }).catchError((error) {
+        print('DEBUG: Navigation error: $error');
+        // Fallback: try direct navigation if named route fails
+        if (mounted) {
+          _navigateWithFallback(normalizedRole);
+        }
+      });
+    });
+  }
+  
+  void _navigateWithFallback(String role) {
+    if (!mounted) return;
+    
+    Widget destination;
+    
+    if (role == 'VHT' || role.toLowerCase() == 'vht') {
+      destination = const VHTDashboardScreen();
+    } else if (role == 'Ambulance Driver' || role.toLowerCase().contains('ambulance')) {
+      destination = const AmbulanceDashboardScreen();
+    } else if (role == 'Clinic Staff' || role.toLowerCase().contains('clinic')) {
+      destination = const ClinicDashboardScreen();
+    } else if (role == 'Admin' || role.toLowerCase() == 'admin' || role.toLowerCase().contains('admin')) {
+      destination = const AdminDashboardScreen();
+    } else {
+      destination = const VHTDashboardScreen();
+    }
+    
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => destination),
+      (route) => false,
+    );
   }
 
   @override
