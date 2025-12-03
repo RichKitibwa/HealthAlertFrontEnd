@@ -172,33 +172,15 @@ class _ClinicIncomingHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(color: Colors.white),
-      child: Row(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: _primaryBlue,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'C',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w400,
-                fontSize: 14,
-                height: 17 / 14,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+          // Centered title
+          const Center(
             child: Text(
               'Incoming Case',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.w700,
@@ -208,7 +190,44 @@ class _ClinicIncomingHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 28), // spacer to balance the leading icon
+          // Back button + C square aligned to the left
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    size: 22,
+                    color: _primaryBlue,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: _primaryBlue,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'C',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      height: 17 / 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
