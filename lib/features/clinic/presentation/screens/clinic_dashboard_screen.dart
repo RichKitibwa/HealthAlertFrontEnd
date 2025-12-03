@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 // Main dashboard for clinic staff
 
 class ClinicDashboardScreen extends StatefulWidget {
-  const ClinicDashboardScreen({super.key});
+  const ClinicDashboardScreen({Key? key}) : super(key: key);
 
   @override
   State<ClinicDashboardScreen> createState() => _ClinicDashboardScreenState();

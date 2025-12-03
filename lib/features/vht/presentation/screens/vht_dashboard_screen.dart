@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+
 // VHT Dashboard Screen
-// Main dashboard for Village Health Team members
+// Main dashboard for Village Health Team members with emergency reporting
 
 class VHTDashboardScreen extends StatefulWidget {
   const VHTDashboardScreen({Key? key}) : super(key: key);
@@ -18,7 +19,6 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
         child: Center(
           child: SizedBox(
             width: 360,
-
             child: Column(
               children: [
                 const SizedBox(height: 12),
@@ -55,7 +55,6 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-
                       color: Colors.black,
                     ),
                   ),
@@ -98,11 +97,11 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                           onPressed: () {
                             Navigator.pushNamed(
                               context,
-                              '/vht-create-emergency',
+                              '/create-emergency',
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F766E), // #0F766E
+                            backgroundColor: const Color(0xFF0F766E),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -144,7 +143,6 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                 const SizedBox(height: 8),
 
                 // RecentCases card ("No open cases")
-                // TODO: Connect open cases route
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 12),
                   padding: const EdgeInsets.all(12),
