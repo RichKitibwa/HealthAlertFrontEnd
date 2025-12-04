@@ -130,7 +130,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     switch (role) {
       case 'VHT':
         // 001 numbers in your test data
-        route = '/create-emergency';
+        route = '/vht-dashboard';
         break;
       case 'Ambulance Driver':
         // 002 numbers → ambulance dashboard
@@ -145,7 +145,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         route = '/admin-dashboard';
         break;
       default:
-        route = '/create-emergency';
+        route = '/vht-dashboard';
     }
 
     Navigator.pushNamedAndRemoveUntil(context, route, (route) => false);

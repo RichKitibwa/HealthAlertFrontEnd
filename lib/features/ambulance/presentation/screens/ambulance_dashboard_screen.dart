@@ -26,6 +26,15 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
         centerTitle: false,
         backgroundColor: _primaryBlue,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(

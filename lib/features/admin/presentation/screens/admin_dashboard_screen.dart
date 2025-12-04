@@ -64,6 +64,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         centerTitle: false,
         backgroundColor: primaryBlue,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
