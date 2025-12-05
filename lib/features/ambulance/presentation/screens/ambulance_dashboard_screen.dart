@@ -6,7 +6,21 @@ class AmbulanceDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFCFD),
+      appBar: AppBar(
+        title: const Text('Ambulance Dashboard'),
+        centerTitle: false,
+        backgroundColor: _primaryBlue,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SizedBox(

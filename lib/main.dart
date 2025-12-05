@@ -30,9 +30,11 @@ class HealthCommApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.red, useMaterial3: true),
       initialRoute: '/login',
       routes: {
+        '/': (context) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/vht-dashboard': (context) => const VHTDashboardScreen(),
+        '/vht-main': (context) => const VHTDashboardScreen(),
         '/create-emergency': (context) => const CreateEmergencyScreen(),
         '/ambulance-dashboard': (context) => const AmbulanceDashboardScreen(),
         '/ambulance-incoming-dispatch': (context) =>

@@ -134,35 +134,26 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   void _navigateToRoleDashboard(String role) {
-    if (!mounted) return;
-    
-    // Trim and normalize the role string
-    final normalizedRole = role.trim();
-    
-    print('DEBUG: Navigating for role: "$normalizedRole"');
-    
-    String routeName;
-    
-    // Use if-else for more flexible matching (handles case variations)
-    if (normalizedRole == 'VHT' || normalizedRole.toLowerCase() == 'vht') {
-      print('DEBUG: Selected VHT dashboard');
-      routeName = '/vht-dashboard';
-    } else if (normalizedRole == 'Ambulance Driver' || 
-               normalizedRole.toLowerCase().contains('ambulance')) {
-      print('DEBUG: Selected Ambulance Driver dashboard');
-      routeName = '/ambulance-dashboard';
-    } else if (normalizedRole == 'Clinic Staff' || 
-               normalizedRole.toLowerCase().contains('clinic')) {
-      print('DEBUG: Selected Clinic Staff dashboard');
-      routeName = '/clinic-dashboard';
-    } else if (normalizedRole == 'Admin' || 
-               normalizedRole.toLowerCase() == 'admin' ||
-               normalizedRole.toLowerCase().contains('admin')) {
-      print('DEBUG: Selected Admin dashboard');
-      routeName = '/admin-dashboard';
-    } else {
-      print('DEBUG: Unknown role "$normalizedRole", defaulting to VHT');
-      routeName = '/vht-dashboard';
+    String route;
+    switch (role) {
+      case 'VHT':
+        // 001 numbers in your test data
+        route = '/vht-dashboard';
+        break;
+      case 'Ambulance Driver':
+        // 002 numbers → ambulance dashboard
+        route = '/ambulance-dashboard';
+        break;
+      case 'Clinic Staff':
+        // 003 numbers → clinic dashboard (or incoming case if you prefer)
+        route = '/clinic-dashboard';
+        break;
+      case 'Admin':
+        // 004 numbers → admin dashboard
+        route = '/admin-dashboard';
+        break;
+      default:
+        route = '/vht-dashboard';
     }
 
     print('DEBUG: About to navigate to route: $routeName');
