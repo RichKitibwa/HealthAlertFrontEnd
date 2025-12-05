@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 // Main dashboard for administrators and NGOs
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  const AdminDashboardScreen({Key? key}) : super(key: key);
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();

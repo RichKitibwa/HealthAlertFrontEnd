@@ -1,25 +1,10 @@
 import 'package:flutter/material.dart';
 
-// Ambulance Driver Dashboard Screen
-// Main landing screen for ambulance drivers
-
-class AmbulanceDashboardScreen extends StatefulWidget {
-  const AmbulanceDashboardScreen({super.key});
-
-  @override
-  State<AmbulanceDashboardScreen> createState() =>
-      _AmbulanceDashboardScreenState();
-}
-
-class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
-  static const Color _primaryBlue = Color(0xFF0077CC);
+class AmbulanceDashboardScreen extends StatelessWidget {
+  const AmbulanceDashboardScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    final bool isWide = size.width >= 600;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ambulance Dashboard'),
@@ -37,84 +22,262 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
         ],
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final double horizontalPadding = constraints.maxWidth < 400
-                ? 16.0
-                : 24.0;
+        child: Center(
+          child: SizedBox(
+            width: 360,
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
 
-            return Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: 16,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isWide ? 520 : double.infinity,
+                // Header with logout
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/login');
+                        },
+                        icon: const Icon(Icons.logout, color: Colors.black),
+                        label: const Text(
+                          'Logout',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // TopBar
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFFE6E9EF)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Ambulance \u2014 Emergency Dispatch',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Main action card - View Incoming Dispatch
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFFE6E9EF)),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Welcome, Ambulance Driver',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      const Text(
+                        'View Incoming Dispatch',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'View incoming emergency requests from VHTs and clinics.',
-                        style: theme.textTheme.bodyMedium,
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Tap to view and accept emergency requests',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
                       ),
-                      const SizedBox(height: 24),
-                      // Primary action button
+                      const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.emergency_share_outlined),
-                          label: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 14.0),
-                            child: Text(
-                              'Show Incoming Requests',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _primaryBlue,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
+                        child: ElevatedButton(
                           onPressed: () {
                             Navigator.pushNamed(
                               context,
                               '/ambulance-incoming-dispatch',
                             );
                           },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'You will see a list of open cases assigned to your ambulance, '
-                        'including requests created by VHTs and clinics.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color?.withOpacity(
-                            0.8,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0077CC),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'View Dispatch',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            );
-          },
+
+                const SizedBox(height: 16),
+
+                // Active Cases card
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFFE6E9EF)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Active Cases',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // TODO: Navigate to active cases screen
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Active cases feature coming soon'),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(color: Color(0xFFE6E9EF)),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'View Active Cases',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // "Recent Cases" label
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'Recent Cases',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // RecentCases card ("No open cases")
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFFE6E9EF)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.centerLeft,
+                  child: const Text(
+                    'No recent cases',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+
+                const Spacer(),
+
+                // Bottom Nav Bar (Home / Cases / Profile)
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(color: Color(0xFFE6E7EB), width: 1),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _BottomNavLabel(label: 'Home'),
+                      _BottomNavLabel(label: 'Cases'),
+                      _BottomNavLabel(label: 'Profile'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _BottomNavLabel extends StatelessWidget {
+  final String label;
+
+  const _BottomNavLabel({Key? key, required this.label}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: Colors.black,
       ),
     );
   }

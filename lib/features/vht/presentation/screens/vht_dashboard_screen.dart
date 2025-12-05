@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+
 // VHT Dashboard Screen
-// Main dashboard for Village Health Team members
+// Main dashboard for Village Health Team members with emergency reporting
 
 class VHTDashboardScreen extends StatefulWidget {
   const VHTDashboardScreen({Key? key}) : super(key: key);
