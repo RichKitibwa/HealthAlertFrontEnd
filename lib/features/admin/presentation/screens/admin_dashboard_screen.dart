@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'admin_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 // Admin Dashboard Screen
 // Main dashboard for administrators and NGOs
@@ -11,6 +14,18 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  int _currentIndex = 0; // 0 = Home, 1 = Reports/Analytics
+
+  void _onItemSelected(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    // TODO: wire up navigation when admin tab screens are ready
+    // if (index == 0) Navigator.pushNamed(context, '/admin-dashboard');
+    // if (index == 1) Navigator.pushNamed(context, '/admin-analytics');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -47,6 +62,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.textTheme.bodySmall?.color,
                   ),
@@ -59,27 +76,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        centerTitle: false,
-        backgroundColor: primaryBlue,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-            },
-          ),
-        ],
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Admin',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: false,
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
+      ),
+      bottomNavigationBar: AdminNavigationBar(
+        currentIndex: _currentIndex,
+        onItemSelected: _onItemSelected,
       ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final padding = constraints.maxWidth < 400 ? 16.0 : 24.0;
             final crossAxisCount = isWide ? 2 : 1;
-            final childAspectRatio = isWide ? 3.0 : 2.7;
+            // On narrow screens, give each card more vertical space to avoid overflow.
+            final childAspectRatio = isWide ? 3.0 : 2.1;
 
             return Padding(
               padding: EdgeInsets.all(padding),
@@ -117,19 +133,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           },
                         ),
                         buildDashboardCard(
-                          icon: Icons.local_hospital_outlined,
-                          title: 'Dispatched Ambulances',
-                          subtitle: 'Track ambulance status and locations.',
+                          icon: Icons.bar_chart_outlined,
+                          title: 'Analytics',
+                          subtitle:
+                              'View ambulance dispatch and VHT report insights.',
                           onTap: () {
-                            // TODO: Navigate to Dispatched Ambulances screen
-                          },
-                        ),
-                        buildDashboardCard(
-                          icon: Icons.assignment_outlined,
-                          title: 'VHT Reports',
-                          subtitle: 'Review reports submitted by VHTs.',
-                          onTap: () {
-                            // TODO: Navigate to VHT Reports screen
+                            // TODO: Navigate to Admin Analytics screen
+                            // Navigator.pushNamed(context, '/admin-analytics');
                           },
                         ),
                         buildDashboardCard(

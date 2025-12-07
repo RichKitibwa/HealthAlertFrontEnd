@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'ambulance_navigation_bar.dart';
+import 'ambulance_all_incoming_requests.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 // Ambulance Driver Dashboard Screen
 // Main landing screen for ambulance drivers
@@ -14,6 +18,19 @@ class AmbulanceDashboardScreen extends StatefulWidget {
 class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
   static const Color _primaryBlue = Color(0xFF0077CC);
 
+  int _currentIndex = 0; // 0 = Home, 1 = Map
+
+  void _onNavItemSelected(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    // TODO: wire up navigation as needed
+    // Example:
+    // if (index == 0) Navigator.pushNamed(context, '/ambulance-dashboard');
+    // if (index == 1) Navigator.pushNamed(context, '/ambulance-map');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -21,20 +38,18 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
     final bool isWide = size.width >= 600;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ambulance Dashboard'),
-        centerTitle: false,
-        backgroundColor: _primaryBlue,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-            },
-          ),
-        ],
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Ambulance',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: false,
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
+      ),
+      bottomNavigationBar: AmbulanceNavigationBar(
+        currentIndex: _currentIndex,
+        onItemSelected: _onNavItemSelected,
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -56,13 +71,6 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Welcome, Ambulance Driver',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
                       Text(
                         'View incoming emergency requests from VHTs and clinics.',
                         style: theme.textTheme.bodyMedium,
@@ -91,9 +99,12 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                             ),
                           ),
                           onPressed: () {
-                            Navigator.pushNamed(
+                            Navigator.push(
                               context,
-                              '/ambulance-incoming-dispatch',
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const AmbulanceAllIncomingRequestsScreen(),
+                              ),
                             );
                           },
                         ),

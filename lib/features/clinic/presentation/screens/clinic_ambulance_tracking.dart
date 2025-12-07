@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'clinic_patient_arrival.dart';
+import 'clinic_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class ClinicAmbulanceTrackingScreen extends StatelessWidget {
   const ClinicAmbulanceTrackingScreen({super.key});
@@ -14,11 +17,50 @@ class ClinicAmbulanceTrackingScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Clinic',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
+      ),
       backgroundColor: _backgroundColor,
+      bottomNavigationBar: ClinicNavigationBar(
+        currentIndex: 2, // 0 = Home, 1 = Patients, 2 = Incoming / Cases
+        onItemSelected: (index) {
+          // TODO: wire up navigation when clinic tab screens are ready
+          // if (index == 0) Navigator.pushNamed(context, '/clinic-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/clinic-patients');
+          // if (index == 2) Navigator.pushNamed(context, '/clinic-incoming-cases');
+        },
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            const _ClinicAmbulanceTrackingHeader(),
+            // Simple centered header; avatar and back button handled by TopNavigationBar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: const Center(
+                child: Text(
+                  'Ambulance Tracking',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    height: 24 / 20,
+                    color: _primaryBlue,
+                  ),
+                ),
+              ),
+            ),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(

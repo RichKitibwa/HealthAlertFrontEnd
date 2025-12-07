@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'vht_dispatch_confirmation_screen.dart';
+import 'vht_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class CaptureLocationScreen extends StatelessWidget {
   final String emergencyType;
@@ -10,19 +13,30 @@ class CaptureLocationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: const Color(0xFF0077CC),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'VHT',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
       ),
       // Figma background: #FBFCFD
       backgroundColor: const Color(0xFFFBFCFD),
+      bottomNavigationBar: VhtNavigationBar(
+        currentIndex: 0, // this screen is part of the VHT home/report flow
+        onItemSelected: (index) {
+          // TODO: wire up navigation if desired
+          // Example:
+          // if (index == 0) Navigator.pushNamed(context, '/vht-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/vht-map');
+          // if (index == 2) Navigator.pushNamed(context, '/vht-patients');
+        },
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -31,49 +45,6 @@ class CaptureLocationScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header row with V circle and title
-                  Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF0077CC),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'V',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                              height: 17 / 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Capture Location',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 20,
-                            height: 24 / 20,
-                            color: Color(0xFF0077CC),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 48), // visual balance
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Main white card that scales with height
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(

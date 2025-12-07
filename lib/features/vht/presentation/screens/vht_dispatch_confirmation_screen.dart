@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'vht_track_ambulance_screen.dart';
+import 'vht_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class DispatchConfirmationScreen extends StatelessWidget {
   final String emergencyType;
@@ -14,19 +17,29 @@ class DispatchConfirmationScreen extends StatelessWidget {
     const String etaText = '12 min'; // TODO: compute ETA
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: const Color(0xFF0077CC),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'VHT',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
       ),
       // Matches other screens
       backgroundColor: const Color(0xFFFBFCFD),
+      bottomNavigationBar: VhtNavigationBar(
+        currentIndex: 0, // part of VHT home/report flow
+        onItemSelected: (index) {
+          // TODO: wire up navigation if desired
+          // if (index == 0) Navigator.pushNamed(context, '/vht-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/vht-map');
+          // if (index == 2) Navigator.pushNamed(context, '/vht-patients');
+        },
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -35,46 +48,17 @@ class DispatchConfirmationScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header row with V circle and title
-                  Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF0077CC),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'V',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                              height: 17 / 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Dispatch Confirmation',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 20,
-                            height: 24 / 20,
-                            color: Color(0xFF0077CC),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 48), // visual balance spacer
-                    ],
+                  const Text(
+                    'Dispatch Confirmation',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      height: 24 / 20,
+                      color: Color(0xFF0077CC),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   // Main white card that scales with height

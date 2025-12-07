@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'admin_case_analytics.dart';
+import 'admin_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class AdminCaseTimelineScreen extends StatelessWidget {
   const AdminCaseTimelineScreen({super.key});
@@ -13,11 +16,49 @@ class AdminCaseTimelineScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Admin',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
+      ),
       backgroundColor: _backgroundColor,
+      bottomNavigationBar: AdminNavigationBar(
+        currentIndex: 0, // 0 = Home, 1 = Reports/Analytics
+        onItemSelected: (index) {
+          // TODO: wire up navigation when admin tabs are ready
+          // if (index == 0) Navigator.pushNamed(context, '/admin-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/admin-analytics');
+        },
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            const _AdminCaseTimelineHeader(),
+            // Simple centered header; back + avatar handled by TopNavigationBar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: const Center(
+                child: Text(
+                  'Case Timeline',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    height: 24 / 20,
+                    color: _primaryBlue,
+                  ),
+                ),
+              ),
+            ),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(

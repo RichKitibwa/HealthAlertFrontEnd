@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../current_user_session.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String verificationId;
@@ -73,13 +74,22 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         });
       }
 
-      // Get user role
+      // Get user role and populate current session
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .get();
 
-      final role = userDoc.data()?['role'] ?? 'VHT';
+      final data = userDoc.data();
+      final role = data?['role'] ?? 'VHT';
+
+      // Store current user session in memory
+      CurrentUserSession.uid = uid;
+      CurrentUserSession.role = role;
+      CurrentUserSession.firstName = data?['firstName'];
+      CurrentUserSession.lastName = data?['lastName'];
+      CurrentUserSession.phoneNumber = data?['phoneNumber'];
+      CurrentUserSession.profileImageUrl = data?['profileImageUrl'];
 
       setState(() => _isLoading = false);
 

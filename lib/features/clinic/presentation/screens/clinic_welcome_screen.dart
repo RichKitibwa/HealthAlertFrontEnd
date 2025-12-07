@@ -24,27 +24,17 @@ class ClinicWelcomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.local_hospital,
-                size: 100,
-                color: Colors.blue,
-              ),
+              const Icon(Icons.local_hospital, size: 100, color: Colors.blue),
               const SizedBox(height: 32),
               const Text(
                 'Welcome, Clinic Staff!',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               const Text(
                 'You are logged in as clinic staff',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 18, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
@@ -53,7 +43,11 @@ class ClinicWelcomeScreen extends StatelessWidget {
                   padding: EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      Icon(Icons.medical_services, size: 48, color: Colors.blue),
+                      Icon(
+                        Icons.medical_services,
+                        size: 48,
+                        color: Colors.blue,
+                      ),
                       SizedBox(height: 16),
                       Text(
                         'Your dashboard features:',
@@ -78,4 +72,3 @@ class ClinicWelcomeScreen extends StatelessWidget {
     );
   }
 }
-

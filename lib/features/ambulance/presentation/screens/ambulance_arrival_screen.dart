@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'ambulance_clinic_en_route.dart';
+import 'ambulance_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class AmbulanceArrivalScreen extends StatelessWidget {
   // TODO: Fetch emergency type and patient info from backend (VHT-submitted case details).
@@ -16,18 +19,28 @@ class AmbulanceArrivalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Transparent app bar to match ambulance flow
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: const Color(0xFF0077CC),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Ambulance',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
       ),
       // Outer background: light grey/blue
       backgroundColor: const Color(0xFFFBFCFD),
+      bottomNavigationBar: AmbulanceNavigationBar(
+        currentIndex: 0, // Treat this as part of the main ambulance flow
+        onItemSelected: (index) {
+          // TODO: wire up navigation when ambulance tab screens are ready
+          // if (index == 0) Navigator.pushNamed(context, '/ambulance-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/ambulance-map');
+        },
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -36,43 +49,17 @@ class AmbulanceArrivalScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header row: blue "A" box + "Arrived at Scene"
-                  Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        color: const Color(0xFF0077CC),
-                        child: const Center(
-                          child: Text(
-                            'A',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                              height: 17 / 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Arrived at Scene',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 20,
-                            height: 24 / 20,
-                            color: Color(0xFF0077CC),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 48), // visual balance
-                    ],
+                  const Text(
+                    'Arrived at Scene',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      height: 24 / 20,
+                      color: Color(0xFF0077CC),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   // Main frame area: light background with inner white card
@@ -145,6 +132,67 @@ class AmbulanceArrivalScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  // Secondary actions: notify clinic and VHT
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF0077CC)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        // TODO: Notify destination clinic (e.g., via backend update or FHIR message).
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Clinic notified about arrival.'),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Notify Clinic',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          height: 20 / 16,
+                          color: Color(0xFF0077CC),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF0077CC)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        // TODO: Notify originating VHT that ambulance has arrived at scene.
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('VHT notified about arrival.'),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Notify VHT',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          height: 20 / 16,
+                          color: Color(0xFF0077CC),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   // Bottom primary button: "Patient onboard"
                   SizedBox(
                     height: 56,

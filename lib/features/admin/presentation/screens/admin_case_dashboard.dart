@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'admin_case_timeline.dart';
+import 'admin_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class AdminCaseDashboardScreen extends StatelessWidget {
   const AdminCaseDashboardScreen({super.key});
@@ -15,11 +18,111 @@ class AdminCaseDashboardScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Admin',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
+      ),
       backgroundColor: _backgroundColor,
+      bottomNavigationBar: AdminNavigationBar(
+        currentIndex: 0, // 0 = Home, 1 = Reports/Analytics
+        onItemSelected: (index) {
+          // TODO: wire up navigation when admin tabs are ready
+          // if (index == 0) Navigator.pushNamed(context, '/admin-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/admin-analytics');
+        },
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            const _AdminActiveCasesHeader(),
+            // Simple centered header; avatar and back button handled by TopNavigationBar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: const Center(
+                child: Text(
+                  'Active Cases',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    height: 24 / 20,
+                    color: _primaryBlue,
+                  ),
+                ),
+              ),
+            ),
+            // Sort dropdown row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      // TODO: Implement actual sorting based on selected criterion
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Sort by $value (coming soon)')),
+                      );
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'Severity',
+                        child: Text('Sort by severity'),
+                      ),
+                      PopupMenuItem(
+                        value: 'Time arrived',
+                        child: Text('Sort by time arrived'),
+                      ),
+                      PopupMenuItem(
+                        value: 'Clinic',
+                        child: Text('Sort by clinic'),
+                      ),
+                      PopupMenuItem(
+                        value: 'Distance',
+                        child: Text('Sort by distance'),
+                      ),
+                    ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _cardBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.sort, size: 18, color: _primaryBlue),
+                          SizedBox(width: 6),
+                          Text(
+                            'Sort',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: _primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(

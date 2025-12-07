@@ -3,6 +3,9 @@
 
 import 'package:flutter/material.dart';
 import 'vht_add_media_screen.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import 'vht_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class CreateEmergencyScreen extends StatefulWidget {
   const CreateEmergencyScreen({Key? key}) : super(key: key);
@@ -12,30 +15,50 @@ class CreateEmergencyScreen extends StatefulWidget {
 }
 
 class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
-  String? _selectedType;
+  int _currentIndex = 0; // 0 = Home, 1 = Map, 2 = Patients
 
-  void _selectType(String type) {
+  void _onNavItemSelected(int index) {
     setState(() {
-      _selectedType = type;
+      _currentIndex = index;
     });
+
+    // TODO: wire up navigation if needed
+    // Example:
+    // if (index == 0) Navigator.pushNamed(context, '/vht-dashboard');
+    // if (index == 1) Navigator.pushNamed(context, '/vht-map');
+    // if (index == 2) Navigator.pushNamed(context, '/vht-patients');
+  }
+
+  void _goToAddMedia(String type) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddMediaScreen(emergencyType: type),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: const Color(0xFF0077CC),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'VHT',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
       ),
       // Figma background: #FBFCFD
       backgroundColor: const Color(0xFFFBFCFD),
+      bottomNavigationBar: VhtNavigationBar(
+        currentIndex: _currentIndex,
+        onItemSelected: _onNavItemSelected,
+      ),
       body: SafeArea(
         child: Stack(
           children: [
@@ -50,51 +73,6 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                     // Full frame background (#F7F9FC)
                     Positioned.fill(
                       child: Container(color: const Color(0xFFF7F9FC)),
-                    ),
-
-                    // Top white bar (Vector: top 0%, bottom ~90.62%)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      height: 60,
-                      child: Container(color: Colors.white),
-                    ),
-
-                    // Back button
-                    Positioned(
-                      left: 0,
-                      top: 12,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        color: const Color(0xFF0077CC),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ),
-                    // Blue square with "V"
-                    // TODO: Clickable profile to switch between roles
-                    Positioned(
-                      left: 10, // ~2.78% of 360
-                      top: 12, // ~1.88% of 640
-                      width: 36,
-                      height: 36,
-                      child: Container(
-                        color: const Color(0xFF0077CC),
-                        child: const Center(
-                          child: Text(
-                            'V',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                              height: 17 / 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
                     ),
 
                     // "Report Emergency" title
@@ -139,13 +117,11 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                       top: 100, // 15.62%
                       height: 64,
                       child: GestureDetector(
-                        onTap: () => _selectType('Birth'),
+                        onTap: () => _goToAddMedia('Birth'),
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _selectedType == 'Birth'
-                                ? const Color(0xFF0077CC)
-                                : const Color(0xFF0077CC).withOpacity(0.6),
+                            color: const Color(0xFF0077CC),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -169,13 +145,11 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                       top: 180, // 28.12%
                       height: 64,
                       child: GestureDetector(
-                        onTap: () => _selectType('Trauma'),
+                        onTap: () => _goToAddMedia('Trauma'),
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _selectedType == 'Trauma'
-                                ? const Color(0xFFFF6A3D)
-                                : const Color(0xFFFF6A3D).withOpacity(0.6),
+                            color: const Color(0xFFFF6A3D),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -199,13 +173,11 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                       top: 260, // 40.62%
                       height: 64,
                       child: GestureDetector(
-                        onTap: () => _selectType('Infection'),
+                        onTap: () => _goToAddMedia('Infection'),
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _selectedType == 'Infection'
-                                ? const Color(0xFFFF8A00)
-                                : const Color(0xFFFF8A00).withOpacity(0.6),
+                            color: const Color(0xFFFF8A00),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -229,13 +201,11 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                       top: 340, // 53.12%
                       height: 64,
                       child: GestureDetector(
-                        onTap: () => _selectType('Other'),
+                        onTap: () => _goToAddMedia('Other'),
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _selectedType == 'Other'
-                                ? const Color(0xFF667085)
-                                : const Color(0xFF667085).withOpacity(0.6),
+                            color: const Color(0xFF667085),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -246,54 +216,6 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                               fontSize: 18,
                               height: 22 / 18,
                               color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // 🚨 Dispatch Now button
-                    Positioned(
-                      left: 60, // 16.67%
-                      right: 60,
-                      bottom: 16, // anchor to bottom of the 640 frame
-                      height: 64,
-                      child: GestureDetector(
-                        onTap: () {
-                          if (_selectedType == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Please select an emergency type first.',
-                                ),
-                              ),
-                            );
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddMediaScreen(
-                                  emergencyType: _selectedType!,
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0077CC),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              '🚨 Dispatch Now',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w400,
-                                fontSize: 20,
-                                height: 24 / 20,
-                                color: Colors.white,
-                              ),
                             ),
                           ),
                         ),

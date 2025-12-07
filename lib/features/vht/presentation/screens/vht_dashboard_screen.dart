@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'vht_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 // VHT Dashboard Screen
 // Main dashboard for Village Health Team members
 
@@ -10,25 +13,31 @@ class VHTDashboardScreen extends StatefulWidget {
 }
 
 class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
+  int _currentIndex = 0; // 0 = Home, 1 = Map, 2 = Patients
+
+  void _onNavItemSelected(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    // Handle navigation between tabs/routes as needed
+    // For now, this keeps you on the dashboard and just updates the selected tab.
+    // Later you can add:
+    // if (index == 1) Navigator.pushNamed(context, '/vht-map');
+    // if (index == 2) Navigator.pushNamed(context, '/vht-patients');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFBFCFD),
-      appBar: AppBar(
-        title: const Text('VHT Dashboard'),
-        centerTitle: false,
-        backgroundColor: const Color(0xFF0F766E),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () {
-              // Navigate back to login screen and clear the stack
-              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-            },
-          ),
-        ],
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'VHT',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -46,60 +55,6 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Header bar with V icon and "VHT Dashboard"
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFFE3E8EF),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF0077CC),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: const Text(
-                                    'V',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'VHT Dashboard',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontStyle: FontStyle.italic,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 20,
-                                      color: Color(0xFF0077CC),
-                                    ),
-                                  ),
-                                ),
-                                // Spacer box to visually balance the left "V" icon
-                                const SizedBox(width: 32),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
                           // Status card: Network / Battery
                           Container(
                             padding: const EdgeInsets.all(12),
@@ -272,47 +227,15 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                   ),
                 ),
 
-                // Fixed Bottom Nav Bar (Home / Cases / Profile)
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(
-                      top: BorderSide(color: Color(0xFFE6E7EB), width: 1),
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _BottomNavLabel(label: 'Home'),
-                      _BottomNavLabel(label: 'Cases'),
-                      _BottomNavLabel(label: 'Profile'),
-                    ],
-                  ),
+                // Fixed Bottom Nav Bar (Home / Map / Patients)
+                VhtNavigationBar(
+                  currentIndex: _currentIndex,
+                  onItemSelected: _onNavItemSelected,
                 ),
               ],
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _BottomNavLabel extends StatelessWidget {
-  final String label;
-
-  const _BottomNavLabel({Key? key, required this.label}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      textAlign: TextAlign.center,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        color: Colors.black,
       ),
     );
   }
