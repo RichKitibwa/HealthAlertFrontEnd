@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'ambulance_en_route_screen.dart';
+import 'ambulance_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class AmbulanceIncomingDispatchScreen extends StatelessWidget {
   // TODO: Replace placeholder emergencyType with value from VHT case selection (e.g., Birth/Trauma/Infection/Other).
@@ -13,17 +16,28 @@ class AmbulanceIncomingDispatchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: const Color(0xFF0077CC),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Ambulance',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
       ),
       // Outer background
       backgroundColor: const Color(0xFFFBFCFD),
+      bottomNavigationBar: AmbulanceNavigationBar(
+        currentIndex: 0, // 0 = Home, 1 = Map (adjust when wiring tabs)
+        onItemSelected: (index) {
+          // TODO: wire up navigation when ambulance tab screens are ready
+          // if (index == 0) Navigator.pushNamed(context, '/ambulance-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/ambulance-map');
+        },
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -32,28 +46,10 @@ class AmbulanceIncomingDispatchScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header row: blue "A" box + title
-                  Row(
+                  // Header: title only (avatar handled by top nav bar)
+                  const Row(
                     children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        color: const Color(0xFF0077CC),
-                        child: const Center(
-                          child: Text(
-                            'A',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                              height: 17 / 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Emergency Dispatch',
                           textAlign: TextAlign.center,
@@ -67,7 +63,6 @@ class AmbulanceIncomingDispatchScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48), // visual balance
                     ],
                   ),
                   const SizedBox(height: 24),

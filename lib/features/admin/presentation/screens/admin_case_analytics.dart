@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'admin_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
+
 class AdminCaseAnalyticsScreen extends StatelessWidget {
   const AdminCaseAnalyticsScreen({super.key});
 
@@ -13,11 +17,49 @@ class AdminCaseAnalyticsScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Admin',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
+      ),
       backgroundColor: _backgroundColor,
+      bottomNavigationBar: AdminNavigationBar(
+        currentIndex: 1, // 0 = Home, 1 = Reports/Analytics
+        onItemSelected: (index) {
+          // TODO: wire up navigation when admin tabs are ready
+          // if (index == 0) Navigator.pushNamed(context, '/admin-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/admin-analytics');
+        },
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            const _AdminCaseAnalyticsHeader(),
+            // Simple centered header; back + avatar handled by TopNavigationBar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: const Center(
+                child: Text(
+                  'Case Analytics',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    height: 24 / 20,
+                    color: _primaryBlue,
+                  ),
+                ),
+              ),
+            ),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
@@ -55,9 +97,9 @@ class AdminCaseAnalyticsScreen extends StatelessWidget {
                                   border: Border.all(color: _cardBorder),
                                 ),
                                 child: const Center(
-                                  // TODO: Replace hard-coded value with computed average response time
+                                  // TODO: Replace hard-coded value with computed response time for this case
                                   child: Text(
-                                    'Average Response Time: 12 min',
+                                    'Ambulance response time for this case: 12 min',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontFamily: 'Inter',
@@ -82,9 +124,9 @@ class AdminCaseAnalyticsScreen extends StatelessWidget {
                                   border: Border.all(color: _cardBorder),
                                 ),
                                 child: const Center(
-                                  // TODO: Replace placeholder with visualization or list of high-volume areas
+                                  // TODO: Replace placeholder with per-case visuals, e.g., location, handoffs, and delays for this case
                                   child: Text(
-                                    'High Case Volume Areas',
+                                    'Location & handoff details for this case',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontFamily: 'Inter',

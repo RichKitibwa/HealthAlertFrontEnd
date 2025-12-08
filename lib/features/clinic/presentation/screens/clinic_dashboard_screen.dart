@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'clinic_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 // Clinic Staff Dashboard Screen
 // Main dashboard for clinic staff
@@ -13,6 +16,19 @@ class ClinicDashboardScreen extends StatefulWidget {
 class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
   static const Color _primaryBlue = Color(0xFF0077CC);
 
+  int _currentIndex = 0; // 0 = Home, 1 = Patients, 2 = Incoming
+
+  void _onNavItemSelected(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    // TODO: wire up navigation when clinic tab screens are ready
+    // if (index == 0) Navigator.pushNamed(context, '/clinic-dashboard');
+    // if (index == 1) Navigator.pushNamed(context, '/clinic-patients');
+    // if (index == 2) Navigator.pushNamed(context, '/clinic-incoming-requests');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -20,20 +36,18 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     final bool isWide = size.width >= 600;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Clinic Dashboard'),
-        centerTitle: false,
-        backgroundColor: _primaryBlue,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-            },
-          ),
-        ],
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Clinic',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: false,
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
+      ),
+      bottomNavigationBar: ClinicNavigationBar(
+        currentIndex: _currentIndex,
+        onItemSelected: _onNavItemSelected,
       ),
       body: SafeArea(
         child: LayoutBuilder(

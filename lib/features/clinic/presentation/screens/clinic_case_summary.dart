@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'clinic_assign_staff.dart';
+import 'clinic_navigation_bar.dart';
+import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../auth/current_user_session.dart';
 
 class ClinicCaseSummaryScreen extends StatelessWidget {
   const ClinicCaseSummaryScreen({super.key});
@@ -17,11 +20,50 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Clinic',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        showBackButton: true,
+        onBack: () {
+          Navigator.pop(context);
+        },
+        onSignOut: () {
+          CurrentUserSession.clear();
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        },
+      ),
       backgroundColor: _backgroundColor,
+      bottomNavigationBar: ClinicNavigationBar(
+        currentIndex: 2, // 0 = Home, 1 = Patients, 2 = Incoming / Cases
+        onItemSelected: (index) {
+          // TODO: wire up navigation when clinic tab screens are ready
+          // if (index == 0) Navigator.pushNamed(context, '/clinic-dashboard');
+          // if (index == 1) Navigator.pushNamed(context, '/clinic-patients');
+          // if (index == 2) Navigator.pushNamed(context, '/clinic-incoming-cases');
+        },
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            const _ClinicCaseSummaryHeader(),
+            // Simple centered header; avatar and back button are handled by TopNavigationBar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: const Center(
+                child: Text(
+                  'Case Summary',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    height: 24 / 20,
+                    color: _primaryBlue,
+                  ),
+                ),
+              ),
+            ),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
@@ -161,6 +203,92 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                             fontWeight: FontWeight.w400,
                                             fontSize: 18,
                                             height: 22 / 18,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(
+                                            color: _primaryBlue,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          // TODO: wire up call to VHT (e.g., open dialer with VHT phone number)
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Calling VHT (placeholder)...',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: const Text(
+                                          'Call VHT',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
+                                            height: 20 / 16,
+                                            color: _primaryBlue,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(
+                                            color: _primaryBlue,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          // TODO: wire up call to Ambulance (e.g., open dialer with ambulance phone number)
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Calling ambulance (placeholder)...',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: const Text(
+                                          'Call Ambulance',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
+                                            height: 20 / 16,
+                                            color: _primaryBlue,
                                           ),
                                         ),
                                       ),
