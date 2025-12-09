@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'vht_add_location_screen.dart';
+import 'vht_onboard_patient.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
@@ -172,6 +172,67 @@ class AddMediaScreen extends StatelessWidget {
                             color: Color(0xFF667085),
                           ),
                         ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Triage level',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            height: 19 / 16,
+                            color: Color(0xFF0077CC),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            hintText: 'Select triage level',
+                            hintStyle: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              height: 18 / 14,
+                              color: Color(0xFF98A2B3),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE3E8EF),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF0077CC),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Critical',
+                              child: Text('Critical'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'High',
+                              child: Text('High'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Moderate',
+                              child: Text('Moderate'),
+                            ),
+                            DropdownMenuItem(value: 'Low', child: Text('Low')),
+                          ],
+                          onChanged: (value) {
+                            // TODO: store or send triage level if needed
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -189,14 +250,14 @@ class AddMediaScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => CaptureLocationScreen(
+                            builder: (context) => VhtOnboardPatientScreen(
                               emergencyType: emergencyType,
                             ),
                           ),
                         );
                       },
                       child: const Text(
-                        'Next → Confirm Location',
+                        'Next → Notify Clinic',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w400,
