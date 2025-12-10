@@ -193,7 +193,7 @@ class ClinicAssignStaffScreen extends StatelessWidget {
                                       ),
                                     ),
                                     child: const Text(
-                                      'Confirm Assignment',
+                                      'Confirm Staff',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontFamily: 'Inter',

@@ -141,102 +141,51 @@ class AmbulanceIncomingDispatchScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              // Accept / Reject buttons row
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 56,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFF4BD964,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                              // Centered Accept button
+                              Center(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 260,
+                                  ),
+                                  child: SizedBox(
+                                    height: 56,
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF4BD964,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
                                           ),
                                         ),
-                                        onPressed: () {
-                                          // TODO: Implement accept dispatch action for ambulance worker and update backend case status.
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const AmbulanceEnRouteScreen(
-                                                    // TODO: Pass along case details (e.g., caseId, pickup location) via constructor once wired to backend.
-                                                  ),
-                                            ),
-                                          );
-                                        },
-                                        child: const Text(
-                                          'Accept',
-                                          style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                            fontSize: 18,
-                                            height: 22 / 18,
-                                            color: Colors.white,
+                                      ),
+                                      onPressed: () {
+                                        // TODO: Implement accept dispatch action for ambulance worker and update backend case status.
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const AmbulanceEnRouteScreen(
+                                                  // TODO: Pass along case details (e.g., caseId, pickup location) via constructor once wired to backend.
+                                                ),
                                           ),
+                                        );
+                                      },
+                                      child: const Text(
+                                        'Accept',
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 18,
+                                          height: 22 / 18,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 56,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFF667085,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          // TODO: Send rejection status back to VHT/backend so the case can be reassigned or escalated.
-                                          showDialog(
-                                            context: context,
-                                            builder: (dialogContext) {
-                                              return AlertDialog(
-                                                title: const Text(
-                                                  'Case rejected',
-                                                ),
-                                                content: const Text(
-                                                  'The VHT will be notified that this ambulance request was rejected.',
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(
-                                                          dialogContext,
-                                                        ).pop(),
-                                                    child: const Text('OK'),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                        child: const Text(
-                                          'Reject',
-                                          style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                            fontSize: 18,
-                                            height: 22 / 18,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ],
                           ),

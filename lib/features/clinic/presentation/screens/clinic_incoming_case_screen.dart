@@ -120,62 +120,83 @@ class ClinicIncomingCaseScreen extends StatelessWidget {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
-                                  vertical: 20,
+                                  vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: _cardBorder),
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      'Patient: $patient',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 18,
-                                        height: 19 / 16,
-                                        color: _primaryBlue,
+                                    // Left side: patient, emergency, VHT notes
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Patient: $patient',
+                                            style: const TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              height: 17 / 14,
+                                              color: _primaryBlue,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Emergency: $emergency',
+                                            style: const TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12,
+                                              height: 15 / 12,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'VHT notes: $notes',
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12,
+                                              height: 15 / 12,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Emergency: $emergency',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
-                                        height: 19 / 16,
-                                        color: _primaryBlue,
+                                    const SizedBox(width: 12),
+                                    // Right side: ETA pill, similar to status chip on admin dashboard
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'VHT Notes: $notes',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
-                                        height: 19 / 16,
+                                      decoration: BoxDecoration(
                                         color: _primaryBlue,
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Ambulance ETA: $eta',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
-                                        height: 19 / 16,
-                                        color: _primaryBlue,
+                                      child: Text(
+                                        'ETA: $eta',
+                                        style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 12,
+                                          height: 15 / 12,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
                                   ],

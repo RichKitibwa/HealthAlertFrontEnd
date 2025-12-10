@@ -166,7 +166,7 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           ),
                                         ),
                                         child: const Text(
-                                          'Assign Staff',
+                                          'See Staff',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
@@ -196,7 +196,7 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           ),
                                         ),
                                         child: const Text(
-                                          'Request Info',
+                                          'Request Additional Info',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
