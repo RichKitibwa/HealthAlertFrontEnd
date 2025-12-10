@@ -33,16 +33,16 @@ class HealthCommApp extends StatelessWidget {
         '/': (context) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/vht-dashboard': (context) => const VHTDashboardScreen(),
-        '/vht-main': (context) => const VHTDashboardScreen(),
+        '/vht-dashboard': (context) => VHTDashboardScreen(),
+        '/vht-main': (context) => VHTDashboardScreen(),
         '/create-emergency': (context) => const CreateEmergencyScreen(),
-        '/ambulance-dashboard': (context) => const AmbulanceDashboardScreen(),
+        '/ambulance-dashboard': (context) => AmbulanceDashboardScreen(),
         '/ambulance-incoming-dispatch': (context) =>
             const AmbulanceIncomingDispatchScreen(),
-        '/clinic-dashboard': (context) => const ClinicDashboardScreen(),
+        '/clinic-dashboard': (context) => ClinicDashboardScreen(),
         '/clinic-incoming-case': (context) => const ClinicIncomingCaseScreen(),
         '/admin-case-dashboard': (context) => const AdminCaseDashboardScreen(),
-        '/admin-dashboard': (context) => const AdminDashboardScreen(),
+        '/admin-dashboard': (context) => AdminDashboardScreen(),
       },
     );
   }

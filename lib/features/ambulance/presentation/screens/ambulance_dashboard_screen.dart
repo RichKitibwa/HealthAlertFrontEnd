@@ -4,16 +4,21 @@ import 'ambulance_all_incoming_requests.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
 
-class AmbulanceDashboardScreen extends StatelessWidget {
+
+class AmbulanceDashboardScreen extends StatefulWidget {
   const AmbulanceDashboardScreen({Key? key}) : super(key: key);
 
+  @override
+  State<AmbulanceDashboardScreen> createState() => _AmbulanceDashboardScreenState();
+}
+
+class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
   int _currentIndex = 0; // 0 = Home, 1 = Map
 
   void _onNavItemSelected(int index) {
     setState(() {
       _currentIndex = index;
     });
-
     // TODO: wire up navigation as needed
     // Example:
     // if (index == 0) Navigator.pushNamed(context, '/ambulance-dashboard');
@@ -22,6 +27,7 @@ class AmbulanceDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Ambulance',
