@@ -3,12 +3,55 @@ import 'vht_dispatch_confirmation_screen.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../../core/utils/location_utils.dart';
+import 'package:geolocator/geolocator.dart';
 
-class CaptureLocationScreen extends StatelessWidget {
+class CaptureLocationScreen extends StatefulWidget {
   final String emergencyType;
 
   const CaptureLocationScreen({Key? key, required this.emergencyType})
     : super(key: key);
+
+  @override
+  State<CaptureLocationScreen> createState() => _CaptureLocationScreenState();
+}
+
+class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
+  Position? _currentPosition;
+  bool _isCapturing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _captureLocation();
+  }
+
+  Future<void> _captureLocation() async {
+    setState(() {
+      _isCapturing = true;
+    });
+
+    try {
+      final position = await LocationUtils.getCurrentLocation();
+      if (mounted) {
+        setState(() {
+          _currentPosition = position;
+          _isCapturing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isCapturing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to capture location. Please try again.'),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,8 +133,25 @@ class CaptureLocationScreen extends StatelessWidget {
                               ),
                             ),
                             SizedBox(height: 16),
-                            // TODO: Implement GPS-based automatic location capture
-                            // (e.g., GPS/triangulation handled on backend)
+                            if (_isCapturing)
+                              const CircularProgressIndicator()
+                            else if (_currentPosition != null)
+                              Text(
+                                'Latitude: ${_currentPosition!.latitude.toStringAsFixed(6)}\n'
+                                'Longitude: ${_currentPosition!.longitude.toStringAsFixed(6)}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 12,
+                                  color: Color(0xFF0077CC),
+                                ),
+                              )
+                            else
+                              ElevatedButton(
+                                onPressed: _captureLocation,
+                                child: const Text('Retry Location Capture'),
+                              ),
                           ],
                         ),
                       ),
@@ -107,17 +167,20 @@ class CaptureLocationScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: () {
-                        // TODO: Wire this to real captured coordinates once backend integration is ready.
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DispatchConfirmationScreen(
-                              emergencyType: emergencyType,
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _currentPosition != null
+                          ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DispatchConfirmationScreen(
+                                    emergencyType: widget.emergencyType,
+                                    latitude: _currentPosition!.latitude,
+                                    longitude: _currentPosition!.longitude,
+                                  ),
+                                ),
+                              );
+                            }
+                          : null,
                       child: const Text(
                         'Continue',
                         style: TextStyle(

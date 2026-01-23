@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../../core/utils/logout_utils.dart';
 
 // Clinic Staff Dashboard Screen
 // Main dashboard for clinic staff
@@ -40,9 +42,37 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         showBackButton: false,
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
+        },
+        onDashboard: () {
+          // Already on dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen
+        },
+      ),
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          // Already on dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen
+        },
+        onLogout: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
         },
       ),
       bottomNavigationBar: ClinicNavigationBar(
@@ -69,42 +99,43 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // TODO: Fetch clinic name from login / user profile information
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 16.0),
-                        padding: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          color: _primaryBlue.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: _primaryBlue.withOpacity(0.3),
+                      // Clinic name card
+                      if (CurrentUserSession.workplace != null && CurrentUserSession.workplace!.isNotEmpty)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 16.0),
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: _primaryBlue.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: _primaryBlue.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Clinic',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                CurrentUserSession.workplace!,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Clinic',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Clinic Name',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                       Text(
-                        'Welcome, Clinic Staff',
+                        'Welcome, ${CurrentUserSession.fullName}',
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),

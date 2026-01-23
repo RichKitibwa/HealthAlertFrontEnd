@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../../core/utils/logout_utils.dart';
 // VHT Dashboard Screen
 // Main dashboard for Village Health Team members with emergency reporting
 
@@ -34,9 +36,37 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
+        },
+        onDashboard: () {
+          // Already on dashboard, do nothing or refresh
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen (offline-first)
+        },
+      ),
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          // Already on dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen
+        },
+        onLogout: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
         },
       ),
       body: SafeArea(
@@ -44,6 +74,25 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
           builder: (context, constraints) {
             return Column(
               children: [
+                // Welcome message below navbar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF344054),
+                      ),
+                    ),
+                  ),
+                ),
                 // Scrollable main content
                 Expanded(
                   child: SingleChildScrollView(

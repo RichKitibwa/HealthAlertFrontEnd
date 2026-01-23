@@ -37,34 +37,99 @@ enum CaseStatus {
 
 // Extension methods for CaseStatus
 extension CaseStatusExtension on CaseStatus {
-  // TODO: Get display name for each status
   String get displayName {
-    // TODO: Return human-readable status
-    // TODO: Consider localization
-    return '';
+    switch (this) {
+      case CaseStatus.pending:
+        return 'Pending';
+      case CaseStatus.dispatched:
+        return 'Dispatched';
+      case CaseStatus.enRoute:
+        return 'En Route';
+      case CaseStatus.arrived:
+        return 'Arrived';
+      case CaseStatus.inTransit:
+        return 'In Transit';
+      case CaseStatus.delivered:
+        return 'Delivered';
+      case CaseStatus.completed:
+        return 'Completed';
+      case CaseStatus.cancelled:
+        return 'Cancelled';
+    }
   }
   
-  // TODO: Get color for status indicator
-  // Color get color {
-  //   TODO: Return appropriate color for each status
-  // }
+  String get value {
+    switch (this) {
+      case CaseStatus.pending:
+        return 'pending';
+      case CaseStatus.dispatched:
+        return 'dispatched';
+      case CaseStatus.enRoute:
+        return 'enRoute';
+      case CaseStatus.arrived:
+        return 'arrived';
+      case CaseStatus.inTransit:
+        return 'inTransit';
+      case CaseStatus.delivered:
+        return 'delivered';
+      case CaseStatus.completed:
+        return 'completed';
+      case CaseStatus.cancelled:
+        return 'cancelled';
+    }
+  }
   
-  // TODO: Check if case is active
+  static CaseStatus fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'pending':
+        return CaseStatus.pending;
+      case 'dispatched':
+        return CaseStatus.dispatched;
+      case 'enroute':
+      case 'en_route':
+        return CaseStatus.enRoute;
+      case 'arrived':
+        return CaseStatus.arrived;
+      case 'intransit':
+      case 'in_transit':
+        return CaseStatus.inTransit;
+      case 'delivered':
+        return CaseStatus.delivered;
+      case 'completed':
+        return CaseStatus.completed;
+      case 'cancelled':
+        return CaseStatus.cancelled;
+      default:
+        return CaseStatus.pending;
+    }
+  }
+  
   bool get isActive {
-    // TODO: Return true if case is in progress
-    return false;
+    return this != CaseStatus.completed && this != CaseStatus.cancelled;
   }
   
-  // TODO: Check if case is final (completed or cancelled)
   bool get isFinal {
-    // TODO: Return true if case is in terminal state
-    return false;
+    return this == CaseStatus.completed || this == CaseStatus.cancelled;
   }
   
-  // TODO: Get next possible statuses
   List<CaseStatus> get nextPossibleStatuses {
-    // TODO: Return list of valid next states
-    return [];
+    switch (this) {
+      case CaseStatus.pending:
+        return [CaseStatus.dispatched, CaseStatus.cancelled];
+      case CaseStatus.dispatched:
+        return [CaseStatus.enRoute, CaseStatus.cancelled];
+      case CaseStatus.enRoute:
+        return [CaseStatus.arrived, CaseStatus.cancelled];
+      case CaseStatus.arrived:
+        return [CaseStatus.inTransit, CaseStatus.cancelled];
+      case CaseStatus.inTransit:
+        return [CaseStatus.delivered, CaseStatus.cancelled];
+      case CaseStatus.delivered:
+        return [CaseStatus.completed, CaseStatus.cancelled];
+      case CaseStatus.completed:
+      case CaseStatus.cancelled:
+        return [];
+    }
   }
 }
 

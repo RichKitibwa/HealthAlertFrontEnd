@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'vht_dispatch_confirmation_screen.dart';
 import 'vht_navigation_bar.dart';
@@ -12,9 +13,21 @@ import '../../../auth/current_user_session.dart';
 ///  - Continue to dispatch if the clinic recommends an ambulance
 class VhtOnboardPatientScreen extends StatefulWidget {
   final String emergencyType;
+  final File? capturedImage;
+  final File? capturedVideo;
+  final String? notes;
+  final String? urgencyLevel;
+  final String? caseId;
 
-  const VhtOnboardPatientScreen({Key? key, required this.emergencyType})
-    : super(key: key);
+  const VhtOnboardPatientScreen({
+    Key? key,
+    required this.emergencyType,
+    this.capturedImage,
+    this.capturedVideo,
+    this.notes,
+    this.urgencyLevel,
+    this.caseId,
+  }) : super(key: key);
 
   @override
   State<VhtOnboardPatientScreen> createState() =>

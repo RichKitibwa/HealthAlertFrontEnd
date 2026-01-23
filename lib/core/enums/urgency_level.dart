@@ -21,36 +21,71 @@ enum UrgencyLevel {
 
 // Extension methods for UrgencyLevel
 extension UrgencyLevelExtension on UrgencyLevel {
-  // TODO: Get display name for each urgency level
   String get displayName {
-    // TODO: Return human-readable urgency name
-    // TODO: Consider localization
-    return '';
+    switch (this) {
+      case UrgencyLevel.critical:
+        return 'Critical';
+      case UrgencyLevel.high:
+        return 'High';
+      case UrgencyLevel.medium:
+        return 'Moderate';
+      case UrgencyLevel.low:
+        return 'Low';
+    }
   }
   
-  // TODO: Get color for urgency indicator
-  // Color get color {
-  //   TODO: Return appropriate color
-  //   - critical: red
-  //   - high: orange
-  //   - medium: yellow
-  //   - low: green
-  // }
+  String get value {
+    switch (this) {
+      case UrgencyLevel.critical:
+        return 'critical';
+      case UrgencyLevel.high:
+        return 'high';
+      case UrgencyLevel.medium:
+        return 'medium';
+      case UrgencyLevel.low:
+        return 'low';
+    }
+  }
   
-  // TODO: Get response time target (in minutes)
+  static UrgencyLevel fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'critical':
+        return UrgencyLevel.critical;
+      case 'high':
+        return UrgencyLevel.high;
+      case 'medium':
+        return UrgencyLevel.medium;
+      case 'low':
+        return UrgencyLevel.low;
+      default:
+        return UrgencyLevel.medium;
+    }
+  }
+  
   int get targetResponseTime {
-    // TODO: Return expected response time for each urgency
-    // critical: 15 minutes
-    // high: 30 minutes
-    // medium: 60 minutes
-    // low: 120 minutes
-    return 0;
+    switch (this) {
+      case UrgencyLevel.critical:
+        return 15;
+      case UrgencyLevel.high:
+        return 30;
+      case UrgencyLevel.medium:
+        return 60;
+      case UrgencyLevel.low:
+        return 120;
+    }
   }
   
-  // TODO: Get priority order value
   int get priority {
-    // TODO: Return numeric priority (lower = higher priority)
-    return 0;
+    switch (this) {
+      case UrgencyLevel.critical:
+        return 1;
+      case UrgencyLevel.high:
+        return 2;
+      case UrgencyLevel.medium:
+        return 3;
+      case UrgencyLevel.low:
+        return 4;
+    }
   }
 }
 

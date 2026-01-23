@@ -60,172 +60,66 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
         onItemSelected: _onNavItemSelected,
       ),
       body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              left: 26,
-              top: 16,
-              child: SizedBox(
-                width: 360,
-                height: 640,
-                child: Stack(
-                  children: [
-                    // Full frame background (#F7F9FC)
-                    Positioned.fill(
-                      child: Container(color: const Color(0xFFF7F9FC)),
-                    ),
-
-                    // "Report Emergency" title
-                    const Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 14,
-                      child: Center(
-                        child: Text(
-                          'Report Emergency',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 20,
-                            height: 24 / 20,
-                            color: Color(0xFF0077CC),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Main white card (Vector: left/right 5.56%, top 12.5%, bottom 31.25%)
-                    Positioned(
-                      left: 20,
-                      right: 20,
-                      top: 80,
-                      height: 360,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE3E8EF)),
-                        ),
-                      ),
-                    ),
-
-                    // 🤰 Birth (blue bar)
-                    Positioned(
-                      left: 40, // 11.11%
-                      right: 40,
-                      top: 100, // 15.62%
-                      height: 64,
-                      child: GestureDetector(
-                        onTap: () => _goToAddMedia('Birth'),
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0077CC),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            '🤰 Birth',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 18,
-                              height: 22 / 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // 🚑 Trauma (orange-red bar)
-                    Positioned(
-                      left: 40,
-                      right: 40,
-                      top: 180, // 28.12%
-                      height: 64,
-                      child: GestureDetector(
-                        onTap: () => _goToAddMedia('Trauma'),
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF6A3D),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            '🚑 Trauma',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 18,
-                              height: 22 / 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // 🦠 Infection (orange bar)
-                    Positioned(
-                      left: 40,
-                      right: 40,
-                      top: 260, // 40.62%
-                      height: 64,
-                      child: GestureDetector(
-                        onTap: () => _goToAddMedia('Infection'),
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF8A00),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            '🦠 Infection',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 18,
-                              height: 22 / 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // ⚡ Other (gray bar)
-                    Positioned(
-                      left: 40,
-                      right: 40,
-                      top: 340, // 53.12%
-                      height: 64,
-                      child: GestureDetector(
-                        onTap: () => _goToAddMedia('Other'),
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF667085),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            '⚡ Other',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 18,
-                              height: 22 / 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Title
+              const Text(
+                'Report Emergency',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24,
+                  height: 32 / 24,
+                  color: Color(0xFF0077CC),
                 ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              const Text(
+                'Select the type of emergency',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                  color: Color(0xFF667085),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              
+              // Emergency type cards
+              _EmergencyTypeCard(
+                icon: '🤰',
+                title: 'Birth',
+                color: const Color(0xFF0077CC),
+                onTap: () => _goToAddMedia('Birth'),
+              ),
+              const SizedBox(height: 16),
+              _EmergencyTypeCard(
+                icon: '🚑',
+                title: 'Trauma',
+                color: const Color(0xFFFF6A3D),
+                onTap: () => _goToAddMedia('Trauma'),
+              ),
+              const SizedBox(height: 16),
+              _EmergencyTypeCard(
+                icon: '🦠',
+                title: 'Infection',
+                color: const Color(0xFFFF8A00),
+                onTap: () => _goToAddMedia('Infection'),
+              ),
+              const SizedBox(height: 16),
+              _EmergencyTypeCard(
+                icon: '⚡',
+                title: 'Other',
+                color: const Color(0xFF667085),
+                onTap: () => _goToAddMedia('Other'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -233,64 +127,63 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
 }
 
 class _EmergencyTypeCard extends StatelessWidget {
+  final String icon;
   final String title;
-  final String subtitle;
-  final bool selected;
+  final Color color;
   final VoidCallback onTap;
 
   const _EmergencyTypeCard({
     Key? key,
+    required this.icon,
     required this.title,
-    required this.subtitle,
-    required this.selected,
+    required this.color,
     required this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Center(
-        child: SizedBox(
-          width: 320,
-          child: InkWell(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  // Default #E6E7EB, highlight with green when selected
-                  color: selected
-                      ? const Color(0xFF0F766E)
-                      : const Color(0xFFE6E7EB),
-                  width: selected ? 2 : 1,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Text(
+                icon,
+                style: const TextStyle(fontSize: 32),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.white,
+                size: 20,
               ),
-            ),
+            ],
           ),
         ),
       ),

@@ -25,27 +25,68 @@ enum CaseType {
 
 // Extension methods for CaseType
 extension CaseTypeExtension on CaseType {
-  // TODO: Get display name for each case type
   String get displayName {
-    // TODO: Return human-readable type name
-    // TODO: Consider localization
-    return '';
+    switch (this) {
+      case CaseType.medical:
+        return 'Medical';
+      case CaseType.trauma:
+        return 'Trauma';
+      case CaseType.maternal:
+        return 'Maternal';
+      case CaseType.pediatric:
+        return 'Pediatric';
+      case CaseType.other:
+        return 'Other';
+    }
   }
   
-  // TODO: Get icon for case type
-  // IconData get icon {
-  //   TODO: Return appropriate icon for each type
-  // }
+  String get value {
+    switch (this) {
+      case CaseType.medical:
+        return 'medical';
+      case CaseType.trauma:
+        return 'trauma';
+      case CaseType.maternal:
+        return 'maternal';
+      case CaseType.pediatric:
+        return 'pediatric';
+      case CaseType.other:
+        return 'other';
+    }
+  }
   
-  // TODO: Get color for case type indicator
-  // Color get color {
-  //   TODO: Return distinguishing color for each type
-  // }
+  static CaseType fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'medical':
+        return CaseType.medical;
+      case 'trauma':
+        return CaseType.trauma;
+      case 'maternal':
+      case 'birth':
+        return CaseType.maternal;
+      case 'pediatric':
+        return CaseType.pediatric;
+      case 'other':
+      case 'infection':
+        return CaseType.other;
+      default:
+        return CaseType.other;
+    }
+  }
   
-  // TODO: Get common symptoms/indicators for case type
   List<String> get commonIndicators {
-    // TODO: Return list of typical symptoms for this type
-    return [];
+    switch (this) {
+      case CaseType.medical:
+        return ['Fever', 'Pain', 'Difficulty breathing', 'Nausea'];
+      case CaseType.trauma:
+        return ['Bleeding', 'Bruising', 'Fracture', 'Laceration'];
+      case CaseType.maternal:
+        return ['Labor pains', 'Bleeding', 'High blood pressure', 'Contractions'];
+      case CaseType.pediatric:
+        return ['Fever', 'Dehydration', 'Difficulty feeding', 'Rash'];
+      case CaseType.other:
+        return ['Varies'];
+    }
   }
 }
 

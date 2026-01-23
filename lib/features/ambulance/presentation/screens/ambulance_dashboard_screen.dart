@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'ambulance_navigation_bar.dart';
 import 'ambulance_all_incoming_requests.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../../core/utils/logout_utils.dart';
 
 
 class AmbulanceDashboardScreen extends StatefulWidget {
@@ -33,9 +35,31 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         showBackButton: false,
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
+        },
+        onDashboard: () {
+          // Already on dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+      ),
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          // Already on dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLogout: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
         },
       ),
       bottomNavigationBar: AmbulanceNavigationBar(
@@ -48,6 +72,24 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
             width: 360,
             child: Column(
               children: [
+                const SizedBox(height: 12),
+
+                // Welcome message below navbar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 12),
 
                 // Header with logout

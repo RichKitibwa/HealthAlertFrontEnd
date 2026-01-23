@@ -1,14 +1,118 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'vht_track_ambulance_screen.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../../data/repositories/emergency_case_repository.dart';
+import '../../../../data/models/emergency_case_model.dart';
+import '../../../../core/enums/case_type.dart';
+import '../../../../core/enums/urgency_level.dart';
 
-class DispatchConfirmationScreen extends StatelessWidget {
+class DispatchConfirmationScreen extends StatefulWidget {
   final String emergencyType;
+  final double? latitude;
+  final double? longitude;
+  final File? capturedImage;
+  final File? capturedVideo;
+  final String? notes;
+  final String? urgencyLevel;
 
-  const DispatchConfirmationScreen({Key? key, required this.emergencyType})
-    : super(key: key);
+  const DispatchConfirmationScreen({
+    Key? key,
+    required this.emergencyType,
+    this.latitude,
+    this.longitude,
+    this.capturedImage,
+    this.capturedVideo,
+    this.notes,
+    this.urgencyLevel,
+  }) : super(key: key);
+
+  @override
+  State<DispatchConfirmationScreen> createState() => _DispatchConfirmationScreenState();
+}
+
+class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen> {
+  final EmergencyCaseRepository _caseRepository = EmergencyCaseRepository();
+  bool _isSubmitting = false;
+
+  Future<void> _submitEmergencyCase() async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Create emergency case model
+      final caseModel = EmergencyCaseModel(
+        caseType: CaseTypeExtension.fromString(widget.emergencyType),
+        urgencyLevel: widget.urgencyLevel != null
+            ? UrgencyLevelExtension.fromString(widget.urgencyLevel!)
+            : UrgencyLevel.medium,
+        latitude: widget.latitude,
+        longitude: widget.longitude,
+        notes: widget.notes,
+        description: widget.notes,
+      );
+
+      // Create case in repository (handles offline/online)
+      final createdCase = await _caseRepository.createCase(caseModel);
+
+      // Upload attachments if available
+      if (widget.capturedImage != null) {
+        await _caseRepository.uploadAttachment(
+          createdCase.id ?? createdCase.offlineId ?? '',
+          widget.capturedImage!,
+          'image',
+        );
+      }
+
+      if (widget.capturedVideo != null) {
+        await _caseRepository.uploadAttachment(
+          createdCase.id ?? createdCase.offlineId ?? '',
+          widget.capturedVideo!,
+          'video',
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(createdCase.isOffline
+                ? 'Emergency case saved offline. Will sync when online.'
+                : 'Emergency case created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TrackAmbulanceScreen(
+              emergencyType: widget.emergencyType,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating emergency case: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +236,7 @@ class DispatchConfirmationScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Emergency type: $emergencyType',
+                              'Emergency type: ${widget.emergencyType}',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontFamily: 'Inter',
@@ -142,6 +246,20 @@ class DispatchConfirmationScreen extends StatelessWidget {
                                 color: Color(0xFF667085),
                               ),
                             ),
+                            if (widget.latitude != null && widget.longitude != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  'Location: ${widget.latitude!.toStringAsFixed(6)}, ${widget.longitude!.toStringAsFixed(6)}',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 12,
+                                    color: Color(0xFF667085),
+                                  ),
+                                ),
+                              ),
                             const SizedBox(height: 16),
                             // TODO: Integrate backend logic to:
                             // 1) Find the nearest available ambulance
@@ -162,18 +280,18 @@ class DispatchConfirmationScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TrackAmbulanceScreen(
-                              emergencyType: emergencyType,
-                            ),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Track Ambulance',
+                      onPressed: _isSubmitting ? null : _submitEmergencyCase,
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Confirm & Dispatch',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w400,

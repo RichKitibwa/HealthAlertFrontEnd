@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../current_user_session.dart';
+import '../../../../core/theme/app_colors.dart';
+import 'register_screen.dart';
 import '../../../vht/presentation/screens/vht_dashboard_screen.dart';
 import '../../../ambulance/presentation/screens/ambulance_dashboard_screen.dart';
 import '../../../clinic/presentation/screens/clinic_dashboard_screen.dart';
@@ -44,7 +46,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter the verification code'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -63,66 +65,57 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
 
-      // Get the user's UID
-      String uid = userCredential.user!.uid;
-
-      if (widget.isNewUser) {
-        // Create user profile in Firestore
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
-          'uid': uid,
-          'firstName': widget.firstName,
-          'lastName': widget.lastName,
-          'phoneNumber': widget.phoneNumber,
-          'role': widget.role,
-          'createdAt': DateTime.now().toIso8601String(),
-        });
-      }
-
-      // Get user role and populate current session
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-
-      final data = userDoc.data();
-      final role = data?['role'] ?? 'VHT';
-
-      // Store current user session in memory
-      CurrentUserSession.uid = uid;
-      CurrentUserSession.role = role;
-      CurrentUserSession.firstName = data?['firstName'];
-      CurrentUserSession.lastName = data?['lastName'];
-      CurrentUserSession.phoneNumber = data?['phoneNumber'];
-      CurrentUserSession.profileImageUrl = data?['profileImageUrl'];
-
       setState(() => _isLoading = false);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Verification successful!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (widget.isNewUser) {
+          // Navigate to details form for new users (role is already selected)
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => _getDetailsScreen(),
+            ),
+          );
+        } else {
+          // For existing users, get user data and navigate to dashboard
+          final uid = userCredential.user!.uid;
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .get();
 
-        // Navigate to role-specific dashboard
-        _navigateToRoleDashboard(role);
+          final data = userDoc.data();
+          final role = data?['role'] ?? 'VHT';
+
+          CurrentUserSession.uid = uid;
+          CurrentUserSession.role = role;
+          CurrentUserSession.firstName = data?['firstName'];
+          CurrentUserSession.lastName = data?['lastName'];
+          CurrentUserSession.phoneNumber = data?['phoneNumber'];
+          CurrentUserSession.profileImageUrl = data?['profileImageUrl'];
+          CurrentUserSession.workplace = data?['workplace'];
+          CurrentUserSession.specialty = data?['specialty'];
+
+          _navigateToRoleDashboard(role);
+        }
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _isLoading = false);
 
-      String errorMessage = 'Verification failed';
-      if (e.code == 'invalid-verification-code') {
-        errorMessage = 'Invalid verification code. Please try again.';
-      } else if (e.code == 'session-expired') {
-        errorMessage = 'Verification code expired. Please request a new one.';
-      } else {
-        errorMessage = e.message ?? 'An error occurred';
-      }
+      // Show raw Firebase error message
+      final errorMessage = e.message ?? 'Error code: ${e.code}';
+      
+      print('Firebase Auth Error Code: ${e.code}');
+      print('Firebase Auth Error Message: ${e.message}');
+      print('Full Firebase Exception: $e');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 8),
+          ),
         );
       }
     } catch (e) {
@@ -132,10 +125,26 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
+    }
+  }
+
+  Widget _getDetailsScreen() {
+    final role = widget.role ?? 'VHT';
+    switch (role) {
+      case 'VHT':
+        return VHTDetailsScreen(phoneNumber: widget.phoneNumber, role: role);
+      case 'Ambulance Driver':
+        return AmbulanceDriverDetailsScreen(phoneNumber: widget.phoneNumber, role: role);
+      case 'Clinic Staff':
+        return ClinicianDetailsScreen(phoneNumber: widget.phoneNumber, role: role);
+      case 'Admin':
+        return AdminDetailsScreen(phoneNumber: widget.phoneNumber, role: role);
+      default:
+        return VHTDetailsScreen(phoneNumber: widget.phoneNumber, role: role);
     }
   }
 
@@ -213,7 +222,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verify Phone Number'),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
         child: Center(
@@ -223,7 +232,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.message, size: 80, color: Colors.red),
+                const Icon(Icons.message, size: 80, color: AppColors.primary),
                 const SizedBox(height: 32),
                 const Text(
                   'Enter Verification Code',
@@ -274,7 +283,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _verifyOTP,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppColors.error,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),

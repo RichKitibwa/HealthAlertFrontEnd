@@ -37,9 +37,29 @@ dependencies:
   firebase_core: ^4.2.1
   firebase_auth: ^6.1.2
   cloud_firestore: ^6.1.0
+  firebase_messaging: ^16.0.4
   google_fonts: ^6.3.2
   provider: ^6.1.5+1
   flutter_map: ^8.2.2
+  crypto: ^3.0.5
+  shared_preferences: ^2.3.3
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  camera: ^0.11.0+2
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.3.0
+  connectivity_plus: ^6.1.0
+  http: ^1.2.2
+  path_provider: ^2.1.4
+  geolocator: ^13.0.1
+  firebase_storage: ^13.0.4
+  path: ^1.9.0
+  video_player: ^2.9.2
+  video_thumbnail: ^0.5.3
+  record: ^6.1.2
+  audioplayers: ^6.0.0
+  just_audio: ^0.9.40
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

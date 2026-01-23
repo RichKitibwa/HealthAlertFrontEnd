@@ -1,327 +1,410 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'otp_verification_screen.dart';
+import '../../current_user_session.dart';
+import '../../../../core/utils/pin_utils.dart';
+import '../../../../core/services/device_storage_service.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../vht/presentation/screens/vht_dashboard_screen.dart';
 import '../../../ambulance/presentation/screens/ambulance_dashboard_screen.dart';
 import '../../../clinic/presentation/screens/clinic_dashboard_screen.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
-import '../../../vht/presentation/screens/vht_dashboard_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  final bool forcePhoneInput;
+  
+  const LoginScreen({
+    Key? key,
+    this.forcePhoneInput = false,
+  }) : super(key: key);
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _pinController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   
   bool _isLoading = false;
+  bool _obscurePin = true;
+  String? _errorMessage;
+  bool _isRegisteredOnDevice = false;
+  String? _userName;
+  String? _phoneNumber;
+  Map<String, dynamic>? _userData;
+  bool _showPhoneInput = true; // Show phone input by default (for guest users)
+  bool _isCheckingRegistration = true; // Track if we're still checking
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.forcePhoneInput) {
+      // Force showing phone input, skip device registration check
+      setState(() {
+        _showPhoneInput = true;
+        _isRegisteredOnDevice = false;
+        _isCheckingRegistration = false;
+      });
+    } else {
+      _checkDeviceRegistration();
+    }
+  }
 
   @override
   void dispose() {
+    _pinController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
 
-  void _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+  Future<void> _checkDeviceRegistration() async {
+    final isRegistered = await DeviceStorageService.isUserRegisteredOnDevice();
+    if (!mounted) return;
+    
+    if (isRegistered) {
+      final userData = await DeviceStorageService.getRegisteredUserData();
+      final phone = userData['phoneNumber'];
+      final name = userData['name'];
       
-      try {
-        final phoneNumber = _phoneController.text.trim();
-        
-        // Check if user exists first with timeout
-        QuerySnapshot usersQuery;
-        try {
-          usersQuery = await FirebaseFirestore.instance
-              .collection('users')
-              .where('phoneNumber', isEqualTo: phoneNumber)
-              .get()
-              .timeout(
-                const Duration(seconds: 10),
-                onTimeout: () {
-                  throw TimeoutException(
-                    'Connection timeout. Check your internet connection and emulator network settings.',
-                    const Duration(seconds: 10),
-                  );
-                },
-              );
-        } on TimeoutException catch (e) {
-          setState(() => _isLoading = false);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Network error: ${e.message}\n\n'
-                  'The emulator cannot reach Firebase. Please:\n'
-                  '1. Check emulator internet connection\n'
-                  '2. Restart the emulator\n'
-                  '3. Verify Firebase is accessible',
-                ),
-                backgroundColor: Colors.orange,
-                duration: const Duration(seconds: 8),
-              ),
-            );
-          }
-          return;
-        } catch (e) {
-          setState(() => _isLoading = false);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Firestore error: ${e.toString()}'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 5),
-              ),
-            );
-          }
-          return;
-        }
-        
-        if (usersQuery.docs.isEmpty) {
-          setState(() => _isLoading = false);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('User not found. Please register first.'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          return;
-        }
-        
-        // Start Firebase Phone Auth
-        await FirebaseAuth.instance.verifyPhoneNumber(
-          phoneNumber: phoneNumber,
-          
-          // Auto-verification (Android only)
-          verificationCompleted: (PhoneAuthCredential credential) async {
-            await _signInWithCredential(credential);
-          },
-          
-          // Verification failed
-          verificationFailed: (FirebaseAuthException e) {
-            setState(() => _isLoading = false);
-            
-            String errorMessage = 'Verification failed';
-            if (e.code == 'invalid-phone-number') {
-              errorMessage = 'Invalid phone number format';
-            } else if (e.code == 'too-many-requests') {
-              errorMessage = 'Too many requests. Please try again later';
-            } else {
-              errorMessage = e.message ?? 'An error occurred';
-            }
-            
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(errorMessage),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-          
-          // OTP code sent
-          codeSent: (String verificationId, int? resendToken) {
-            setState(() => _isLoading = false);
-            
-            if (mounted) {
-              // Navigate to OTP verification
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => OTPVerificationScreen(
-                    verificationId: verificationId,
-                    phoneNumber: phoneNumber,
-                    isNewUser: false,
-                  ),
-                ),
-              );
-            }
-          },
-          
-          // Auto-retrieval timeout
-          codeAutoRetrievalTimeout: (String verificationId) {
-            print('Auto retrieval timeout');
-          },
-          
-          timeout: const Duration(seconds: 60),
-        );
-        
-      } catch (e) {
-        setState(() => _isLoading = false);
-        
+      if (phone != null) {
+        if (!mounted) return;
+        setState(() {
+          _isRegisteredOnDevice = true;
+          _phoneNumber = phone;
+          _userName = name ?? 'User';
+          _showPhoneInput = false;
+          _isCheckingRegistration = false;
+        });
+        _loadUserData();
+      } else {
+        if (!mounted) return;
+        setState(() {
+          _showPhoneInput = true;
+          _isCheckingRegistration = false;
+        });
+      }
+    } else {
+      if (!mounted) return;
+      setState(() {
+        _showPhoneInput = true;
+        _isCheckingRegistration = false;
+      });
+    }
+  }
+
+  Future<void> _loadUserData() async {
+    if (_phoneNumber == null) return;
+    if (!mounted) return;
+    
+    try {
+      final usersQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('phoneNumber', isEqualTo: _phoneNumber)
+          .get();
+
+      if (!mounted) return;
+      
+      if (usersQuery.docs.isNotEmpty) {
+        final userDoc = usersQuery.docs.first;
+        final data = userDoc.data();
+        data['uid'] = userDoc.id;
+        data['id'] = userDoc.id;
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          setState(() {
+            _userData = data;
+          });
         }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
+  }
+
+  Future<void> _loadUserByPhone(String phoneNumber) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final usersQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .get();
+
+      if (!mounted) return;
+
+      if (usersQuery.docs.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'No account found with this phone number. Please register first.';
+          });
+        }
+        return;
+      }
+
+      final userDoc = usersQuery.docs.first;
+      final data = userDoc.data();
+      data['uid'] = userDoc.id;
+      data['id'] = userDoc.id;
+      
+      if (mounted) {
+        setState(() {
+          _userData = data;
+          _phoneNumber = phoneNumber;
+          final fullName = '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
+          _userName = fullName.isEmpty ? 'User' : fullName;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Error loading user data: ${e.toString()}';
+        });
       }
     }
   }
 
-  Future<void> _signInWithCredential(PhoneAuthCredential credential) async {
-    try {
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      
-      // Get user role from Firestore
-      final uid = FirebaseAuth.instance.currentUser!.uid;
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      
-      final role = userDoc.data()?['role'] ?? 'VHT';
-      
-      if (mounted) {
-        _navigateToRoleDashboard(role);
+  Future<void> _verifyPin() async {
+    // If phone input is shown and phone number is not loaded, load user first
+    if (_showPhoneInput && _userData == null) {
+      if (!_formKey.currentState!.validate()) {
+        return;
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sign in failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+      
+      final phoneNumber = _phoneController.text.trim();
+      await _loadUserByPhone(phoneNumber);
+      
+      // If user data is still null after loading, return (error already set)
+      if (_userData == null) {
+        return;
+      }
+    }
+
+    final pin = _pinController.text.trim();
+
+    if (pin.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter your PIN';
+      });
+      return;
+    }
+
+    if (!PinUtils.isValidPinFormat(pin)) {
+      setState(() {
+        _errorMessage = 'PIN must be 4-6 digits';
+      });
+      return;
+    }
+
+    if (_userData == null) {
+      setState(() {
+        _errorMessage = 'User data not loaded. Please try again.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final pinHash = PinUtils.hashPin(pin);
+      final storedPinHash = _userData!['pinHash'] as String?;
+
+      if (storedPinHash == null || storedPinHash != pinHash) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Incorrect PIN. Please try again.';
+        });
+        _pinController.clear();
+        return;
+      }
+
+      // PIN is correct - populate session and navigate
+      final uid = _userData!['uid'] as String? ?? _userData!['id'] as String? ?? '';
+      
+      CurrentUserSession.uid = uid;
+      CurrentUserSession.role = _userData!['role'] ?? 'VHT';
+      CurrentUserSession.firstName = _userData!['firstName'] as String?;
+      CurrentUserSession.lastName = _userData!['lastName'] as String?;
+      CurrentUserSession.phoneNumber = _userData!['phoneNumber'] as String?;
+      CurrentUserSession.profileImageUrl = _userData!['profileImageUrl'] as String?;
+      CurrentUserSession.workplace = _userData!['workplace'] as String?;
+      CurrentUserSession.specialty = _userData!['specialty'] as String?;
+
+      // Save user data to device for future logins
+      if (!_isRegisteredOnDevice && _phoneNumber != null) {
+        await DeviceStorageService.saveRegisteredUser(
+          phoneNumber: _phoneNumber!,
+          firstName: CurrentUserSession.firstName ?? '',
+          lastName: CurrentUserSession.lastName ?? '',
         );
       }
+
+      setState(() => _isLoading = false);
+
+      if (mounted) {
+        // Navigate to role-specific dashboard
+        _navigateToRoleDashboard(CurrentUserSession.role ?? 'VHT');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Error: ${e.toString()}';
+      });
     }
   }
 
   void _navigateToRoleDashboard(String role) {
-    if (!mounted) return;
-    
-    final normalizedRole = role.trim();
-    
-    String routeName;
-    if (normalizedRole == 'VHT' || normalizedRole.toLowerCase() == 'vht') {
-      routeName = '/vht-dashboard';
-    } else if (normalizedRole == 'Ambulance Driver' || 
-               normalizedRole.toLowerCase().contains('ambulance')) {
-      routeName = '/ambulance-dashboard';
-    } else if (normalizedRole == 'Clinic Staff' || 
-               normalizedRole.toLowerCase().contains('clinic')) {
-      routeName = '/clinic-dashboard';
-    } else if (normalizedRole == 'Admin' || 
-               normalizedRole.toLowerCase() == 'admin' ||
-               normalizedRole.toLowerCase().contains('admin')) {
-      routeName = '/admin-dashboard';
-    } else {
-      routeName = '/vht-dashboard';
+    String route;
+    switch (role) {
+      case 'VHT':
+        route = '/vht-dashboard';
+        break;
+      case 'Ambulance Driver':
+        route = '/ambulance-dashboard';
+        break;
+      case 'Clinic Staff':
+        route = '/clinic-dashboard';
+        break;
+      case 'Admin':
+        route = '/admin-dashboard';
+        break;
+      default:
+        route = '/vht-dashboard';
     }
-    
-    print('DEBUG: Navigating to route: $routeName');
-    
-    // Use WidgetsBinding to ensure navigation happens after the current frame
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      
+
       Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-        routeName,
-        (route) => false,
-      ).then((_) {
-        print('DEBUG: Navigation completed successfully');
-      }).catchError((error) {
-        print('DEBUG: Navigation error: $error');
-        // Fallback: try direct navigation if named route fails
-        if (mounted) {
-          _navigateWithFallback(normalizedRole);
-        }
-      });
+        route,
+        (r) => false,
+      );
     });
   }
-  
-  void _navigateWithFallback(String role) {
-    if (!mounted) return;
+
+  Future<void> _registerAgain() async {
+    // Clear device registration data
+    await DeviceStorageService.clearRegisteredUser();
     
-    Widget destination;
-    if (role == 'VHT' || role.toLowerCase() == 'vht') {
-      destination = const VHTDashboardScreen();
-    } else if (role == 'Ambulance Driver' || role.toLowerCase().contains('ambulance')) {
-      destination = const AmbulanceDashboardScreen();
-    } else if (role == 'Clinic Staff' || role.toLowerCase().contains('clinic')) {
-      destination = const ClinicDashboardScreen();
-    } else if (role == 'Admin' || role.toLowerCase() == 'admin' || role.toLowerCase().contains('admin')) {
-      destination = const AdminDashboardScreen();
-    } else {
-      destination = const VHTDashboardScreen();
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const RegisterScreen()),
+      );
     }
-    
-    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => destination),
-      (route) => false,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Always show the login form immediately
+    // Phone input will show if user is not registered on device (guest user)
+    // PIN-only will show if user is registered on device
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: EdgeInsets.only(
+              left: 24.0,
+              right: 24.0,
+              top: 24.0,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App Logo/Title
-                  const Icon(
+                  Icon(
                     Icons.local_hospital,
                     size: 100,
-                    color: Colors.red,
+                    color: AppColors.primary,
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'HealthAlert',
-                    style: TextStyle(
+                  const SizedBox(height: 32),
+                  Text(
+                    (widget.forcePhoneInput || !_isRegisteredOnDevice) ? 'Login' : 'Welcome back!',
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Welcome back!',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey,
+                  if (!widget.forcePhoneInput && _isRegisteredOnDevice && _userName != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _userName!,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 64),
+                  ],
+                  const SizedBox(height: 32),
+                  
+                  // Phone Number Input (only if not registered on device or user data not loaded, or forcePhoneInput is true)
+                  if ((widget.forcePhoneInput || _showPhoneInput) && _userData == null) ...[
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone Number',
+                        prefixIcon: Icon(Icons.phone),
+                        border: OutlineInputBorder(),
+                        hintText: '+256700000001',
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your phone number';
+                        }
+                        if (!value.startsWith('+')) {
+                          return 'Phone number must start with + and country code';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
-                  // Phone Number
+                  // PIN Input
                   TextFormField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      prefixIcon: Icon(Icons.phone),
-                      border: OutlineInputBorder(),
-                      hintText: '+256700000001',
-                      helperText: 'Use test numbers: +256700000001 to +256700000004',
+                    controller: _pinController,
+                    decoration: InputDecoration(
+                      labelText: 'PIN',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePin ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePin = !_obscurePin;
+                          });
+                        },
+                      ),
+                      border: const OutlineInputBorder(),
+                      errorText: _errorMessage,
                     ),
-                    keyboardType: TextInputType.phone,
-                    style: const TextStyle(fontSize: 18),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your phone number';
-                      }
-                      if (!value.startsWith('+')) {
-                        return 'Phone must start with + and country code';
-                      }
-                      return null;
-                    },
+                    keyboardType: TextInputType.number,
+                    obscureText: _obscurePin,
+                    maxLength: 6,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      letterSpacing: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    onFieldSubmitted: (_) => _verifyPin(),
                   ),
                   const SizedBox(height: 32),
 
@@ -329,9 +412,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
+                      onPressed: _isLoading ? null : _verifyPin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -340,7 +423,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
-                              'Send Verification Code',
+                              'Login',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -349,15 +432,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Register Link
+                  // Register New Account Link
                   TextButton(
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/register');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                      );
                     },
                     child: const Text(
-                      'Don\'t have an account? Register',
-                      style: TextStyle(fontSize: 16),
+                      'Register new account',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ],

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'admin_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../../core/utils/logout_utils.dart';
 
 // Admin Dashboard Screen
 // Main dashboard for administrators and NGOs
@@ -80,9 +82,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         showBackButton: false,
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
+        },
+        onDashboard: () {
+          // Already on dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onReports: () {
+          // TODO: Navigate to reports screen
+        },
+        onAnalytics: () {
+          // TODO: Navigate to analytics screen
+        },
+      ),
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          // Already on dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onReports: () {
+          // TODO: Navigate to reports screen
+        },
+        onAnalytics: () {
+          // TODO: Navigate to analytics screen
+        },
+        onLogout: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
         },
       ),
       bottomNavigationBar: AdminNavigationBar(
@@ -97,64 +133,81 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             // On narrow screens, give each card more vertical space to avoid overflow.
             final childAspectRatio = isWide ? 3.0 : 2.1;
 
-            return Padding(
-              padding: EdgeInsets.all(padding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome, Admin',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+            return Column(
+              children: [
+                // Welcome message below navbar
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: padding,
+                    right: padding,
+                    top: 12.0,
+                    bottom: 8.0,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Choose what you want to manage today.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: GridView.count(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: childAspectRatio,
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(padding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        buildDashboardCard(
-                          icon: Icons.assignment_turned_in_outlined,
-                          title: 'Active Cases',
-                          subtitle: 'View and manage all ongoing cases.',
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/admin-case-dashboard',
-                            );
-                          },
+                        Text(
+                          'Choose what you want to manage today.',
+                          style: theme.textTheme.bodyMedium,
                         ),
-                        buildDashboardCard(
-                          icon: Icons.bar_chart_outlined,
-                          title: 'Analytics',
-                          subtitle:
-                              'View ambulance dispatch and VHT report insights.',
-                          onTap: () {
-                            // TODO: Navigate to Admin Analytics screen
-                            // Navigator.pushNamed(context, '/admin-analytics');
-                          },
-                        ),
-                        buildDashboardCard(
-                          icon: Icons.group_outlined,
-                          title: 'Manage Users',
-                          subtitle: 'Add or remove system users.',
-                          onTap: () {
-                            // TODO: Navigate to Manage Users screen
-                          },
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: GridView.count(
+                            crossAxisCount: crossAxisCount,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: childAspectRatio,
+                            children: [
+                              buildDashboardCard(
+                                icon: Icons.assignment_turned_in_outlined,
+                                title: 'Active Cases',
+                                subtitle: 'View and manage all ongoing cases.',
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/admin-case-dashboard',
+                                  );
+                                },
+                              ),
+                              buildDashboardCard(
+                                icon: Icons.bar_chart_outlined,
+                                title: 'Analytics',
+                                subtitle:
+                                    'View ambulance dispatch and VHT report insights.',
+                                onTap: () {
+                                  // TODO: Navigate to Admin Analytics screen
+                                  // Navigator.pushNamed(context, '/admin-analytics');
+                                },
+                              ),
+                              buildDashboardCard(
+                                icon: Icons.group_outlined,
+                                title: 'Manage Users',
+                                subtitle: 'Add or remove system users.',
+                                onTap: () {
+                                  // TODO: Navigate to Manage Users screen
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           },
         ),

@@ -22,6 +22,21 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
   /// If null and [showBackButton] is true, Navigator.pop will be used.
   final VoidCallback? onBack;
 
+  /// Optional callback for navigation to dashboard
+  final VoidCallback? onDashboard;
+
+  /// Optional callback for navigation to settings
+  final VoidCallback? onSettings;
+
+  /// Optional callback for navigation to reports (Admin only)
+  final VoidCallback? onReports;
+
+  /// Optional callback for navigation to analytics (Admin only)
+  final VoidCallback? onAnalytics;
+
+  /// Optional callback for navigation to learning resources (VHT and Clinician only)
+  final VoidCallback? onLearningResources;
+
   const TopNavigationBar({
     super.key,
     required this.role,
@@ -29,6 +44,11 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
     this.profileImageUrl,
     this.showBackButton = false,
     this.onBack,
+    this.onDashboard,
+    this.onSettings,
+    this.onReports,
+    this.onAnalytics,
+    this.onLearningResources,
   });
 
   @override
@@ -38,6 +58,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final Color backgroundColor = _backgroundColorForRole(role);
     final String roleLabel = _roleDisplayName(role);
+    final bool isAdmin = role.toLowerCase() == 'admin';
 
     return AppBar(
       backgroundColor: backgroundColor,
@@ -71,11 +92,15 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.logout),
-          color: Colors.white,
-          tooltip: 'Sign out',
-          onPressed: onSignOut,
+        // Hamburger menu button - opens drawer
+        Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () {
+              Scaffold.of(context).openEndDrawer();
+            },
+            tooltip: 'Menu',
+          ),
         ),
       ],
     );

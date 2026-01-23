@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/ambulance/presentation/screens/ambulance_incoming_dispatch_screen.dart';
@@ -15,7 +17,14 @@ import 'features/admin/presentation/screens/admin_dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    print('Firebase initialized successfully');
+  } catch (e, stackTrace) {
+    print('Error initializing Firebase: $e');
+    print('Stack trace: $stackTrace');
+    // Still run the app, but Firebase operations will fail gracefully
+  }
   runApp(const HealthCommApp());
 }
 
@@ -27,10 +36,10 @@ class HealthCommApp extends StatelessWidget {
     return MaterialApp(
       title: 'Emergency Health System',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.red, useMaterial3: true),
-      initialRoute: '/login',
+      theme: AppTheme.lightTheme,
+      initialRoute: '/',
       routes: {
-        '/': (context) => const LoginScreen(),
+        '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/vht-dashboard': (context) => VHTDashboardScreen(),

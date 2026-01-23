@@ -39,8 +39,24 @@ class CurrentUserSession {
   /// Optional URL to a profile photo (e.g., in Firebase Storage).
   static String? profileImageUrl;
 
+  /// Workplace/Clinic name (for Clinic Staff).
+  static String? workplace;
+
+  /// Specialty (for Clinic Staff).
+  static String? specialty;
+
   /// Convenience getter: true if a user is currently "logged in" in memory.
   static bool get isLoggedIn => uid != null;
+
+  /// Get user's full name
+  static String get fullName {
+    if (firstName != null && lastName != null) {
+      return '$firstName $lastName'.trim();
+    }
+    if (firstName != null) return firstName!;
+    if (lastName != null) return lastName!;
+    return 'User';
+  }
 
   /// Clears the in-memory session (e.g., on sign-out).
   static void clear() {
@@ -53,5 +69,7 @@ class CurrentUserSession {
     lastName = null;
     phoneNumber = null;
     profileImageUrl = null;
+    workplace = null;
+    specialty = null;
   }
 }
