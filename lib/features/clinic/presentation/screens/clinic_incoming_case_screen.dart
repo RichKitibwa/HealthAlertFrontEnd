@@ -3,13 +3,12 @@ import 'clinic_case_summary.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
+import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ClinicIncomingCaseScreen extends StatelessWidget {
   const ClinicIncomingCaseScreen({super.key});
-
-  static const Color _backgroundColor = Color(0xFFF7F9FC);
-  static const Color _primaryBlue = Color(0xFF0077CC);
-  static const Color _cardBorder = Color(0xFFE3E8EF);
 
   // Dummy data for now; later this can be replaced with real backend data.
   final List<Map<String, String>> _dummyCases = const [
@@ -55,12 +54,48 @@ class ClinicIncomingCaseScreen extends StatelessWidget {
         onBack: () {
           Navigator.pop(context);
         },
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+        onDashboard: () {
+          // TODO: Navigate to dashboard screen
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen
         },
       ),
-      backgroundColor: _backgroundColor,
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          // TODO: Navigate to dashboard screen
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen
+        },
+        onLogout: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+      ),
+      backgroundColor: AppColors.background,
       bottomNavigationBar: ClinicNavigationBar(
         currentIndex: 2, // 0 = Home, 1 = Patients, 2 = Incoming Requests
         onItemSelected: (index) {
@@ -74,12 +109,37 @@ class ClinicIncomingCaseScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _ClinicIncomingHeader(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Incoming Cases',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Review emergencies submitted by VHTs.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 16,
+                  vertical: 12,
                 ),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -116,16 +176,23 @@ class ClinicIncomingCaseScreen extends StatelessWidget {
                                   ),
                                 );
                               },
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: _cardBorder),
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.border),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(8),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 12),
+                                    ),
+                                  ],
                                 ),
                                 child: Row(
                                   mainAxisAlignment:
@@ -140,23 +207,23 @@ class ClinicIncomingCaseScreen extends StatelessWidget {
                                         children: [
                                           Text(
                                             'Patient: $patient',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontFamily: 'Inter',
-                                              fontWeight: FontWeight.w600,
+                                              fontWeight: FontWeight.w800,
                                               fontSize: 14,
                                               height: 17 / 14,
-                                              color: _primaryBlue,
+                                              color: AppColors.clinicAccent,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             'Emergency: $emergency',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontWeight: FontWeight.w400,
                                               fontSize: 12,
                                               height: 15 / 12,
-                                              color: Colors.black54,
+                                              color: AppColors.textSecondary,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
@@ -164,12 +231,12 @@ class ClinicIncomingCaseScreen extends StatelessWidget {
                                             'VHT notes: $notes',
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontWeight: FontWeight.w400,
                                               fontSize: 12,
                                               height: 15 / 12,
-                                              color: Colors.black54,
+                                              color: AppColors.textSecondary,
                                             ),
                                           ),
                                         ],
@@ -180,22 +247,28 @@ class ClinicIncomingCaseScreen extends StatelessWidget {
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
-                                        vertical: 6,
+                                        vertical: 7,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: _primaryBlue,
+                                        color: AppColors.clinicAccent.withAlpha(
+                                          18,
+                                        ),
                                         borderRadius: BorderRadius.circular(
                                           999,
+                                        ),
+                                        border: Border.all(
+                                          color: AppColors.clinicAccent
+                                              .withAlpha(30),
                                         ),
                                       ),
                                       child: Text(
                                         'ETA: $eta',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
+                                          fontWeight: FontWeight.w800,
                                           fontSize: 12,
                                           height: 15 / 12,
-                                          color: Colors.white,
+                                          color: AppColors.clinicAccent,
                                         ),
                                       ),
                                     ),
@@ -212,34 +285,6 @@ class ClinicIncomingCaseScreen extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ClinicIncomingHeader extends StatelessWidget {
-  const _ClinicIncomingHeader();
-
-  static const Color _primaryBlue = Color(0xFF0077CC);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(color: Colors.white),
-      child: const Center(
-        child: Text(
-          'Incoming Cases',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-            height: 24 / 20,
-            color: _primaryBlue,
-          ),
         ),
       ),
     );

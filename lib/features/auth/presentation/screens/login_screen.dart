@@ -4,19 +4,12 @@ import '../../current_user_session.dart';
 import '../../../../core/utils/pin_utils.dart';
 import '../../../../core/services/device_storage_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../vht/presentation/screens/vht_dashboard_screen.dart';
-import '../../../ambulance/presentation/screens/ambulance_dashboard_screen.dart';
-import '../../../clinic/presentation/screens/clinic_dashboard_screen.dart';
-import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool forcePhoneInput;
-  
-  const LoginScreen({
-    Key? key,
-    this.forcePhoneInput = false,
-  }) : super(key: key);
+
+  const LoginScreen({Key? key, this.forcePhoneInput = false}) : super(key: key);
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -26,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _pinController = TextEditingController();
   final _phoneController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
+
   bool _isLoading = false;
   bool _obscurePin = true;
   String? _errorMessage;
@@ -62,12 +55,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkDeviceRegistration() async {
     final isRegistered = await DeviceStorageService.isUserRegisteredOnDevice();
     if (!mounted) return;
-    
+
     if (isRegistered) {
       final userData = await DeviceStorageService.getRegisteredUserData();
       final phone = userData['phoneNumber'];
       final name = userData['name'];
-      
+
       if (phone != null) {
         if (!mounted) return;
         setState(() {
@@ -97,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _loadUserData() async {
     if (_phoneNumber == null) return;
     if (!mounted) return;
-    
+
     try {
       final usersQuery = await FirebaseFirestore.instance
           .collection('users')
@@ -105,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
           .get();
 
       if (!mounted) return;
-      
+
       if (usersQuery.docs.isNotEmpty) {
         final userDoc = usersQuery.docs.first;
         final data = userDoc.data();
@@ -118,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (e) {
+      // ignore: avoid_print
       print('Error loading user data: $e');
     }
   }
@@ -141,7 +135,8 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _errorMessage = 'No account found with this phone number. Please register first.';
+            _errorMessage =
+                'No account found with this phone number. Please register first.';
           });
         }
         return;
@@ -151,12 +146,13 @@ class _LoginScreenState extends State<LoginScreen> {
       final data = userDoc.data();
       data['uid'] = userDoc.id;
       data['id'] = userDoc.id;
-      
+
       if (mounted) {
         setState(() {
           _userData = data;
           _phoneNumber = phoneNumber;
-          final fullName = '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
+          final fullName =
+              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
           _userName = fullName.isEmpty ? 'User' : fullName;
           _isLoading = false;
         });
@@ -177,10 +173,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!_formKey.currentState!.validate()) {
         return;
       }
-      
+
       final phoneNumber = _phoneController.text.trim();
       await _loadUserByPhone(phoneNumber);
-      
+
       // If user data is still null after loading, return (error already set)
       if (_userData == null) {
         return;
@@ -229,14 +225,16 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // PIN is correct - populate session and navigate
-      final uid = _userData!['uid'] as String? ?? _userData!['id'] as String? ?? '';
-      
+      final uid =
+          _userData!['uid'] as String? ?? _userData!['id'] as String? ?? '';
+
       CurrentUserSession.uid = uid;
       CurrentUserSession.role = _userData!['role'] ?? 'VHT';
       CurrentUserSession.firstName = _userData!['firstName'] as String?;
       CurrentUserSession.lastName = _userData!['lastName'] as String?;
       CurrentUserSession.phoneNumber = _userData!['phoneNumber'] as String?;
-      CurrentUserSession.profileImageUrl = _userData!['profileImageUrl'] as String?;
+      CurrentUserSession.profileImageUrl =
+          _userData!['profileImageUrl'] as String?;
       CurrentUserSession.workplace = _userData!['workplace'] as String?;
       CurrentUserSession.specialty = _userData!['specialty'] as String?;
 
@@ -252,7 +250,6 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (mounted) {
-        // Navigate to role-specific dashboard
         _navigateToRoleDashboard(CurrentUserSession.role ?? 'VHT');
       }
     } catch (e) {
@@ -285,17 +282,17 @@ class _LoginScreenState extends State<LoginScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
-      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-        route,
-        (r) => false,
-      );
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil(route, (r) => false);
     });
   }
 
   Future<void> _registerAgain() async {
     // Clear device registration data
     await DeviceStorageService.clearRegisteredUser();
-    
+
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -306,9 +303,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Always show the login form immediately
-    // Phone input will show if user is not registered on device (guest user)
-    // PIN-only will show if user is registered on device
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SafeArea(
@@ -326,43 +320,63 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.local_hospital,
-                    size: 100,
+                  Image.asset(
+                    'assets/images/healthcare_logo.png',
+                    height: 100,
+                    fit: BoxFit.contain,
                     color: AppColors.primary,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
                   Text(
-                    (widget.forcePhoneInput || !_isRegisteredOnDevice) ? 'Login' : 'Welcome back!',
+                    (widget.forcePhoneInput || !_isRegisteredOnDevice)
+                        ? 'Login'
+                        : 'Welcome back!',
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  if (!widget.forcePhoneInput && _isRegisteredOnDevice && _userName != null) ...[
+                  if (!widget.forcePhoneInput &&
+                      _isRegisteredOnDevice &&
+                      _userName != null) ...[
                     const SizedBox(height: 8),
                     Text(
                       _userName!,
-                      style: TextStyle(
-                        fontSize: 24,
+                      style: const TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+                        color: AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ],
                   const SizedBox(height: 32),
-                  
-                  // Phone Number Input (only if not registered on device or user data not loaded, or forcePhoneInput is true)
-                  if ((widget.forcePhoneInput || _showPhoneInput) && _userData == null) ...[
+
+                  // Phone Number Input
+                  if ((widget.forcePhoneInput || _showPhoneInput) &&
+                      _userData == null) ...[
                     TextFormField(
                       controller: _phoneController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Phone Number',
-                        prefixIcon: Icon(Icons.phone),
-                        border: OutlineInputBorder(),
                         hintText: '+256700000001',
+                        labelStyle: const TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
+                        prefixIcon: const Icon(Icons.phone),
+                        prefixIconColor: AppColors.textSecondary,
+                        border: const OutlineInputBorder(),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
                       ),
                       keyboardType: TextInputType.phone,
                       validator: (value) {
@@ -383,9 +397,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _pinController,
                     decoration: InputDecoration(
                       labelText: 'PIN',
+                      labelStyle: const TextStyle(
+                        color: AppColors.textSecondary,
+                      ),
                       prefixIcon: const Icon(Icons.lock_outline),
+                      prefixIconColor: AppColors.textSecondary,
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePin ? Icons.visibility : Icons.visibility_off),
+                        icon: Icon(
+                          _obscurePin ? Icons.visibility : Icons.visibility_off,
+                          color: AppColors.textSecondary,
+                        ),
                         onPressed: () {
                           setState(() {
                             _obscurePin = !_obscurePin;
@@ -393,6 +414,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       border: const OutlineInputBorder(),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
                       errorText: _errorMessage,
                     ),
                     keyboardType: TextInputType.number,
@@ -401,50 +431,128 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 24,
-                      letterSpacing: 8,
+                      letterSpacing: 6,
                       fontWeight: FontWeight.bold,
                     ),
                     onFieldSubmitted: (_) => _verifyPin(),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-                  // Login Button
+                  // Login Button (3D solid CTA)
                   SizedBox(
                     height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _verifyPin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: AppColors.primary.withValues(alpha: 0.92),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryDark.withValues(
+                              alpha: 0.22,
+                            ),
+                            blurRadius: 14,
+                            offset: const Offset(0, 8),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _isLoading ? null : _verifyPin,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Subtle top highlight “sheen” for depth
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.white.withValues(
+                                              alpha: 0.22,
+                                            ),
+                                            Colors.white.withValues(
+                                              alpha: 0.00,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                _isLoading
+                                    ? const SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Login',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                          letterSpacing: 0.2,
+                                        ),
+                                      ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'Login',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+
+                  // If user is registered but PIN fails repeatedly, offer re-register
+                  if (!_isCheckingRegistration &&
+                      _isRegisteredOnDevice &&
+                      _errorMessage != null &&
+                      _errorMessage!.contains('Incorrect PIN')) ...[
+                    TextButton(
+                      onPressed: _registerAgain,
+                      child: const Text(
+                        'Forgot PIN? Register again',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
                   // Register New Account Link
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterScreen(),
+                        ),
                       );
                     },
                     child: const Text(
                       'Register new account',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),

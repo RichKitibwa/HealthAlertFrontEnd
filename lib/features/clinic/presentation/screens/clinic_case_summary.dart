@@ -3,17 +3,12 @@ import 'clinic_assign_staff.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
+import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ClinicCaseSummaryScreen extends StatelessWidget {
   const ClinicCaseSummaryScreen({super.key});
-
-  static const Color _backgroundColor = Color(0xFFF7F9FC);
-  static const Color _primaryBlue = Color(0xFF0077CC);
-  static const Color _cardBorder = Color(0xFFE3E8EF);
-  static const Color _previewBackground = Color(0xFFF0F2F5);
-  static const Color _previewText = Color(0xFF98A2B3);
-  static const Color _triageRed = Color(0xFFFF3B30);
-  static const Color _secondaryGrey = Color(0xFF667085);
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +22,48 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
         onBack: () {
           Navigator.pop(context);
         },
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+        onDashboard: () {
+          // TODO: Navigate to dashboard screen
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen
         },
       ),
-      backgroundColor: _backgroundColor,
+      backgroundColor: AppColors.background,
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          // TODO: Navigate to dashboard screen
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen
+        },
+        onLogout: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+      ),
       bottomNavigationBar: ClinicNavigationBar(
         currentIndex: 2, // 0 = Home, 1 = Patients, 2 = Incoming / Cases
         onItemSelected: (index) {
@@ -45,32 +76,36 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Simple centered header; avatar and back button are handled by TopNavigationBar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: const BoxDecoration(color: Colors.white),
-              child: const Center(
-                child: Text(
-                  'Case Summary',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                    height: 24 / 20,
-                    color: _primaryBlue,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Case Summary',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Review media, triage level, and next actions for this emergency.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 12),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 24,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       // Keep content nicely centered on larger screens
@@ -93,9 +128,16 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: _previewBackground,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: _cardBorder),
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.border),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(8),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 12),
+                                    ),
+                                  ],
                                 ),
                                 child: SizedBox(
                                   height: size.height * 0.22,
@@ -105,10 +147,10 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
-                                        height: 19 / 16,
-                                        color: _previewText,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        height: 18 / 14,
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                   ),
@@ -122,8 +164,17 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                   horizontal: 16,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _triageRed,
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: const Color(0xFFFF3B30),
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFFFF3B30,
+                                      ).withAlpha(45),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ],
                                 ),
                                 child: const Center(
                                   child: Text(
@@ -131,7 +182,7 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight: FontWeight.w800,
                                       fontSize: 16,
                                       height: 19 / 16,
                                       color: Colors.white,
@@ -157,22 +208,24 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           );
                                         },
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: _primaryBlue,
+                                          backgroundColor:
+                                              AppColors.clinicAccent,
                                           foregroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
-                                              12,
+                                              14,
                                             ),
                                           ),
+                                          elevation: 6,
                                         ),
                                         child: const Text(
                                           'See Staff',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                            fontSize: 18,
-                                            height: 22 / 18,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 16,
+                                            height: 20 / 16,
                                           ),
                                         ),
                                       ),
@@ -187,22 +240,27 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           // TODO: hook up Request Info flow
                                         },
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: _secondaryGrey,
-                                          foregroundColor: Colors.white,
+                                          backgroundColor: AppColors.surface,
+                                          foregroundColor:
+                                              AppColors.clinicAccent,
+                                          side: BorderSide(
+                                            color: AppColors.border,
+                                          ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
-                                              12,
+                                              14,
                                             ),
                                           ),
+                                          elevation: 0,
                                         ),
                                         child: const Text(
                                           'Request Additional Info',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                            fontSize: 18,
-                                            height: 22 / 18,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 16,
+                                            height: 20 / 16,
                                           ),
                                         ),
                                       ),
@@ -218,8 +276,8 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                       height: 48,
                                       child: OutlinedButton(
                                         style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(
-                                            color: _primaryBlue,
+                                          side: BorderSide(
+                                            color: AppColors.border,
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
@@ -244,10 +302,10 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 16,
-                                            height: 20 / 16,
-                                            color: _primaryBlue,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 14,
+                                            height: 18 / 14,
+                                            color: AppColors.clinicAccent,
                                           ),
                                         ),
                                       ),
@@ -259,8 +317,8 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                       height: 48,
                                       child: OutlinedButton(
                                         style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(
-                                            color: _primaryBlue,
+                                          side: BorderSide(
+                                            color: AppColors.border,
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
@@ -285,10 +343,10 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 16,
-                                            height: 20 / 16,
-                                            color: _primaryBlue,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 14,
+                                            height: 18 / 14,
+                                            color: AppColors.clinicAccent,
                                           ),
                                         ),
                                       ),
@@ -307,65 +365,6 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ClinicCaseSummaryHeader extends StatelessWidget {
-  const _ClinicCaseSummaryHeader();
-
-  static const Color _primaryBlue = Color(0xFF0077CC);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(color: Colors.white),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, size: 22, color: _primaryBlue),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: _primaryBlue,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'C',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w400,
-                fontSize: 14,
-                height: 17 / 14,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Case Summary',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-                height: 24 / 20,
-                color: _primaryBlue,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8), // small spacer on the right
-        ],
       ),
     );
   }

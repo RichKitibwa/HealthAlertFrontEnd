@@ -4,6 +4,7 @@ import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 // Clinic Staff Dashboard Screen
 // Main dashboard for clinic staff
@@ -16,8 +17,6 @@ class ClinicDashboardScreen extends StatefulWidget {
 }
 
 class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
-  static const Color _primaryBlue = Color(0xFF0077CC);
-
   int _currentIndex = 0; // 0 = Home, 1 = Patients, 2 = Incoming
 
   void _onNavItemSelected(int index) {
@@ -38,6 +37,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     final bool isWide = size.width >= 600;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
@@ -45,7 +45,11 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
           }
         },
         onDashboard: () {
@@ -71,7 +75,11 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
         onLogout: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
           }
         },
       ),
@@ -84,7 +92,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
           builder: (context, constraints) {
             final double horizontalPadding = constraints.maxWidth < 400
                 ? 16.0
-                : 24.0;
+                : 20.0;
 
             return Padding(
               padding: EdgeInsets.symmetric(
@@ -94,56 +102,96 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: isWide ? 520 : double.infinity,
+                    maxWidth: isWide ? 560 : double.infinity,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Clinic name card
-                      if (CurrentUserSession.workplace != null && CurrentUserSession.workplace!.isNotEmpty)
+                      if (CurrentUserSession.workplace != null &&
+                          CurrentUserSession.workplace!.isNotEmpty)
                         Container(
                           width: double.infinity,
                           margin: const EdgeInsets.only(bottom: 16.0),
-                          padding: const EdgeInsets.all(12.0),
+                          padding: const EdgeInsets.all(14.0),
                           decoration: BoxDecoration(
-                            color: _primaryBlue.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: _primaryBlue.withOpacity(0.3),
-                            ),
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(8),
+                                blurRadius: 18,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              const Text(
-                                'Clinic',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
+                              Container(
+                                height: 40,
+                                width: 40,
+                                decoration: BoxDecoration(
+                                  color: AppColors.clinicAccent.withAlpha(18),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.clinicAccent.withAlpha(30),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.local_hospital_outlined,
+                                  color: AppColors.clinicAccent,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                CurrentUserSession.workplace!,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Clinic',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.6,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      CurrentUserSession.workplace!,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
                       Text(
-                        'Welcome, ${CurrentUserSession.fullName}',
+                        'Welcome, ${CurrentUserSession.firstName ?? CurrentUserSession.fullName ?? 'User'}',
                         style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Monitor active emergency cases and incoming patients.',
-                        style: theme.textTheme.bodyMedium,
+                        'Monitor incoming emergencies and manage active cases for your clinic.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 24),
                       // Primary action button
@@ -162,11 +210,13 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _primaryBlue,
+                            backgroundColor: AppColors.clinicAccent,
                             foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(14),
                             ),
+                            elevation: 6,
                           ),
                           onPressed: () {
                             // Navigate to clinic active cases / incoming cases screen
@@ -193,14 +243,14 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: _primaryBlue,
-                            side: BorderSide(
-                              color: _primaryBlue.withOpacity(0.5),
-                            ),
+                            backgroundColor: AppColors.surface,
+                            foregroundColor: AppColors.clinicAccent,
+                            side: BorderSide(color: AppColors.border),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(14),
                             ),
+                            elevation: 0,
                           ),
                           onPressed: () {
                             // Navigate to clinic current patients screen (same list for now)
@@ -213,11 +263,11 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'You will see a list of incoming emergencies and active cases for your clinic.',
+                        'You will see a list of incoming emergencies and active cases linked to your clinic.',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color?.withOpacity(
-                            0.8,
-                          ),
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],

@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
+import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ClinicPatientArrivalScreen extends StatelessWidget {
   const ClinicPatientArrivalScreen({super.key});
-
-  static const Color _backgroundColor = Color(0xFFF7F9FC);
-  static const Color _primaryBlue = Color(0xFF0077CC);
-  static const Color _cardBorder = Color(0xFFE3E8EF);
-  static const Color _actionOrange = Color(0xFFFF6A3D);
 
   @override
   Widget build(BuildContext context) {
@@ -23,12 +21,48 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
         onBack: () {
           Navigator.pop(context);
         },
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+        onDashboard: () {
+          // TODO: Navigate to dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources
         },
       ),
-      backgroundColor: _backgroundColor,
+      backgroundColor: AppColors.background,
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          // TODO: Navigate to dashboard
+        },
+        onSettings: () {
+          // TODO: Navigate to settings
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources
+        },
+        onLogout: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+      ),
       bottomNavigationBar: ClinicNavigationBar(
         currentIndex: 2, // 0 = Home, 1 = Patients, 2 = Incoming / Cases
         onItemSelected: (index) {
@@ -41,211 +75,172 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Simple centered header; avatar and back handled by TopNavigationBar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: const BoxDecoration(color: Colors.white),
-              child: const Center(
-                child: Text(
-                  'Patient Arrival',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                    height: 24 / 20,
-                    color: _primaryBlue,
-                  ),
-                ),
-              ),
-            ),
             Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 24,
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Keep card nicely centered on larger screens
-                      final maxWidth = constraints.maxWidth > 420
-                          ? 420.0
-                          : constraints.maxWidth;
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 560),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Patient Arrival',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Confirm staff assignment and close the case once the patient is received.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                        ),
+                        const SizedBox(height: 20),
 
-                      return Align(
-                        alignment: Alignment.topCenter,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: maxWidth,
-                            minWidth: maxWidth * 0.85,
+                        // Info card
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(8),
+                                blurRadius: 18,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
                           ),
                           child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Info card
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 24,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: _cardBorder),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: const [
-                                    Text(
-                                      'Patient: Adult Female',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
-                                        height: 19 / 16,
-                                        color: _primaryBlue,
-                                      ),
-                                    ),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      'Emergency: 🚑 Trauma',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
-                                        height: 19 / 16,
-                                        color: _primaryBlue,
-                                      ),
-                                    ),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      'Staff Assigned: Nurse + Clinician',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
-                                        height: 19 / 16,
-                                        color: _primaryBlue,
-                                      ),
-                                    ),
-                                  ],
+                              Text(
+                                'Patient',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                  letterSpacing: 0.6,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
-                              SizedBox(height: size.height * 0.06),
-                              // Patient Received / Close Case button
-                              SizedBox(
-                                width: double.infinity,
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 360,
-                                  ),
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      // TODO: hook up close case / navigation
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _actionOrange,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Patient Received / Close Case',
-                                      textAlign: TextAlign.center,
-                                      softWrap: true,
-                                      maxLines: 2,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize:
-                                            18, // slightly smaller so it fits
-                                        height: 22 / 18,
-                                      ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Adult Female',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                'Emergency',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                  letterSpacing: 0.6,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Text(
+                                    '🚑',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Trauma',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                      color: AppColors.clinicAccent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                'Staff assigned',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                  letterSpacing: 0.6,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Nurse + Clinician',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      );
-                    },
+
+                        const SizedBox(height: 24),
+
+                        // Primary button
+                        SizedBox(
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // TODO: hook up close case / navigation
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.clinicAccent,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 6,
+                            ),
+                            child: const Text(
+                              'Patient Received / Close Case',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                height: 20 / 16,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ClinicPatientArrivalHeader extends StatelessWidget {
-  const _ClinicPatientArrivalHeader();
-
-  static const Color _primaryBlue = Color(0xFF0077CC);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(color: Colors.white),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, size: 22, color: _primaryBlue),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          // C square
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: _primaryBlue,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'C',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w400,
-                fontSize: 14,
-                height: 17 / 14,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Patient Arrival',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-                height: 24 / 20,
-                color: _primaryBlue,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8), // small spacer on the right
-        ],
       ),
     );
   }

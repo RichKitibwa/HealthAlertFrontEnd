@@ -3,6 +3,9 @@ import 'ambulance_incoming_dispatch_screen.dart';
 import 'ambulance_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
+import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Screen that shows all incoming emergency requests for the ambulance driver.
 /// For now this uses dummy data; later it can be wired to backend / Firestore.
@@ -84,12 +87,39 @@ class _AmbulanceAllIncomingRequestsScreenState
         onBack: () {
           Navigator.pop(context);
         },
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
         },
       ),
-      backgroundColor: const Color(0xFFFBFCFD),
+      backgroundColor: AppColors.background,
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          Navigator.pop(context);
+          Navigator.pushNamed(context, '/ambulance-dashboard');
+        },
+        onSettings: () {
+          Navigator.pop(context);
+          // TODO: Navigate to settings screen
+        },
+        onLogout: () async {
+          Navigator.pop(context);
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+      ),
       bottomNavigationBar: AmbulanceNavigationBar(
         currentIndex: _currentIndex,
         onItemSelected: _onNavItemSelected,
@@ -111,7 +141,7 @@ class _AmbulanceAllIncomingRequestsScreenState
                       fontWeight: FontWeight.w700,
                       fontSize: 20,
                       height: 24 / 20,
-                      color: Color(0xFF0077CC),
+                      color: AppColors.ambulanceAccent,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -161,8 +191,9 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryBlue = Color(0xFF0077CC);
-    const Color cardBorder = Color(0xFFE3E8EF);
+    final Color primaryGreen = AppColors.ambulanceAccent;
+    final Color chipBg = AppColors.ambulanceAccent.withAlpha(20);
+    final Color cardBorder = AppColors.border;
 
     return InkWell(
       onTap: onTap,
@@ -185,12 +216,12 @@ class _RequestCard extends StatelessWidget {
                   // Emergency type as the main title
                   Text(
                     'Emergency: $emergencyType',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                       height: 17 / 14,
-                      color: primaryBlue,
+                      color: primaryGreen,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -223,17 +254,17 @@ class _RequestCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: primaryBlue,
+                color: chipBg,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 'ETA: $eta',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w400,
                   fontSize: 12,
                   height: 15 / 12,
-                  color: Colors.white,
+                  color: primaryGreen,
                 ),
               ),
             ),

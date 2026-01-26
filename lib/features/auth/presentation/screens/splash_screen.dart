@@ -14,7 +14,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -25,9 +26,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
     _navigateToNext();
   }
 
@@ -82,8 +84,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     }
 
     // Check if user is registered on this device
-    final isRegisteredOnDevice = await DeviceStorageService.isUserRegisteredOnDevice();
-    
+    final isRegisteredOnDevice =
+        await DeviceStorageService.isUserRegisteredOnDevice();
+
     if (mounted) {
       if (isRegisteredOnDevice) {
         // Returning user - go to login screen (welcome + PIN)
@@ -136,13 +139,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Logo
-              const Icon(
-                Icons.local_hospital,
-                size: 120,
-                color: AppColors.primary,
+              Image.asset(
+                'assets/images/healthcare_logo.png',
+                height: 120,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
-              
+
               // App Name
               const Text(
                 'HealthAlert',
@@ -153,7 +156,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Tagline
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 40.0),
@@ -168,7 +171,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 48),
-              
+
               // Loading indicator
               const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),

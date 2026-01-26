@@ -4,6 +4,7 @@ import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 // Admin Dashboard Screen
 // Main dashboard for administrators and NGOs
@@ -22,18 +23,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     setState(() {
       _currentIndex = index;
     });
-
-    // TODO: wire up navigation when admin tab screens are ready
-    // if (index == 0) Navigator.pushNamed(context, '/admin-dashboard');
-    // if (index == 1) Navigator.pushNamed(context, '/admin-analytics');
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    final isWide = size.width >= 600;
-    const primaryBlue = Color(0xFF0077CC);
 
     Widget buildDashboardCard({
       required IconData icon,
@@ -41,43 +35,73 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       required String subtitle,
       required VoidCallback onTap,
     }) {
-      return Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, size: 32, color: primaryBlue),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+      return InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(8),
+                blurRadius: 18,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.adminAccent.withAlpha(18),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.adminAccent.withAlpha(30),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.textTheme.bodySmall?.color,
-                  ),
+                child: Icon(icon, color: AppColors.adminAccent),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            ],
           ),
         ),
       );
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
@@ -85,39 +109,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
           }
         },
-        onDashboard: () {
-          // Already on dashboard
-        },
-        onSettings: () {
-          // TODO: Navigate to settings screen
-        },
-        onReports: () {
-          // TODO: Navigate to reports screen
-        },
-        onAnalytics: () {
-          // TODO: Navigate to analytics screen
-        },
+        onDashboard: () {},
+        onSettings: () {},
+        onReports: () {},
+        onAnalytics: () {},
       ),
       endDrawer: AppDrawer(
-        onDashboard: () {
-          // Already on dashboard
-        },
-        onSettings: () {
-          // TODO: Navigate to settings screen
-        },
-        onReports: () {
-          // TODO: Navigate to reports screen
-        },
-        onAnalytics: () {
-          // TODO: Navigate to analytics screen
-        },
+        onDashboard: () {},
+        onSettings: () {},
+        onReports: () {},
+        onAnalytics: () {},
         onLogout: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
           }
         },
       ),
@@ -126,90 +134,67 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onItemSelected: _onItemSelected,
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final padding = constraints.maxWidth < 400 ? 16.0 : 24.0;
-            final crossAxisCount = isWide ? 2 : 1;
-            // On narrow screens, give each card more vertical space to avoid overflow.
-            final childAspectRatio = isWide ? 3.0 : 2.1;
-
-            return Column(
-              children: [
-                // Welcome message below navbar
-                Padding(
-                  padding: EdgeInsets.only(
-                    left: padding,
-                    right: padding,
-                    top: 12.0,
-                    bottom: 8.0,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(padding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 8),
+                  Text(
+                    'Choose what you want to manage today.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Inter',
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView(
                       children: [
-                        Text(
-                          'Choose what you want to manage today.',
-                          style: theme.textTheme.bodyMedium,
+                        buildDashboardCard(
+                          icon: Icons.assignment_turned_in_outlined,
+                          title: 'Active Cases',
+                          subtitle: 'View and manage all ongoing cases.',
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/admin-case-dashboard',
+                            );
+                          },
                         ),
                         const SizedBox(height: 16),
-                        Expanded(
-                          child: GridView.count(
-                            crossAxisCount: crossAxisCount,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
-                            childAspectRatio: childAspectRatio,
-                            children: [
-                              buildDashboardCard(
-                                icon: Icons.assignment_turned_in_outlined,
-                                title: 'Active Cases',
-                                subtitle: 'View and manage all ongoing cases.',
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/admin-case-dashboard',
-                                  );
-                                },
-                              ),
-                              buildDashboardCard(
-                                icon: Icons.bar_chart_outlined,
-                                title: 'Analytics',
-                                subtitle:
-                                    'View ambulance dispatch and VHT report insights.',
-                                onTap: () {
-                                  // TODO: Navigate to Admin Analytics screen
-                                  // Navigator.pushNamed(context, '/admin-analytics');
-                                },
-                              ),
-                              buildDashboardCard(
-                                icon: Icons.group_outlined,
-                                title: 'Manage Users',
-                                subtitle: 'Add or remove system users.',
-                                onTap: () {
-                                  // TODO: Navigate to Manage Users screen
-                                },
-                              ),
-                            ],
-                          ),
+                        buildDashboardCard(
+                          icon: Icons.bar_chart_outlined,
+                          title: 'Analytics',
+                          subtitle:
+                              'View ambulance dispatch and VHT report insights.',
+                          onTap: () {},
+                        ),
+                        const SizedBox(height: 16),
+                        buildDashboardCard(
+                          icon: Icons.group_outlined,
+                          title: 'Manage Users',
+                          subtitle: 'Add or remove system users.',
+                          onTap: () {},
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

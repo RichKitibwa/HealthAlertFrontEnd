@@ -4,6 +4,7 @@ import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 // VHT Dashboard Screen
 // Main dashboard for Village Health Team members with emergency reporting
 
@@ -32,14 +33,18 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFCFD),
+      backgroundColor: AppColors.background,
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
           }
         },
         onDashboard: () {
@@ -65,7 +70,11 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
         onLogout: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
           }
         },
       ),
@@ -84,12 +93,11 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF344054),
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                     ),
                   ),
                 ),
@@ -108,33 +116,56 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFFE3E8EF),
-                              ),
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha(10),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
                             ),
-                            child: const Column(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  '📡 Network: Online',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: Color(0xFF475467),
-                                  ),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.wifi,
+                                      size: 18,
+                                      color: AppColors.vhtAccent,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Network: Online',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: 8),
-                                Text(
-                                  '🔋 Battery: Good',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: Color(0xFF475467),
-                                  ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.battery_full,
+                                      size: 18,
+                                      color: Colors.green,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Battery: Good',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -144,31 +175,43 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                           // Report Emergency primary action
                           SizedBox(
                             width: double.infinity,
-                            child: ElevatedButton(
+                            child: OutlinedButton(
                               onPressed: () {
                                 Navigator.pushNamed(
                                   context,
                                   '/create-emergency',
                                 );
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0077CC),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.vhtAccent,
+                                side: BorderSide(
+                                  color: AppColors.vhtAccent,
+                                  width: 2,
+                                ),
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
+                                  vertical: 16,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                                elevation: 0,
                               ),
-                              child: const Text(
-                                '🚨 Report Emergency',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white,
-                                ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: AppColors.vhtAccent,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    'Report Emergency',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -178,95 +221,102 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                           const Text(
                             'Quick Actions',
                             style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontStyle: FontStyle.italic,
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
-                              color: Color(0xFF344054),
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 12),
 
                           // 📄 View Case History
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFFE3E8EF),
+                          Card(
+                            elevation: 0,
+                            color: AppColors.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: BorderSide(
+                                color: AppColors.border.withValues(alpha: 0.8),
                               ),
                             ),
-                            child: const Center(
-                              child: Text(
-                                '📄 View Case History',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF344054),
-                                ),
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.description_outlined,
+                                color: AppColors.clinicAccent,
                               ),
+                              title: Text(
+                                'View Case History',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                // TODO: Navigate to case history
+                              },
                             ),
                           ),
                           const SizedBox(height: 12),
 
                           // 📝 Send Follow-up Update
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFFE3E8EF),
+                          Card(
+                            elevation: 0,
+                            color: AppColors.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: BorderSide(
+                                color: AppColors.border.withValues(alpha: 0.8),
                               ),
                             ),
-                            child: const Center(
-                              child: Text(
-                                '📝 Send Follow-up Update',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF344054),
-                                ),
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.edit_note_outlined,
+                                color: AppColors.vhtAccent,
                               ),
+                              title: Text(
+                                'Send Follow-up Update',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                // TODO: Navigate to follow-up update
+                              },
                             ),
                           ),
                           const SizedBox(height: 12),
 
                           // ⚙️ Settings
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFFE3E8EF),
+                          Card(
+                            elevation: 0,
+                            color: AppColors.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: BorderSide(
+                                color: AppColors.border.withValues(alpha: 0.8),
                               ),
                             ),
-                            child: const Center(
-                              child: Text(
-                                '⚙️ Settings',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF344054),
-                                ),
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.settings_outlined,
+                                color: AppColors.adminAccent,
                               ),
+                              title: Text(
+                                'Settings',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                // TODO: Navigate to settings
+                              },
                             ),
                           ),
                           const SizedBox(height: 24),

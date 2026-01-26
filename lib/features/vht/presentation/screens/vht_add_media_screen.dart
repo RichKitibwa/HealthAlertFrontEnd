@@ -14,6 +14,9 @@ import '../../../../core/utils/file_utils.dart';
 import '../../../../core/utils/location_utils.dart';
 import '../../../../core/services/clinic_matching_service.dart';
 import '../../../../core/services/fcm_notification_service.dart';
+import '../../../common/presentation/widgets/app_drawer.dart';
+import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class AddMediaScreen extends StatefulWidget {
   final String emergencyType;
@@ -34,7 +37,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
   final TextEditingController _notesController = TextEditingController();
   String? _imageSizeInfo;
   String? _videoSizeInfo;
-  
+
   // Patient details
   String _patientId = '';
   String? _selectedGender;
@@ -56,18 +59,24 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
   Future<void> _generatePatientId() async {
     try {
       final now = DateTime.now();
-      final year = now.year.toString().substring(2); // Get last 2 digits (26 for 2026)
-      
+      final year = now.year.toString().substring(
+        2,
+      ); // Get last 2 digits (26 for 2026)
+
       // Get or create the patient counter document
-      final counterRef = _firestore.collection('counters').doc('patientCounter');
-      
+      final counterRef = _firestore
+          .collection('counters')
+          .doc('patientCounter');
+
       // Use transaction to atomically increment the counter
-      final patientNumber = await _firestore.runTransaction<int>((transaction) async {
+      final patientNumber = await _firestore.runTransaction<int>((
+        transaction,
+      ) async {
         final snapshot = await transaction.get(counterRef);
-        
+
         int currentCount;
         final currentYear = now.year;
-        
+
         if (!snapshot.exists || snapshot.data() == null) {
           // First patient ever, start at 1
           currentCount = 1;
@@ -79,7 +88,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         } else {
           final data = snapshot.data()!;
           final storedYear = data['year'] as int? ?? currentYear;
-          
+
           if (storedYear != currentYear) {
             // New year, reset counter to 1
             currentCount = 1;
@@ -97,15 +106,15 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
             });
           }
         }
-        
+
         return currentCount;
       });
-      
+
       // Format: P + 3-digit number + 2-digit year (e.g., P00126, P00226)
       // Ensure number doesn't exceed 999 (3 digits max)
       final safeNumber = patientNumber > 999 ? 999 : patientNumber;
       final formattedId = 'P${safeNumber.toString().padLeft(3, '0')}$year';
-      
+
       if (mounted) {
         setState(() {
           _patientId = formattedId;
@@ -118,7 +127,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         final now = DateTime.now();
         final year = now.year.toString().substring(2);
         // Simple fallback: use a random 3-digit number (001-999)
-        final fallbackNumber = (DateTime.now().millisecondsSinceEpoch % 999) + 1;
+        final fallbackNumber =
+            (DateTime.now().millisecondsSinceEpoch % 999) + 1;
         setState(() {
           _patientId = 'P${fallbackNumber.toString().padLeft(3, '0')}$year';
         });
@@ -135,10 +145,10 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0077CC),
+            colorScheme: ColorScheme.light(
+              primary: AppColors.vhtAccent,
               onPrimary: Colors.white,
-              onSurface: Color(0xFF1A1A1A),
+              onSurface: AppColors.textPrimary,
             ),
             datePickerTheme: DatePickerThemeData(
               shape: RoundedRectangleBorder(
@@ -171,7 +181,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Unable to get your location. Please enable location services.'),
+              content: Text(
+                'Unable to get your location. Please enable location services.',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -183,18 +195,21 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       }
 
       // Find nearest matching clinic
-      final clinicMatch = await _clinicMatchingService.findNearestMatchingClinic(
-        vhtLatitude: position.latitude,
-        vhtLongitude: position.longitude,
-        emergencyType: widget.emergencyType,
-        patientAge: _age,
-      );
+      final clinicMatch = await _clinicMatchingService
+          .findNearestMatchingClinic(
+            vhtLatitude: position.latitude,
+            vhtLongitude: position.longitude,
+            emergencyType: widget.emergencyType,
+            patientAge: _age,
+          );
 
       if (clinicMatch == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('No available clinic found. Please try again later.'),
+              content: Text(
+                'No available clinic found. Please try again later.',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
@@ -217,7 +232,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         'urgencyLevel': _selectedUrgency ?? 'medium',
         'notes': _notesController.text,
         'vhtId': CurrentUserSession.uid,
-        'vhtName': '${CurrentUserSession.firstName} ${CurrentUserSession.lastName}',
+        'vhtName':
+            '${CurrentUserSession.firstName} ${CurrentUserSession.lastName}',
         'assignedClinicId': clinicMatch['clinicianId'],
         'assignedClinicName': clinicMatch['clinicName'],
         'assignedClinicianName': clinicMatch['clinicianName'],
@@ -236,7 +252,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         emergencyType: widget.emergencyType,
         patientId: _patientId,
         caseId: caseRef.id,
-        vhtName: '${CurrentUserSession.firstName} ${CurrentUserSession.lastName}',
+        vhtName:
+            '${CurrentUserSession.firstName} ${CurrentUserSession.lastName}',
         urgencyLevel: _selectedUrgency,
       );
 
@@ -251,7 +268,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Case created but notification failed. Clinic will be notified via other means.'),
+              content: Text(
+                'Case created but notification failed. Clinic will be notified via other means.',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
@@ -320,7 +339,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       setState(() {
         _videoSizeInfo = 'Video: ${fileSizeMB.toStringAsFixed(2)}MB';
       });
-      
+
       // Generate thumbnail
       _generateVideoThumbnail(video);
     }
@@ -329,7 +348,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
   Future<void> _generateVideoThumbnail(File videoFile) async {
     try {
       if (!videoFile.existsSync()) return;
-      
+
       final thumbnailPath = await VideoThumbnail.thumbnailFile(
         video: videoFile.path,
         thumbnailPath: videoFile.parent.path,
@@ -367,13 +386,56 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         onBack: () {
           Navigator.pop(context);
         },
-        onSignOut: () {
-          CurrentUserSession.clear();
-          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+        onDashboard: () {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/vht-dashboard',
+            (route) => false,
+          );
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen (offline-first)
         },
       ),
-      // Figma background: #FBFCFD
-      backgroundColor: const Color(0xFFFBFCFD),
+      endDrawer: AppDrawer(
+        onDashboard: () {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/vht-dashboard',
+            (route) => false,
+          );
+        },
+        onSettings: () {
+          // TODO: Navigate to settings screen
+        },
+        onLearningResources: () {
+          // TODO: Navigate to learning resources screen
+        },
+        onLogout: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+        },
+      ),
+      backgroundColor: AppColors.background,
       bottomNavigationBar: VhtNavigationBar(
         currentIndex:
             0, // this screen is part of the VHT Home/report emergency flow
@@ -397,9 +459,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                   // Patient Details Section (First)
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFE3E8EF)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -411,11 +473,10 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                         const Text(
                           'Patient Details',
                           style: TextStyle(
-                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                             height: 19 / 16,
-                            color: Color(0xFF0077CC),
+                            color: AppColors.vhtAccent,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -423,15 +484,15 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7F9FC),
+                            color: AppColors.surfaceVariant,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE3E8EF)),
+                            border: Border.all(color: AppColors.border),
                           ),
                           child: Row(
                             children: [
                               const Icon(
                                 Icons.badge_outlined,
-                                color: Color(0xFF0077CC),
+                                color: AppColors.vhtAccent,
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -442,19 +503,17 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                     const Text(
                                       'Patient ID',
                                       style: TextStyle(
-                                        fontFamily: 'Inter',
                                         fontSize: 12,
-                                        color: Color(0xFF667085),
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       _patientId,
                                       style: const TextStyle(
-                                        fontFamily: 'Inter',
                                         fontWeight: FontWeight.w600,
                                         fontSize: 14,
-                                        color: Color(0xFF1A1A1A),
+                                        color: AppColors.textPrimary,
                                       ),
                                     ),
                                   ],
@@ -470,42 +529,41 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                             labelText: 'Gender',
                             prefixIcon: const Icon(Icons.person_outline),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: AppColors.surface,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 16,
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE3E8EF),
+                              borderSide: BorderSide(
+                                color: AppColors.border,
                                 width: 1,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF0077CC),
+                              borderSide: BorderSide(
+                                color: AppColors.vhtAccent,
                                 width: 2,
                               ),
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE3E8EF),
+                              borderSide: BorderSide(
+                                color: AppColors.border,
                                 width: 1,
                               ),
                             ),
                           ),
                           style: const TextStyle(
-                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w400,
                             fontSize: 14,
-                            color: Color(0xFF1A1A1A),
+                            color: AppColors.textPrimary,
                           ),
                           icon: const Icon(
                             Icons.keyboard_arrow_down_rounded,
-                            color: Color(0xFF667085),
+                            color: AppColors.textSecondary,
                           ),
                           iconSize: 24,
                           borderRadius: BorderRadius.circular(12),
@@ -541,7 +599,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                             Expanded(
                               child: TextButton.icon(
                                 icon: Icon(
-                                  _useAgeInstead ? Icons.radio_button_unchecked : Icons.radio_button_checked,
+                                  _useAgeInstead
+                                      ? Icons.radio_button_unchecked
+                                      : Icons.radio_button_checked,
                                   size: 18,
                                 ),
                                 label: const Text('Date of Birth'),
@@ -552,14 +612,18 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                   });
                                 },
                                 style: TextButton.styleFrom(
-                                  foregroundColor: _useAgeInstead ? const Color(0xFF667085) : const Color(0xFF0077CC),
+                                  foregroundColor: _useAgeInstead
+                                      ? AppColors.textSecondary
+                                      : AppColors.vhtAccent,
                                 ),
                               ),
                             ),
                             Expanded(
                               child: TextButton.icon(
                                 icon: Icon(
-                                  _useAgeInstead ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                                  _useAgeInstead
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_unchecked,
                                   size: 18,
                                 ),
                                 label: const Text('Age'),
@@ -570,7 +634,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                   });
                                 },
                                 style: TextButton.styleFrom(
-                                  foregroundColor: _useAgeInstead ? const Color(0xFF0077CC) : const Color(0xFF667085),
+                                  foregroundColor: _useAgeInstead
+                                      ? AppColors.vhtAccent
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                             ),
@@ -582,34 +648,40 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                           GestureDetector(
                             onTap: () => _selectDateOfBirth(context),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFE3E8EF)),
+                                border: Border.all(color: AppColors.border),
                               ),
                               child: Row(
                                 children: [
                                   const Icon(
                                     Icons.calendar_today_outlined,
-                                    color: Color(0xFF667085),
+                                    color: AppColors.textSecondary,
                                     size: 20,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           _dateOfBirth != null
                                               ? 'Date of Birth: ${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}'
                                               : 'Select Date of Birth',
                                           style: TextStyle(
-                                            fontFamily: 'Inter',
                                             fontSize: 14,
                                             color: _dateOfBirth != null
-                                                ? const Color(0xFF1A1A1A)
-                                                : const Color(0xFF98A2B3),
+                                                ? AppColors.textPrimary
+                                                : AppColors.textSecondary
+                                                      .withAlpha(
+                                                        (0.65 * 255).toInt(),
+                                                      ),
                                           ),
                                         ),
                                       ],
@@ -617,7 +689,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                   ),
                                   const Icon(
                                     Icons.keyboard_arrow_down_rounded,
-                                    color: Color(0xFF667085),
+                                    color: AppColors.textSecondary,
                                   ),
                                 ],
                               ),
@@ -631,42 +703,43 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                               prefixIcon: const Icon(Icons.cake_outlined),
                               hintText: 'Enter age in years',
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: AppColors.surface,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 16,
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE3E8EF),
+                                borderSide: BorderSide(
+                                  color: AppColors.border,
                                   width: 1,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF0077CC),
+                                borderSide: BorderSide(
+                                  color: AppColors.vhtAccent,
                                   width: 2,
                                 ),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE3E8EF),
+                                borderSide: BorderSide(
+                                  color: AppColors.border,
                                   width: 1,
                                 ),
                               ),
                             ),
                             style: const TextStyle(
-                              fontFamily: 'Inter',
                               fontWeight: FontWeight.w400,
                               fontSize: 14,
-                              color: Color(0xFF1A1A1A),
+                              color: AppColors.textPrimary,
                             ),
                             onChanged: (value) {
                               setState(() {
-                                _age = value.isNotEmpty ? int.tryParse(value) : null;
+                                _age = value.isNotEmpty
+                                    ? int.tryParse(value)
+                                    : null;
                               });
                             },
                           ),
@@ -681,11 +754,10 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                       const Text(
                         'Notes',
                         style: TextStyle(
-                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           height: 19 / 16,
-                          color: Color(0xFF0077CC),
+                          color: AppColors.vhtAccent,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -694,23 +766,22 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                         maxLines: 4,
                         decoration: InputDecoration(
                           hintText: 'Type any important notes…',
-                          hintStyle: const TextStyle(
-                            fontFamily: 'Inter',
+                          hintStyle: TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 14,
                             height: 18 / 14,
-                            color: Color(0xFF98A2B3),
+                            color: AppColors.textSecondary.withAlpha(
+                              (0.65 * 255).toInt(),
+                            ),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE3E8EF),
-                            ),
+                            borderSide: BorderSide(color: AppColors.border),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF0077CC),
+                            borderSide: BorderSide(
+                              color: AppColors.vhtAccent,
                               width: 1.5,
                             ),
                           ),
@@ -721,11 +792,10 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                       const Text(
                         'These details will help clinic and ambulance staff prepare.',
                         style: TextStyle(
-                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w400,
                           fontSize: 12,
                           height: 16 / 12,
-                          color: Color(0xFF667085),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -738,11 +808,10 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                       const Text(
                         'Photo / Video (optional)',
                         style: TextStyle(
-                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           height: 19 / 16,
-                          color: Color(0xFF0077CC),
+                          color: AppColors.vhtAccent,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -756,31 +825,48 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: const Color(0xFFE3E8EF),
-                                    ),
+                                    border: Border.all(color: AppColors.border),
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: GestureDetector(
                                       onTap: () {
-                                        Navigator.of(context, rootNavigator: true).push(
+                                        Navigator.of(
+                                          context,
+                                          rootNavigator: true,
+                                        ).push(
                                           PageRouteBuilder(
-                                            pageBuilder: (context, animation, secondaryAnimation) => FullScreenMediaViewer(
-                                              imageFile: _capturedImage,
-                                              videoFile: _capturedVideo,
-                                            ),
+                                            pageBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                ) => FullScreenMediaViewer(
+                                                  imageFile: _capturedImage,
+                                                  videoFile: _capturedVideo,
+                                                ),
                                             fullscreenDialog: true,
                                             opaque: true,
                                             barrierColor: Colors.black,
-                                            transitionDuration: const Duration(milliseconds: 300),
-                                            reverseTransitionDuration: const Duration(milliseconds: 300),
-                                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                              return FadeTransition(
-                                                opacity: animation,
-                                                child: child,
-                                              );
-                                            },
+                                            transitionDuration: const Duration(
+                                              milliseconds: 300,
+                                            ),
+                                            reverseTransitionDuration:
+                                                const Duration(
+                                                  milliseconds: 300,
+                                                ),
+                                            transitionsBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child,
+                                                ) {
+                                                  return FadeTransition(
+                                                    opacity: animation,
+                                                    child: child,
+                                                  );
+                                                },
                                           ),
                                         );
                                       },
@@ -793,26 +879,29 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                                   fit: BoxFit.cover,
                                                 )
                                               : _capturedVideo != null
-                                                  ? _videoThumbnail != null && _videoThumbnail!.existsSync()
-                                                      ? Image.file(
-                                                          _videoThumbnail!,
-                                                          fit: BoxFit.cover,
-                                                          width: double.infinity,
-                                                          height: double.infinity,
-                                                        )
-                                                      : Container(
-                                                          color: Colors.black87,
-                                                          width: double.infinity,
-                                                          height: double.infinity,
-                                                          child: const Center(
-                                                            child: Icon(
-                                                              Icons.videocam,
-                                                              size: 64,
-                                                              color: Color(0xFF0077CC),
-                                                            ),
+                                              ? _videoThumbnail != null &&
+                                                        _videoThumbnail!
+                                                            .existsSync()
+                                                    ? Image.file(
+                                                        _videoThumbnail!,
+                                                        fit: BoxFit.cover,
+                                                        width: double.infinity,
+                                                        height: double.infinity,
+                                                      )
+                                                    : Container(
+                                                        color: Colors.black87,
+                                                        width: double.infinity,
+                                                        height: double.infinity,
+                                                        child: const Center(
+                                                          child: Icon(
+                                                            Icons.videocam,
+                                                            size: 64,
+                                                            color: AppColors
+                                                                .vhtAccent,
                                                           ),
-                                                        )
-                                                  : const SizedBox(),
+                                                        ),
+                                                      )
+                                              : const SizedBox(),
                                           Positioned(
                                             top: 8,
                                             right: 8,
@@ -853,15 +942,15 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                     ),
                                   ),
                                 ),
-                                if (_imageSizeInfo != null || _videoSizeInfo != null)
+                                if (_imageSizeInfo != null ||
+                                    _videoSizeInfo != null)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 8),
                                     child: Text(
                                       _imageSizeInfo ?? _videoSizeInfo ?? '',
                                       style: const TextStyle(
-                                        fontFamily: 'Inter',
                                         fontSize: 12,
-                                        color: Color(0xFF667085),
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                   ),
@@ -892,61 +981,60 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                       const Text(
                         'Triage level',
                         style: TextStyle(
-                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           height: 19 / 16,
-                          color: Color(0xFF0077CC),
+                          color: AppColors.vhtAccent,
                         ),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           hintText: 'Select triage level',
-                          hintStyle: const TextStyle(
-                            fontFamily: 'Inter',
+                          hintStyle: TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 14,
                             height: 18 / 14,
-                            color: Color(0xFF98A2B3),
+                            color: AppColors.textSecondary.withAlpha(
+                              (0.65 * 255).toInt(),
+                            ),
                           ),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.surface,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 16,
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE3E8EF),
+                            borderSide: BorderSide(
+                              color: AppColors.border,
                               width: 1,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF0077CC),
+                            borderSide: BorderSide(
+                              color: AppColors.vhtAccent,
                               width: 2,
                             ),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE3E8EF),
+                            borderSide: BorderSide(
+                              color: AppColors.border,
                               width: 1,
                             ),
                           ),
                         ),
                         style: const TextStyle(
-                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w400,
                           fontSize: 14,
-                          color: Color(0xFF1A1A1A),
+                          color: AppColors.textPrimary,
                         ),
                         icon: const Icon(
                           Icons.keyboard_arrow_down_rounded,
-                          color: Color(0xFF667085),
+                          color: AppColors.textSecondary,
                         ),
                         iconSize: 24,
                         borderRadius: BorderRadius.circular(12),
@@ -996,30 +1084,33 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                     height: 56,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0077CC),
+                        backgroundColor: AppColors.vhtAccent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: _isNotifying ? null : () async {
-                        await _notifyClinic();
-                      },
+                      onPressed: _isNotifying
+                          ? null
+                          : () async {
+                              await _notifyClinic();
+                            },
                       child: _isNotifying
                           ? const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(
                               'Next → Notify Clinic',
                               style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w400,
-                                fontSize: 20,
-                                height: 24 / 20,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                                height: 22 / 18,
                                 color: Colors.white,
                               ),
                             ),

@@ -60,7 +60,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('User with this phone number already exists. Please login instead.'),
+                  content: Text(
+                    'User with this phone number already exists. Please login instead.',
+                  ),
                   backgroundColor: AppColors.error,
                 ),
               );
@@ -76,9 +78,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // TEMPORARY: Skip Firebase phone verification - automatically proceed to details form
         // TODO: Re-enable Firebase phone verification when Firebase Auth is properly configured
         await Future.delayed(const Duration(milliseconds: 500));
-        
+
         setState(() => _isLoading = false);
-        
+
         // Navigate directly to details form (phone is considered "verified")
         if (mounted) {
           _navigateToDetailsForm(phoneNumber);
@@ -107,7 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
           verificationFailed: (FirebaseAuthException e) {
             setState(() => _isLoading = false);
-            
+
             String errorMessage;
             // Show raw Firebase messages for SHA/auth errors, custom for validation
             if (e.code == 'app-not-authorized') {
@@ -131,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // Show raw Firebase error for other errors
               errorMessage = e.message ?? 'Error code: ${e.code}';
             }
-            
+
             print('Firebase Auth Error Code: ${e.code}');
             print('Firebase Auth Error Message: ${e.message}');
             print('Full Firebase Exception: $e');
@@ -187,7 +189,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-
   /* TODO: Re-enable when Firebase phone verification is restored
   Future<void> _signInWithCredential(PhoneAuthCredential credential, String phoneNumber) async {
     try {
@@ -226,9 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _navigateToDetailsForm(String phoneNumber) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => _getDetailsScreen(phoneNumber),
-      ),
+      MaterialPageRoute(builder: (context) => _getDetailsScreen(phoneNumber)),
     );
   }
 
@@ -237,11 +236,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       case 'VHT':
         return VHTDetailsScreen(phoneNumber: phoneNumber, role: _selectedRole);
       case 'Ambulance Driver':
-        return AmbulanceDriverDetailsScreen(phoneNumber: phoneNumber, role: _selectedRole);
+        return AmbulanceDriverDetailsScreen(
+          phoneNumber: phoneNumber,
+          role: _selectedRole,
+        );
       case 'Clinic Staff':
-        return ClinicianDetailsScreen(phoneNumber: phoneNumber, role: _selectedRole);
+        return ClinicianDetailsScreen(
+          phoneNumber: phoneNumber,
+          role: _selectedRole,
+        );
       case 'Admin':
-        return AdminDetailsScreen(phoneNumber: phoneNumber, role: _selectedRole);
+        return AdminDetailsScreen(
+          phoneNumber: phoneNumber,
+          role: _selectedRole,
+        );
       default:
         return VHTDetailsScreen(phoneNumber: phoneNumber, role: _selectedRole);
     }
@@ -251,6 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -266,71 +275,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.local_hospital,
-                    size: 80,
+                  const SizedBox(height: 28),
+                  Image.asset(
+                    'assets/images/healthcare_logo.png',
+                    height: 92,
+                    fit: BoxFit.contain,
                     color: AppColors.primary,
+                    colorBlendMode: BlendMode.srcIn,
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'HealthAlert',
+                    'Register',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      fontFamily: 'Inter',
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Register your account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 48),
-
-                  // Phone Number Helper Text
-                  const Text(
-                    'Enter your phone number to continue',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
 
                   // Phone Number
                   TextFormField(
                     controller: _phoneController,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      prefixIcon: Icon(Icons.phone),
-                      border: OutlineInputBorder(),
-                      hintText: '+256700000001',
-                    ),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your phone number';
-                      }
-                      if (!value.startsWith('+')) {
-                        return 'Phone number must start with + and country code';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Role Selection
-                  DropdownButtonFormField<String>(
-                    value: _selectedRole,
                     decoration: InputDecoration(
-                      labelText: 'I am a...',
-                      prefixIcon: const Icon(Icons.work),
+                      hintText: 'Phone Number',
+                      prefixIcon: const Icon(Icons.phone),
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(
@@ -346,8 +317,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your phone number';
+                      }
+                      if (!value.startsWith('+')) {
+                        return 'Phone number must start with + and country code';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Role Selection (styled like login inputs)
+                  DropdownButtonFormField<String>(
+                    value: _selectedRole,
+                    decoration: InputDecoration(
+                      hintText: 'I am a...',
+                      prefixIcon: const Icon(Icons.work_outline),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(
-                          color: Color(0xFF0077CC),
+                          color: Color(0xFFE3E8EF),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primary,
                           width: 2,
                         ),
                       ),
@@ -361,15 +372,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     style: const TextStyle(
                       fontFamily: 'Inter',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 14,
-                      color: Color(0xFF1A1A1A),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                      color: AppColors.textPrimary,
                     ),
                     icon: const Icon(
                       Icons.keyboard_arrow_down_rounded,
                       color: Color(0xFF667085),
                     ),
-                    iconSize: 24,
                     borderRadius: BorderRadius.circular(12),
                     dropdownColor: Colors.white,
                     elevation: 8,
@@ -390,44 +400,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
-                  // Send OTP Button
+                  // Continue button (pill + shadow like login)
                   SizedBox(
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _sendOTP,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                    height: 64,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        color: AppColors.primary,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withAlpha(60),
+                            blurRadius: 22,
+                            offset: const Offset(0, 14),
+                          ),
+                        ],
                       ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'Continue',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _sendOTP,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.6,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Continue',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
 
-                  // Login Link
                   TextButton(
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const LoginScreen(forcePhoneInput: true),
+                          builder: (context) =>
+                              const LoginScreen(forcePhoneInput: true),
                         ),
                       );
                     },
-                    child: const Text('Already have an account? Login'),
+                    child: const Text(
+                      'Already have an account? Login',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -535,7 +574,11 @@ class _VHTDetailsScreenState extends State<VHTDetailsScreen> {
 
       if (mounted) {
         Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushNamedAndRemoveUntil(context, '/vht-dashboard', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/vht-dashboard',
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -587,10 +630,12 @@ class AmbulanceDriverDetailsScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<AmbulanceDriverDetailsScreen> createState() => _AmbulanceDriverDetailsScreenState();
+  State<AmbulanceDriverDetailsScreen> createState() =>
+      _AmbulanceDriverDetailsScreenState();
 }
 
-class _AmbulanceDriverDetailsScreenState extends State<AmbulanceDriverDetailsScreen> {
+class _AmbulanceDriverDetailsScreenState
+    extends State<AmbulanceDriverDetailsScreen> {
   void _onDetailsSubmitted({
     required String firstName,
     required String lastName,
@@ -671,7 +716,11 @@ class _AmbulanceDriverDetailsScreenState extends State<AmbulanceDriverDetailsScr
 
       if (mounted) {
         Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushNamedAndRemoveUntil(context, '/ambulance-dashboard', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/ambulance-dashboard',
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -807,7 +856,11 @@ class _AdminDetailsScreenState extends State<AdminDetailsScreen> {
 
       if (mounted) {
         Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/admin-dashboard',
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -940,7 +993,11 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
 
       if (mounted) {
         Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushNamedAndRemoveUntil(context, '/clinic-dashboard', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/clinic-dashboard',
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
