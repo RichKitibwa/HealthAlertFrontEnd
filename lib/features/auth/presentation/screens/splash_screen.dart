@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../current_user_session.dart';
 import '../../../../core/services/device_storage_service.dart';
+import '../../../../core/services/fcm_notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -74,6 +75,9 @@ class _SplashScreenState extends State<SplashScreen>
           CurrentUserSession.workplace = data?['workplace'];
           CurrentUserSession.specialty = data?['specialty'];
 
+          // Initialize FCM and save token to user document
+          FCMNotificationService().initialize();
+
           // Navigate to appropriate dashboard
           _navigateToRoleDashboard(role);
           return;
@@ -138,11 +142,12 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
+              // Logo (same green as welcome/register)
               Image.asset(
                 'assets/images/healthcare_logo.png',
                 height: 120,
                 fit: BoxFit.contain,
+                color: AppColors.primary,
               ),
               const SizedBox(height: 24),
 

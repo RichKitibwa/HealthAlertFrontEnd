@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
-import 'package:geolocator/geolocator.dart';
-import 'vht_onboard_patient.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'vht_case_submitted_screen.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
@@ -14,6 +15,11 @@ import '../../../../core/utils/file_utils.dart';
 import '../../../../core/utils/location_utils.dart';
 import '../../../../core/services/clinic_matching_service.dart';
 import '../../../../core/services/fcm_notification_service.dart';
+import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/local_storage_service.dart';
+import '../../../../data/models/emergency_case_model.dart';
+import '../../../../core/enums/case_type.dart';
+import '../../../../core/enums/urgency_level.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -40,6 +46,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
 
   // Patient details
   String _patientId = '';
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   String? _selectedGender;
   DateTime? _dateOfBirth;
   int? _age;
@@ -57,83 +65,87 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
   }
 
   Future<void> _generatePatientId() async {
+    final now = DateTime.now();
+    final year = now.year.toString().substring(2); // Last 2 digits (26 for 2026)
+
     try {
-      final now = DateTime.now();
-      final year = now.year.toString().substring(
-        2,
-      ); // Get last 2 digits (26 for 2026)
+      // Check connectivity first
+      final isOnline = await ConnectivityService().checkConnectivity();
 
-      // Get or create the patient counter document
-      final counterRef = _firestore
-          .collection('counters')
-          .doc('patientCounter');
+      if (isOnline) {
+        // Online: use Firestore transaction for consistent counter
+        final counterRef = _firestore.collection('counters').doc('patientCounter');
 
-      // Use transaction to atomically increment the counter
-      final patientNumber = await _firestore.runTransaction<int>((
-        transaction,
-      ) async {
-        final snapshot = await transaction.get(counterRef);
+        final patientNumber = await _firestore.runTransaction<int>((transaction) async {
+          final snapshot = await transaction.get(counterRef);
 
-        int currentCount;
-        final currentYear = now.year;
+          int currentCount;
+          final currentYear = now.year;
 
-        if (!snapshot.exists || snapshot.data() == null) {
-          // First patient ever, start at 1
-          currentCount = 1;
-          transaction.set(counterRef, {
-            'count': 1,
-            'year': currentYear,
-            'lastUpdated': FieldValue.serverTimestamp(),
-          });
-        } else {
-          final data = snapshot.data()!;
-          final storedYear = data['year'] as int? ?? currentYear;
-
-          if (storedYear != currentYear) {
-            // New year, reset counter to 1
+          if (!snapshot.exists || snapshot.data() == null) {
             currentCount = 1;
-            transaction.update(counterRef, {
+            transaction.set(counterRef, {
               'count': 1,
               'year': currentYear,
               'lastUpdated': FieldValue.serverTimestamp(),
             });
           } else {
-            // Same year, increment counter
-            currentCount = (data['count'] as int? ?? 0) + 1;
-            transaction.update(counterRef, {
-              'count': currentCount,
-              'lastUpdated': FieldValue.serverTimestamp(),
-            });
+            final data = snapshot.data()!;
+            final storedYear = data['year'] as int? ?? currentYear;
+
+            if (storedYear != currentYear) {
+              currentCount = 1;
+              transaction.update(counterRef, {
+                'count': 1,
+                'year': currentYear,
+                'lastUpdated': FieldValue.serverTimestamp(),
+              });
+            } else {
+              currentCount = (data['count'] as int? ?? 0) + 1;
+              transaction.update(counterRef, {
+                'count': currentCount,
+                'lastUpdated': FieldValue.serverTimestamp(),
+              });
+            }
           }
-        }
 
-        return currentCount;
-      });
-
-      // Format: P + 3-digit number + 2-digit year (e.g., P00126, P00226)
-      // Ensure number doesn't exceed 999 (3 digits max)
-      final safeNumber = patientNumber > 999 ? 999 : patientNumber;
-      final formattedId = 'P${safeNumber.toString().padLeft(3, '0')}$year';
-
-      if (mounted) {
-        setState(() {
-          _patientId = formattedId;
+          return currentCount;
         });
+
+        final safeNumber = patientNumber > 999 ? 999 : patientNumber;
+        final formattedId = 'P${safeNumber.toString().padLeft(3, '0')}$year';
+
+        if (mounted) {
+          setState(() {
+            _patientId = formattedId;
+          });
+        }
+      } else {
+        // Offline: generate a local ID using timestamp
+        _generateOfflinePatientId(year);
       }
     } catch (e) {
-      // Fallback: Use a simple counter stored locally if Firestore fails
-      // This is a temporary fallback - should use Firestore in production
-      if (mounted) {
-        final now = DateTime.now();
-        final year = now.year.toString().substring(2);
-        // Simple fallback: use a random 3-digit number (001-999)
-        final fallbackNumber =
-            (DateTime.now().millisecondsSinceEpoch % 999) + 1;
-        setState(() {
-          _patientId = 'P${fallbackNumber.toString().padLeft(3, '0')}$year';
-        });
-      }
+      // Fallback: Use offline ID generation if Firestore fails
+      _generateOfflinePatientId(year);
     }
+  }
+
+  void _generateOfflinePatientId(String year) {
+    if (mounted) {
+      final fallbackNumber = (DateTime.now().millisecondsSinceEpoch % 999) + 1;
+      setState(() {
+        _patientId = 'P${fallbackNumber.toString().padLeft(3, '0')}$year';
+      });
+    }
+  }
+
+  int _calculateAgeFromDob(DateTime dob) {
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
   }
 
   Future<void> _selectDateOfBirth(BuildContext context) async {
@@ -163,52 +175,284 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
     if (picked != null) {
       setState(() {
         _dateOfBirth = picked;
-        _age = null;
+        _age = _calculateAgeFromDob(picked);
         _useAgeInstead = false;
       });
     }
   }
 
+  /// Validates required fields before submission
+  bool _validateForm() {
+    if (_selectedGender == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select patient gender.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+    if (_dateOfBirth == null && _age == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter patient date of birth or age.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+    if (_selectedUrgency == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a triage level.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  /// Request location permission with user-friendly dialogs
+  Future<LocationResult> _getLocationWithPermission() async {
+    final result = await LocationUtils.getCurrentLocationWithDetails();
+
+    if (!result.success && result.permissionDeniedForever && mounted) {
+      // Show dialog to open settings
+      final shouldOpenSettings = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Location Permission Required'),
+          content: const Text(
+            'HealthAlert needs location access to report emergencies and help ambulances find patients.\n\n'
+            'Please open Settings and enable location for this app.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.vhtAccent,
+              ),
+              child: const Text('Open Settings', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldOpenSettings == true) {
+        await openAppSettings();
+      }
+    }
+
+    return result;
+  }
+
+  /// Upload a file to Firebase Storage and return the download URL.
+  /// Returns null if the file is null or upload fails.
+  Future<String?> _uploadMediaFile(File? file, String caseId, String folder) async {
+    if (file == null) return null;
+    try {
+      // Verify file exists and is readable
+      if (!await file.exists()) {
+        debugPrint('Upload $folder: File does not exist at ${file.path}');
+        return null;
+      }
+      final fileSize = await file.length();
+      debugPrint('Upload $folder: Starting upload (${(fileSize / 1024).toStringAsFixed(1)} KB)');
+
+      final ext = file.path.split('.').last;
+      final fileName = '${caseId}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('emergencyCases/$caseId/$folder/$fileName');
+      final uploadTask = ref.putFile(file);
+
+      // Monitor upload progress
+      uploadTask.snapshotEvents.listen((snapshot) {
+        final progress = snapshot.bytesTransferred / snapshot.totalBytes;
+        debugPrint('Upload $folder: ${(progress * 100).toStringAsFixed(0)}%');
+      });
+
+      await uploadTask;
+      final url = await ref.getDownloadURL();
+      debugPrint('Upload $folder: SUCCESS - $url');
+      return url;
+    } catch (e, stack) {
+      debugPrint('Upload $folder FAILED: $e');
+      debugPrint('Stack: $stack');
+      return null;
+    }
+  }
+
+  /// Build the case data map for both local storage and Firestore
+  Map<String, dynamic> _buildCaseData({
+    required String caseId,
+    required String vhtName,
+    double? latitude,
+    double? longitude,
+    Map<String, dynamic>? clinicMatch,
+    String? imageUrl,
+    String? videoUrl,
+    String? voiceNoteUrl,
+  }) {
+    return <String, dynamic>{
+      'caseId': caseId,
+      'patientId': _patientId,
+      'patientFirstName': _firstNameController.text.trim(),
+      'patientLastName': _lastNameController.text.trim(),
+      'patientGender': _selectedGender,
+      'patientAge': _age,
+      'patientDateOfBirth': _dateOfBirth?.toIso8601String(),
+      'emergencyType': widget.emergencyType,
+      'urgencyLevel': _selectedUrgency ?? 'medium',
+      'notes': _notesController.text.trim(),
+      'vhtId': CurrentUserSession.uid,
+      'vhtName': vhtName,
+      'vhtPhoneNumber': CurrentUserSession.phoneNumber,
+      if (clinicMatch != null) 'assignedClinicId': clinicMatch['clinicianId'],
+      if (clinicMatch != null) 'assignedClinicName': clinicMatch['clinicName'],
+      if (clinicMatch != null) 'assignedClinicianName': clinicMatch['clinicianName'],
+      if (clinicMatch != null) 'clinicianPhoneNumber': clinicMatch['phoneNumber'],
+      'status': 'pending',
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (latitude != null) 'vhtLatitude': latitude,
+      if (longitude != null) 'vhtLongitude': longitude,
+      if (imageUrl != null) 'imageUrl': imageUrl,
+      if (videoUrl != null) 'videoUrl': videoUrl,
+      if (voiceNoteUrl != null) 'voiceNoteUrl': voiceNoteUrl,
+      'createdAt': DateTime.now().toIso8601String(),
+      'updatedAt': DateTime.now().toIso8601String(),
+    };
+  }
+
+  /// Save the case locally first (offline-first approach)
+  Future<void> _saveCaseLocally(Map<String, dynamic> caseData, {bool isSynced = false}) async {
+    try {
+      final localCase = EmergencyCaseModel(
+        id: isSynced ? caseData['caseId'] as String? : null,
+        offlineId: caseData['caseId'] as String?,
+        caseType: CaseTypeExtension.fromString(widget.emergencyType.toLowerCase()),
+        urgencyLevel: UrgencyLevelExtension.fromString(_selectedUrgency ?? 'medium'),
+        patientId: _patientId,
+        patientAge: _age,
+        patientGender: _selectedGender,
+        patientDateOfBirth: _dateOfBirth?.toIso8601String(),
+        emergencyType: widget.emergencyType,
+        notes: _notesController.text.trim(),
+        latitude: caseData['latitude'] as double?,
+        longitude: caseData['longitude'] as double?,
+        vhtId: CurrentUserSession.uid,
+        vhtName: caseData['vhtName'] as String?,
+        vhtPhoneNumber: CurrentUserSession.phoneNumber,
+        assignedClinicId: caseData['assignedClinicId'] as String?,
+        assignedClinicName: caseData['assignedClinicName'] as String?,
+        assignedClinicianName: caseData['assignedClinicianName'] as String?,
+        clinicianPhoneNumber: caseData['clinicianPhoneNumber'] as String?,
+        isOffline: !isSynced,
+        isSynced: isSynced,
+      );
+
+      await LocalStorageService.saveEmergencyCaseLocally(localCase);
+    } catch (e) {
+      // Local save failed - not critical, continue
+      debugPrint('Failed to save case locally: $e');
+    }
+  }
+
   Future<void> _notifyClinic() async {
+    // Validate required fields first
+    if (!_validateForm()) return;
+
     setState(() {
       _isNotifying = true;
     });
 
     try {
-      // Get VHT's current location
-      final position = await LocationUtils.getCurrentLocation();
-      if (position == null) {
+      // Step 1: Try to get location (non-blocking fallback)
+      final locationResult = await _getLocationWithPermission();
+      double? latitude;
+      double? longitude;
+
+      if (locationResult.success) {
+        latitude = locationResult.position!.latitude;
+        longitude = locationResult.position!.longitude;
+      }
+      // If location fails, we continue without it - clinician will be matched by expertise
+
+      final vhtName = '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'.trim();
+
+      // Step 2: Check connectivity
+      final connectivityService = ConnectivityService();
+      final isOnline = await connectivityService.checkConnectivity();
+
+      if (!isOnline) {
+        // OFFLINE PATH: Save locally and queue for sync
+        final offlineCaseId = 'offline_${DateTime.now().millisecondsSinceEpoch}';
+        final caseData = _buildCaseData(
+          caseId: offlineCaseId,
+          vhtName: vhtName,
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+        await _saveCaseLocally(caseData, isSynced: false);
+
+        // Add to offline queue for later sync
+        await LocalStorageService.addToOfflineQueue('createCase', {
+          'offlineId': offlineCaseId,
+          'caseData': caseData,
+        });
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Unable to get your location. Please enable location services.',
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VhtCaseSubmittedScreen(
+                caseId: offlineCaseId,
+                emergencyType: widget.emergencyType,
+                clinicName: 'Pending (offline)',
+                clinicianName: '',
+                patientId: _patientId,
+                urgencyLevel: _selectedUrgency,
+                isOffline: true,
               ),
-              backgroundColor: Colors.red,
             ),
           );
         }
-        setState(() {
-          _isNotifying = false;
-        });
         return;
       }
 
-      // Find nearest matching clinic
-      final clinicMatch = await _clinicMatchingService
-          .findNearestMatchingClinic(
-            vhtLatitude: position.latitude,
-            vhtLongitude: position.longitude,
-            emergencyType: widget.emergencyType,
-            patientAge: _age,
-          );
+      // ONLINE PATH: Save locally first, then sync to Firestore
+      // Step 3: Find matching clinic (with or without location)
+      Map<String, dynamic>? clinicMatch;
+
+      if (latitude != null && longitude != null) {
+        // Location available — find nearest matching clinic
+        clinicMatch = await _clinicMatchingService.findNearestMatchingClinic(
+          vhtLatitude: latitude,
+          vhtLongitude: longitude,
+          emergencyType: widget.emergencyType,
+          patientAge: _age,
+        );
+      }
+
+      // Fallback: match by expertise only (no location)
+      clinicMatch ??= await _clinicMatchingService.findMatchingClinicianWithoutLocation(
+        emergencyType: widget.emergencyType,
+        patientAge: _age,
+      );
 
       if (clinicMatch == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'No available clinic found. Please try again later.',
+                'No available clinic staff found. Please try again later or contact your supervisor.',
               ),
               backgroundColor: Colors.orange,
             ),
@@ -220,73 +464,87 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         return;
       }
 
-      // Create emergency case in Firestore
+      // Step 4: Create case reference and upload media
       final caseRef = _firestore.collection('emergencyCases').doc();
-      final caseData = {
-        'caseId': caseRef.id,
-        'patientId': _patientId,
-        'patientGender': _selectedGender,
-        'patientAge': _age,
-        'patientDateOfBirth': _dateOfBirth?.toIso8601String(),
-        'emergencyType': widget.emergencyType,
-        'urgencyLevel': _selectedUrgency ?? 'medium',
-        'notes': _notesController.text,
-        'vhtId': CurrentUserSession.uid,
-        'vhtName':
-            '${CurrentUserSession.firstName} ${CurrentUserSession.lastName}',
-        'assignedClinicId': clinicMatch['clinicianId'],
-        'assignedClinicName': clinicMatch['clinicName'],
-        'assignedClinicianName': clinicMatch['clinicianName'],
-        'status': 'pending',
-        'vhtLatitude': position.latitude,
-        'vhtLongitude': position.longitude,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
 
-      await caseRef.set(caseData);
+      // Upload media files in parallel
+      String? imageUrl;
+      String? videoUrl;
+      String? voiceNoteUrl;
+      final hasMedia = _capturedImage != null || _capturedVideo != null || _audioFile != null;
+      try {
+        final uploads = await Future.wait([
+          _uploadMediaFile(_capturedImage, caseRef.id, 'images'),
+          _uploadMediaFile(_capturedVideo, caseRef.id, 'videos'),
+          _uploadMediaFile(_audioFile, caseRef.id, 'voiceNotes'),
+        ]);
+        imageUrl = uploads[0];
+        videoUrl = uploads[1];
+        voiceNoteUrl = uploads[2];
 
-      // Send FCM notification to clinician
-      final notificationSent = await _fcmService.notifyClinicianOfEmergency(
-        fcmToken: clinicMatch['fcmToken'],
-        emergencyType: widget.emergencyType,
-        patientId: _patientId,
-        caseId: caseRef.id,
-        vhtName:
-            '${CurrentUserSession.firstName} ${CurrentUserSession.lastName}',
-        urgencyLevel: _selectedUrgency,
-      );
-
-      if (mounted) {
-        if (notificationSent) {
+        // Warn user if media was captured but upload failed
+        if (hasMedia && mounted) {
+          final failedUploads = <String>[];
+          if (_capturedImage != null && imageUrl == null) failedUploads.add('image');
+          if (_capturedVideo != null && videoUrl == null) failedUploads.add('video');
+          if (_audioFile != null && voiceNoteUrl == null) failedUploads.add('voice note');
+          if (failedUploads.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Warning: Failed to upload ${failedUploads.join(", ")}. Case will be submitted without media.'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        debugPrint('Media upload error: $e');
+        if (hasMedia && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Clinic notified: ${clinicMatch['clinicName']}'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Case created but notification failed. Clinic will be notified via other means.',
-              ),
+              content: Text('Warning: Media upload failed ($e). Case will be submitted without media.'),
               backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 4),
             ),
           );
         }
+      }
 
-        // Navigate to next screen
-        Navigator.push(
+      final caseData = _buildCaseData(
+        caseId: caseRef.id,
+        vhtName: vhtName,
+        latitude: latitude,
+        longitude: longitude,
+        clinicMatch: clinicMatch,
+        imageUrl: imageUrl,
+        videoUrl: videoUrl,
+        voiceNoteUrl: voiceNoteUrl,
+      );
+
+      // Step 5: Save locally first (offline-first)
+      await _saveCaseLocally(caseData, isSynced: true);
+
+      // Step 6: Save to Firestore
+      final firestoreData = Map<String, dynamic>.from(caseData);
+      firestoreData['createdAt'] = FieldValue.serverTimestamp();
+      firestoreData['updatedAt'] = FieldValue.serverTimestamp();
+      await caseRef.set(firestoreData);
+
+      // Note: Cloud Function (onEmergencyCaseCreated) handles clinician notification for new cases
+
+      if (mounted) {
+        // Navigate to case submitted confirmation screen
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => VhtOnboardPatientScreen(
-              emergencyType: widget.emergencyType,
-              capturedImage: _capturedImage,
-              capturedVideo: _capturedVideo,
-              notes: _notesController.text,
-              urgencyLevel: _selectedUrgency,
+            builder: (context) => VhtCaseSubmittedScreen(
               caseId: caseRef.id,
+              emergencyType: widget.emergencyType,
+              clinicName: clinicMatch!['clinicName'] as String? ?? 'Unknown Clinic',
+              clinicianName: clinicMatch['clinicianName'] as String? ?? '',
+              patientId: _patientId,
+              urgencyLevel: _selectedUrgency,
             ),
           ),
         );
@@ -295,7 +553,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error notifying clinic: $e'),
+            content: Text('Error submitting case: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -312,6 +570,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
   @override
   void dispose() {
     _notesController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
@@ -382,6 +642,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Report Emergency',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -523,6 +784,58 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
+                        // Patient First Name
+                        TextField(
+                          controller: _firstNameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            labelText: 'First Name',
+                            prefixIcon: const Icon(Icons.person_outline),
+                            filled: true,
+                            fillColor: AppColors.surface,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.border, width: 1),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.vhtAccent, width: 2),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.border, width: 1),
+                            ),
+                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14, color: AppColors.textPrimary),
+                        ),
+                        const SizedBox(height: 16),
+                        // Patient Last Name
+                        TextField(
+                          controller: _lastNameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            labelText: 'Last Name',
+                            prefixIcon: const Icon(Icons.person_outline),
+                            filled: true,
+                            fillColor: AppColors.surface,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.border, width: 1),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.vhtAccent, width: 2),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.border, width: 1),
+                            ),
+                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14, color: AppColors.textPrimary),
+                        ),
+                        const SizedBox(height: 16),
                         // Gender Dropdown
                         DropdownButtonFormField<String>(
                           decoration: InputDecoration(
@@ -597,46 +910,83 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: TextButton.icon(
-                                icon: Icon(
-                                  _useAgeInstead
-                                      ? Icons.radio_button_unchecked
-                                      : Icons.radio_button_checked,
-                                  size: 18,
-                                ),
-                                label: const Text('Date of Birth'),
-                                onPressed: () {
+                              child: InkWell(
+                                onTap: () {
                                   setState(() {
                                     _useAgeInstead = false;
                                     _age = null;
                                   });
                                 },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: _useAgeInstead
-                                      ? AppColors.textSecondary
-                                      : AppColors.vhtAccent,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _useAgeInstead
+                                            ? Icons.radio_button_unchecked
+                                            : Icons.radio_button_checked,
+                                        size: 18,
+                                        color: _useAgeInstead
+                                            ? AppColors.textSecondary
+                                            : AppColors.vhtAccent,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Date of Birth',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: _useAgeInstead
+                                              ? AppColors.textSecondary
+                                              : AppColors.vhtAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                             Expanded(
-                              child: TextButton.icon(
-                                icon: Icon(
-                                  _useAgeInstead
-                                      ? Icons.radio_button_checked
-                                      : Icons.radio_button_unchecked,
-                                  size: 18,
-                                ),
-                                label: const Text('Age'),
-                                onPressed: () {
+                              child: InkWell(
+                                onTap: () {
                                   setState(() {
                                     _useAgeInstead = true;
                                     _dateOfBirth = null;
                                   });
                                 },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: _useAgeInstead
-                                      ? AppColors.vhtAccent
-                                      : AppColors.textSecondary,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _useAgeInstead
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_unchecked,
+                                        size: 18,
+                                        color: _useAgeInstead
+                                            ? AppColors.vhtAccent
+                                            : AppColors.textSecondary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Age',
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: _useAgeInstead
+                                              ? AppColors.vhtAccent
+                                              : AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -684,6 +1034,17 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                                       ),
                                           ),
                                         ),
+                                        if (_dateOfBirth != null && _age != null) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Age: $_age years',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.vhtAccent,
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -1106,7 +1467,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                               ),
                             )
                           : const Text(
-                              'Next → Notify Clinic',
+                              'Notify Clinic',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 18,

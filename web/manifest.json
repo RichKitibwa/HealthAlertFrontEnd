@@ -1,6 +1,6 @@
 {
-    "name": "health_app_frontend",
-    "short_name": "health_app_frontend",
+    "name": "HealthAlert",
+    "short_name": "HealthAlert",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

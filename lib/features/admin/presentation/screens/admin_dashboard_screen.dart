@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_navigation_bar.dart';
+import 'admin_case_analytics.dart';
+import 'admin_manage_users_screen.dart';
+import 'admin_case_timeline.dart';
+import '../../../common/presentation/screens/notifications_screen.dart';
+import '../../../common/presentation/screens/settings_screen.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
@@ -17,12 +23,11 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  int _currentIndex = 0; // 0 = Home, 1 = Reports/Analytics
+  int _currentIndex = 0; // 0 = Home, 1 = Notifications, 2 = Analytics, 3 = Users
 
-  void _onItemSelected(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+  void _onNavItemSelected(int index) {
+    if (index == _currentIndex) return;
+    // Navigation is handled by AdminNavigationBar; dashboard is always "home" (index 0)
   }
 
   @override
@@ -106,6 +111,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         showBackButton: false,
+        pageTitle: 'Dashboard',
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -113,13 +119,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           }
         },
         onDashboard: () {},
-        onSettings: () {},
+        onSettings: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+        },
         onReports: () {},
         onAnalytics: () {},
       ),
       endDrawer: AppDrawer(
         onDashboard: () {},
-        onSettings: () {},
+        onNotifications: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        },
+        onSettings: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+        },
         onReports: () {},
         onAnalytics: () {},
         onLogout: () async {
@@ -131,7 +144,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       bottomNavigationBar: AdminNavigationBar(
         currentIndex: _currentIndex,
-        onItemSelected: _onItemSelected,
+        onItemSelected: _onNavItemSelected,
       ),
       body: SafeArea(
         child: Padding(
@@ -162,8 +175,79 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   Expanded(
                     child: ListView(
                       children: [
+                        // Pending dispatch request section
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('emergencyCases')
+                              .where('status', isEqualTo: 'ambulanceRequested')
+                              .limit(1)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            final docs = snapshot.data?.docs ?? [];
+                            if (docs.isEmpty) return const SizedBox.shrink();
+                            
+                            final data = docs.first.data() as Map<String, dynamic>;
+                            final type = data['emergencyType'] as String? ?? 'Emergency';
+                            final patientFirst = data['patientFirstName'] as String? ?? '';
+                            final patientLast = data['patientLastName'] as String? ?? '';
+                            final patientName = '$patientFirst $patientLast'.trim();
+                            final urgency = data['urgencyLevel'] as String? ?? 'medium';
+                            
+                            return Column(
+                              children: [
+                                InkWell(
+                                  onTap: () => Navigator.push(context, MaterialPageRoute(
+                                    builder: (_) => AdminCaseTimelineScreen(caseId: docs.first.id),
+                                  )),
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withAlpha(10),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(color: Colors.red.withAlpha(40)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.withAlpha(20),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: const Icon(Icons.local_shipping_rounded, color: Colors.red, size: 24),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text('Dispatch Needed', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.red)),
+                                              const SizedBox(height: 2),
+                                              Text('$type${patientName.isNotEmpty ? " - $patientName" : ""}', style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text('Dispatch', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            );
+                          },
+                        ),
                         buildDashboardCard(
-                          icon: Icons.assignment_turned_in_outlined,
+                          icon: Icons.assignment_rounded,
                           title: 'Active Cases',
                           subtitle: 'View and manage all ongoing cases.',
                           onTap: () {
@@ -175,18 +259,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                         const SizedBox(height: 16),
                         buildDashboardCard(
-                          icon: Icons.bar_chart_outlined,
+                          icon: Icons.insights_rounded,
                           title: 'Analytics',
                           subtitle:
                               'View ambulance dispatch and VHT report insights.',
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AdminCaseAnalyticsScreen()),
+                            );
+                          },
                         ),
                         const SizedBox(height: 16),
                         buildDashboardCard(
-                          icon: Icons.group_outlined,
+                          icon: Icons.people_alt_rounded,
                           title: 'Manage Users',
                           subtitle: 'Add or remove system users.',
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AdminManageUsersScreen()),
+                            );
+                          },
                         ),
                       ],
                     ),

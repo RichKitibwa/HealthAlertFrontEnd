@@ -1,235 +1,544 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'admin_case_analytics.dart';
 import 'admin_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../common/presentation/screens/settings_screen.dart';
 import '../../../auth/current_user_session.dart';
-import '../../../common/presentation/widgets/app_drawer.dart';
+import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 
-class AdminCaseTimelineScreen extends StatelessWidget {
-  const AdminCaseTimelineScreen({super.key});
+class AdminCaseTimelineScreen extends StatefulWidget {
+  final String caseId;
+
+  const AdminCaseTimelineScreen({super.key, required this.caseId});
 
   @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+  State<AdminCaseTimelineScreen> createState() => _AdminCaseTimelineScreenState();
+}
 
-    return Scaffold(
-      appBar: TopNavigationBar(
-        role: CurrentUserSession.role ?? 'Admin',
-        profileImageUrl: CurrentUserSession.profileImageUrl,
-        showBackButton: true,
-        onBack: () {
-          Navigator.pop(context);
-        },
-        onSignOut: () async {
-          await LogoutUtils.logout();
-          if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/login',
-              (route) => false,
-            );
-          }
-        },
-        onDashboard: () {},
-        onSettings: () {},
-        onReports: () {},
-        onAnalytics: () {},
-      ),
-      backgroundColor: AppColors.background,
-      endDrawer: AppDrawer(
-        onDashboard: () {
-          // TODO: Navigate to dashboard
-        },
-        onSettings: () {
-          // TODO: Navigate to settings
-        },
-        onReports: () {
-          // TODO: Navigate to reports
-        },
-        onAnalytics: () {
-          // TODO: Navigate to analytics
-        },
-        onLogout: () async {
-          await LogoutUtils.logout();
-          if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/login',
-              (route) => false,
-            );
-          }
-        },
-      ),
-      bottomNavigationBar: AdminNavigationBar(
-        currentIndex: 0, // 0 = Home, 1 = Reports/Analytics
-        onItemSelected: (index) {
-          // TODO: wire up navigation when admin tabs are ready
-          // if (index == 0) Navigator.pushNamed(context, '/admin-dashboard');
-          // if (index == 1) Navigator.pushNamed(context, '/admin-analytics');
-        },
-      ),
-      body: SafeArea(
-        child: Column(
+class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
+  bool _isDispatching = false;
+
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'pending': return Colors.orange;
+      case 'advised': return Colors.blue;
+      case 'ambulancerequested': return Colors.deepPurple;
+      case 'dispatched': return AppColors.clinicAccent;
+      case 'enroute': return Colors.blue;
+      case 'arrived': return Colors.green;
+      case 'intransit': return Colors.indigo;
+      case 'delivered': return Colors.teal;
+      case 'intreatment': return Colors.blue;
+      case 'admitted': return Colors.deepOrange;
+      case 'discharged': return Colors.green.shade700;
+      case 'completed': return Colors.green.shade700;
+      case 'cancelled': return Colors.red;
+      default: return AppColors.textSecondary;
+    }
+  }
+
+  String _getStatusLabel(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'pending': return 'Pending Review';
+      case 'advised': return 'Advice Sent';
+      case 'ambulancerequested': return 'Ambulance Requested';
+      case 'dispatched': return 'Dispatched';
+      case 'enroute': return 'En Route';
+      case 'arrived': return 'Arrived';
+      case 'intransit': return 'In Transit';
+      case 'delivered': return 'Delivered';
+      case 'intreatment': return 'In Treatment';
+      case 'admitted': return 'Admitted';
+      case 'discharged': return 'Discharged';
+      case 'completed': return 'Completed';
+      case 'cancelled': return 'Cancelled';
+      default: return status ?? 'Unknown';
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending': return Icons.hourglass_top_rounded;
+      case 'advised': return Icons.message_rounded;
+      case 'ambulancerequested': return Icons.local_shipping_outlined;
+      case 'dispatched': return Icons.local_shipping_rounded;
+      case 'enroute': return Icons.directions_car_rounded;
+      case 'arrived': return Icons.location_on_rounded;
+      case 'intransit': return Icons.transfer_within_a_station_rounded;
+      case 'delivered': return Icons.check_circle_rounded;
+      case 'intreatment': return Icons.medical_services_rounded;
+      case 'admitted': return Icons.local_hotel_rounded;
+      case 'discharged': return Icons.exit_to_app_rounded;
+      case 'completed': return Icons.verified_rounded;
+      case 'cancelled': return Icons.cancel_rounded;
+      default: return Icons.info_rounded;
+    }
+  }
+
+  Color _getUrgencyColor(String? urgency) {
+    switch (urgency?.toLowerCase()) {
+      case 'critical': return Colors.red;
+      case 'high': return Colors.deepOrange;
+      case 'medium': return Colors.orange;
+      case 'low': return Colors.green;
+      default: return AppColors.textSecondary;
+    }
+  }
+
+  String _formatTimestamp(Timestamp? ts) {
+    if (ts == null) return '';
+    final dt = ts.toDate();
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} - ${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  Future<void> _callPhone(String phone) async {
+    final uri = Uri(scheme: 'tel', path: phone);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open dialer for $phone'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _dispatchAmbulance(Map<String, dynamic> caseData) async {
+    // Show ambulance selection dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Case Timeline',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Review the sequence of events for this emergency case.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
+            Icon(Icons.local_shipping_rounded, color: AppColors.adminAccent, size: 22),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text('Dispatch Ambulance', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16), maxLines: 1),
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 560),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Timeline card
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 24,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.border),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withAlpha(8),
-                                blurRadius: 18,
-                                offset: const Offset(0, 12),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
-                              // TODO: Replace hardcoded time with fetched VHT reporting time
-                              Text(
-                                'VHT Report: 10:12',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  height: 19 / 16,
-                                  color: AppColors.adminAccent,
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              // TODO: Replace hardcoded time with fetched ambulance accepting time
-                              Text(
-                                'Ambulance Accept: 10:14',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  height: 19 / 16,
-                                  color: AppColors.adminAccent,
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              // TODO: Replace hardcoded time with fetched arrival-at-scene time
-                              Text(
-                                'Arrival at Scene: 10:25',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  height: 19 / 16,
-                                  color: AppColors.adminAccent,
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              // TODO: Replace hardcoded time with fetched clinic intake time
-                              Text(
-                                'Clinic Intake: 10:40',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  height: 19 / 16,
-                                  color: AppColors.adminAccent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // View Analytics button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 360),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const AdminCaseAnalyticsScreen(),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.adminAccent,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                elevation: 6,
-                              ),
-                              child: const Text(
-                                'View Analytics',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                  height: 20 / 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+          ],
+        ),
+        content: const Text('Dispatch the nearest available ambulance to this case?', style: TextStyle(fontSize: 14)),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
                     ),
                   ),
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.adminAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: const Text('Dispatch', style: TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+    setState(() => _isDispatching = true);
+
+    try {
+      // Find nearest available ambulance driver
+      final driversQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'Ambulance Driver')
+          .limit(5)
+          .get();
+
+      String? assignedDriverId;
+      String? assignedDriverName;
+      if (driversQuery.docs.isNotEmpty) {
+        final driver = driversQuery.docs.first;
+        final driverData = driver.data();
+        assignedDriverId = driver.id;
+        assignedDriverName = '${driverData['firstName'] ?? ''} ${driverData['lastName'] ?? ''}'.trim();
+      }
+
+      await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
+        'status': 'dispatched',
+        'updatedBy': CurrentUserSession.uid,
+        'dispatchedAt': FieldValue.serverTimestamp(),
+        if (assignedDriverId != null) 'assignedAmbulanceId': assignedDriverId,
+        if (assignedDriverName != null) 'assignedDriverName': assignedDriverName,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Note: Cloud Function handles notifications for dispatched status (driver and VHT)
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ambulance dispatched successfully.'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDispatching = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: TopNavigationBar(
+        role: CurrentUserSession.role ?? 'Admin',
+        profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Case Timeline',
+        showBackButton: true,
+        onBack: () => Navigator.pop(context),
+        onSignOut: () async {
+          await LogoutUtils.logout();
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          }
+        },
+        onDashboard: () {
+          Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+        },
+        onSettings: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+        },
+        onReports: () {},
+        onAnalytics: () {},
+      ),
+      backgroundColor: AppColors.background,
+      endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/admin-dashboard'),
+      bottomNavigationBar: AdminNavigationBar(
+        currentIndex: 0,
+        onItemSelected: (index) {
+          if (index == 0) {
+            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+          }
+        },
+      ),
+      body: SafeArea(
+        child: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return const Center(child: Text('Case not found.'));
+            }
+
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+            final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
+            final urgency = data['urgencyLevel'] as String? ?? 'medium';
+            final status = data['status'] as String? ?? 'pending';
+            final patientFirstName = data['patientFirstName'] as String? ?? '';
+            final patientLastName = data['patientLastName'] as String? ?? '';
+            final patientId = data['patientId'] as String? ?? '';
+            final patientAge = data['patientAge'] as int?;
+            final vhtName = data['vhtName'] as String? ?? '';
+            final vhtPhone = data['vhtPhoneNumber'] as String? ?? '';
+            final clinicName = data['assignedClinicName'] as String? ?? '';
+            final clinicianName = data['assignedClinicianName'] as String? ?? '';
+            final clinicianPhone = data['clinicianPhoneNumber'] as String? ?? '';
+            final createdAt = data['createdAt'] as Timestamp?;
+            final updatedAt = data['updatedAt'] as Timestamp?;
+            final dispatchedAt = data['dispatchedAt'] as Timestamp?;
+            final statusColor = _getStatusColor(status);
+            final patientName = '$patientFirstName $patientLastName'.trim();
+            final isAmbulanceRequested = status == 'ambulanceRequested';
+
+            // Build timeline
+            final clinicianDecision = data['clinicianDecision'] as String? ?? '';
+            final isAdvicePath = clinicianDecision == 'advise_vht' || status == 'advised';
+            final List<String> statuses;
+            if (isAdvicePath) {
+              statuses = ['pending', 'advised', 'completed'];
+            } else if (clinicianDecision == 'dispatch_ambulance' ||
+                ['ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment', 'admitted'].contains(status)) {
+              statuses = ['pending', 'ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment', 'admitted', 'completed'];
+            } else {
+              statuses = ['pending', 'completed'];
+            }
+            final currentIndex = statuses.indexOf(status);
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Case Timeline', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  const SizedBox(height: 6),
+                  Text('Review events for this emergency case.', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  const SizedBox(height: 16),
+
+                  // Status + Urgency Banner
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: statusColor.withAlpha(8),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: statusColor.withAlpha(40)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(_getStatusIcon(status), color: statusColor, size: 28),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(emergencyType, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: statusColor)),
+                              const SizedBox(height: 2),
+                              Text(_getStatusLabel(status), style: TextStyle(fontSize: 13, color: statusColor)),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getUrgencyColor(urgency).withAlpha(20),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(urgency.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _getUrgencyColor(urgency))),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Patient + Case Info
+                  _buildInfoCard('Case Details', [
+                    if (patientName.isNotEmpty) _buildInfoRow('Patient', patientName),
+                    if (patientId.isNotEmpty) _buildInfoRow('Patient ID', patientId),
+                    if (patientAge != null) _buildInfoRow('Age', '$patientAge years'),
+                    if (vhtName.isNotEmpty) _buildInfoRow('VHT', vhtName),
+                    if (clinicName.isNotEmpty) _buildInfoRow('Clinic', clinicName),
+                    if (clinicianName.isNotEmpty) _buildInfoRow('Clinician', clinicianName),
+                  ]),
+                  const SizedBox(height: 12),
+
+                  // Contact section
+                  _buildInfoCard('Contacts', [
+                    if (vhtPhone.isNotEmpty)
+                      _buildContactRow('VHT', vhtName, vhtPhone),
+                    if (clinicianPhone.isNotEmpty)
+                      _buildContactRow('Clinician', clinicianName, clinicianPhone),
+                  ]),
+                  const SizedBox(height: 16),
+
+                  // Timeline
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Progress Timeline', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                        const SizedBox(height: 12),
+                        ...List.generate(statuses.length, (index) {
+                          final isCompleted = index <= currentIndex;
+                          final isCurrent = index == currentIndex;
+                          final s = statuses[index];
+
+                          // Get timestamp for this status
+                          String? timeStr;
+                          if (s == 'pending' && createdAt != null) timeStr = _formatTimestamp(createdAt);
+                          if (s == 'dispatched' && dispatchedAt != null) timeStr = _formatTimestamp(dispatchedAt);
+                          if (isCurrent && updatedAt != null && s != 'pending') timeStr = _formatTimestamp(updatedAt);
+
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Column(
+                                children: [
+                                  Container(
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isCompleted ? (isCurrent ? _getStatusColor(s) : Colors.green) : AppColors.border,
+                                      border: isCurrent ? Border.all(color: _getStatusColor(s).withAlpha(80), width: 2) : null,
+                                    ),
+                                    child: isCompleted
+                                        ? Icon(isCurrent ? _getStatusIcon(s) : Icons.check, size: 12, color: Colors.white)
+                                        : null,
+                                  ),
+                                  if (index < statuses.length - 1)
+                                    Container(width: 2, height: 22, color: isCompleted && index < currentIndex ? Colors.green : AppColors.border),
+                                ],
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _getStatusLabel(s),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
+                                          color: isCompleted ? AppColors.textPrimary : AppColors.textSecondary.withAlpha(100),
+                                        ),
+                                      ),
+                                      if (timeStr != null)
+                                        Text(timeStr, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Dispatch button (when ambulance is requested)
+                  if (isAmbulanceRequested) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: _isDispatching ? null : () => _dispatchAmbulance(data),
+                        icon: _isDispatching
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.local_shipping_rounded),
+                        label: Text(
+                          _isDispatching ? 'Dispatching...' : 'Dispatch Ambulance',
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.adminAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // View Analytics button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => AdminCaseAnalyticsScreen(caseId: widget.caseId)),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.adminAccent.withAlpha(20),
+                        foregroundColor: AppColors.adminAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                      child: const Text('View Analytics', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String title, List<Widget> children) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.adminAccent)),
+          const SizedBox(height: 8),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 90, child: Text(label, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary))),
+          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactRow(String role, String name, String phone) {
+    return InkWell(
+      onTap: () => _callPhone(phone),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Icon(Icons.phone, color: Colors.green, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Call $role', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                  if (name.isNotEmpty) Text(name, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                ],
+              ),
             ),
+            Icon(Icons.chevron_right, size: 18, color: AppColors.textSecondary),
           ],
         ),
       ),

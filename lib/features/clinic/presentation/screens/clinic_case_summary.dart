@@ -18,6 +18,7 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Case Summary',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

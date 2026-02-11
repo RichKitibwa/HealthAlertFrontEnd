@@ -48,6 +48,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'New Emergency',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

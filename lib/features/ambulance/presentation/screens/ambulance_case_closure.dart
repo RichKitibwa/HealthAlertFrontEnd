@@ -26,6 +26,7 @@ class AmbulanceCaseClosureScreen extends StatelessWidget {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Case Closure',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../current_user_session.dart';
 import '../../../../core/utils/pin_utils.dart';
 import '../../../../core/services/device_storage_service.dart';
+import '../../../../core/services/fcm_notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'register_screen.dart';
 
@@ -246,6 +247,9 @@ class _LoginScreenState extends State<LoginScreen> {
           lastName: CurrentUserSession.lastName ?? '',
         );
       }
+
+      // Initialize FCM and save token to user document
+      FCMNotificationService().initialize();
 
       setState(() => _isLoading = false);
 

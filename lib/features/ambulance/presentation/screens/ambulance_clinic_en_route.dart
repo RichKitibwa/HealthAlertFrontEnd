@@ -16,6 +16,7 @@ class AmbulanceClinicEnRouteScreen extends StatelessWidget {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'To Clinic',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

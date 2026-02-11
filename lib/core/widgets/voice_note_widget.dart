@@ -256,18 +256,20 @@ class _VoiceNoteWidgetState extends State<VoiceNoteWidget> with SingleTickerProv
         const SizedBox(height: 8),
         
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: const Color(0xFFF7F9FC),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFE3E8EF)),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Recording/Playback UI
               if (_isRecording)
                 // Recording state
                 Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -292,17 +294,17 @@ class _VoiceNoteWidgetState extends State<VoiceNoteWidget> with SingleTickerProv
                         Text(
                           'Recording: ${_formatDuration(_recordingDuration)}',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: Colors.red,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     // Animated waveform line
                     SizedBox(
-                      height: 40,
+                      height: 28,
                       child: AnimatedBuilder(
                         animation: _animation,
                         builder: (context, child) {
@@ -313,100 +315,122 @@ class _VoiceNoteWidgetState extends State<VoiceNoteWidget> with SingleTickerProv
                         },
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    IconButton(
-                      icon: const Icon(Icons.pause_circle_filled, size: 48, color: Colors.red),
-                      onPressed: _stopRecording,
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 40,
+                      width: 40,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.stop_circle, size: 36, color: Colors.red),
+                        onPressed: _stopRecording,
+                      ),
                     ),
                   ],
                 )
               else if (_hasRecording && _audioFile != null)
-                // Playback state
+                // Playback state - compact row layout
                 Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        IconButton(
-                          icon: Icon(
-                            _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                            size: 48,
-                            color: const Color(0xFF0077CC),
+                        SizedBox(
+                          height: 36,
+                          width: 36,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(
+                              _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                              size: 32,
+                              color: const Color(0xFF0077CC),
+                            ),
+                            onPressed: _togglePlayback,
                           ),
-                          onPressed: _togglePlayback,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderThemeData(
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                            ),
+                            child: Slider(
+                              value: _playbackDuration.inMilliseconds.toDouble().clamp(
+                                0.0,
+                                _totalDuration.inMilliseconds > 0
+                                  ? _totalDuration.inMilliseconds.toDouble()
+                                  : 1.0,
+                              ),
+                              max: _totalDuration.inMilliseconds > 0
+                                ? _totalDuration.inMilliseconds.toDouble()
+                                : 1.0,
+                              onChanged: (value) {
+                                _seekTo(Duration(milliseconds: value.toInt()));
+                              },
+                              activeColor: const Color(0xFF0077CC),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${_formatDuration(_playbackDuration)}/${_formatDuration(_totalDuration)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF667085),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        SizedBox(
+                          height: 28,
+                          width: 28,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                            onPressed: () {
+                              setState(() {
+                                _hasRecording = false;
+                                _audioFile = null;
+                                _isPlaying = false;
+                                _playbackDuration = Duration.zero;
+                                _totalDuration = Duration.zero;
+                              });
+                              _player.stop();
+                              if (widget.onAudioRecorded != null) {
+                                widget.onAudioRecorded!(null);
+                              }
+                            },
+                          ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Slider
-                    Slider(
-                      value: _playbackDuration.inMilliseconds.toDouble().clamp(
-                        0.0,
-                        _totalDuration.inMilliseconds > 0 
-                          ? _totalDuration.inMilliseconds.toDouble() 
-                          : 1.0,
-                      ),
-                      max: _totalDuration.inMilliseconds > 0 
-                        ? _totalDuration.inMilliseconds.toDouble() 
-                        : 1.0,
-                      onChanged: (value) {
-                        _seekTo(Duration(milliseconds: value.toInt()));
-                      },
-                      activeColor: const Color(0xFF0077CC),
-                    ),
-                    // Timer
-                    Text(
-                      '${_formatDuration(_playbackDuration)} / ${_formatDuration(_totalDuration)}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF667085),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Delete button
-                    TextButton.icon(
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      label: const Text('Delete recording'),
-                      onPressed: () {
-                        setState(() {
-                          _hasRecording = false;
-                          _audioFile = null;
-                          _isPlaying = false;
-                          _playbackDuration = Duration.zero;
-                          _totalDuration = Duration.zero;
-                        });
-                        _player.stop();
-                        if (widget.onAudioRecorded != null) {
-                          widget.onAudioRecorded!(null);
-                        }
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red,
-                      ),
                     ),
                   ],
                 )
               else
-                // Initial state - microphone icon
-                Column(
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.mic,
-                        size: 48,
-                        color: Color(0xFF0077CC),
-                      ),
-                      onPressed: _startRecording,
+                // Initial state - compact mic row
+                InkWell(
+                  onTap: _startRecording,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.mic,
+                          size: 28,
+                          color: Color(0xFF0077CC),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Tap to record voice note',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF667085),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Tap to record voice note',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF667085),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
             ],
           ),

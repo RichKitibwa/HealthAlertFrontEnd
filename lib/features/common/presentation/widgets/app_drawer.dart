@@ -6,6 +6,7 @@ import '../../../auth/current_user_session.dart';
 
 class AppDrawer extends StatelessWidget {
   final VoidCallback? onDashboard;
+  final VoidCallback? onNotifications;
   final VoidCallback? onSettings;
   final VoidCallback? onReports;
   final VoidCallback? onAnalytics;
@@ -15,6 +16,7 @@ class AppDrawer extends StatelessWidget {
   const AppDrawer({
     Key? key,
     this.onDashboard,
+    this.onNotifications,
     this.onSettings,
     this.onReports,
     this.onAnalytics,
@@ -44,7 +46,15 @@ class AppDrawer extends StatelessWidget {
                   onDashboard!();
                 },
               ),
-            const Divider(),
+            if (onNotifications != null)
+              ListTile(
+                leading: const Icon(Icons.notifications_outlined, color: Color(0xFF1A1A1A)),
+                title: const Text('Notifications'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onNotifications!();
+                },
+              ),
             if (onSettings != null)
               ListTile(
                 leading: const Icon(Icons.settings, color: Color(0xFF1A1A1A)),
@@ -52,6 +62,15 @@ class AppDrawer extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(context);
                   onSettings!();
+                },
+              ),
+            if (showLearningResources && onLearningResources != null)
+              ListTile(
+                leading: const Icon(Icons.school, color: Color(0xFF1A1A1A)),
+                title: const Text('Learning Resources'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onLearningResources!();
                 },
               ),
             if (isAdmin && onReports != null)
@@ -70,15 +89,6 @@ class AppDrawer extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(context);
                   onAnalytics!();
-                },
-              ),
-            if (showLearningResources && onLearningResources != null)
-              ListTile(
-                leading: const Icon(Icons.school, color: Color(0xFF1A1A1A)),
-                title: const Text('Learning Resources'),
-                onTap: () {
-                  Navigator.pop(context);
-                  onLearningResources!();
                 },
               ),
             const Divider(),

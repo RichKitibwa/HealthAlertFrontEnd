@@ -1,7 +1,23 @@
 // Location utilities
-// GPS location capture and management
+// GPS location capture and management with proper permission handling
 
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+/// Result object for location requests that includes error context
+class LocationResult {
+  final Position? position;
+  final String? error;
+  final bool permissionDeniedForever;
+
+  LocationResult({
+    this.position,
+    this.error,
+    this.permissionDeniedForever = false,
+  });
+
+  bool get success => position != null;
+}
 
 class LocationUtils {
   // Check if location services are enabled
@@ -19,35 +35,72 @@ class LocationUtils {
     return await Geolocator.requestPermission();
   }
 
-  // Get current location
-  static Future<Position?> getCurrentLocation() async {
+  /// Request location permission using permission_handler (more reliable)
+  /// Returns true if granted.
+  static Future<bool> requestLocationPermission() async {
+    // First check current status
+    var status = await Permission.locationWhenInUse.status;
+
+    if (status.isGranted) return true;
+
+    // Request permission
+    status = await Permission.locationWhenInUse.request();
+
+    return status.isGranted;
+  }
+
+  /// Get current location with detailed error reporting.
+  /// Returns a LocationResult with either a position or an error message.
+  static Future<LocationResult> getCurrentLocationWithDetails() async {
     try {
-      // Check if location services are enabled
+      // Step 1: Check if location services (GPS) are enabled
       bool serviceEnabled = await isLocationServiceEnabled();
       if (!serviceEnabled) {
-        return null;
+        return LocationResult(
+          error: 'Location services are disabled. Please enable GPS in your device settings.',
+        );
       }
 
-      // Check permission
-      LocationPermission permission = await checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await requestPermission();
-        if (permission == LocationPermission.denied) {
-          return null;
-        }
+      // Step 2: Request permission using permission_handler
+      var permStatus = await Permission.locationWhenInUse.status;
+
+      if (permStatus.isDenied) {
+        permStatus = await Permission.locationWhenInUse.request();
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        return null;
+      if (permStatus.isDenied) {
+        return LocationResult(
+          error: 'Location permission was denied. Please grant location access to report emergencies.',
+        );
       }
 
-      // Get current position
-      return await Geolocator.getCurrentPosition(
+      if (permStatus.isPermanentlyDenied) {
+        return LocationResult(
+          error: 'Location permission is permanently denied. Please open Settings and enable location for this app.',
+          permissionDeniedForever: true,
+        );
+      }
+
+      // Step 3: Get the position
+      final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception('Location request timed out'),
       );
+
+      return LocationResult(position: position);
     } catch (e) {
-      return null;
+      return LocationResult(
+        error: 'Could not get location: ${e.toString()}',
+      );
     }
+  }
+
+  // Get current location (legacy - returns null on failure)
+  static Future<Position?> getCurrentLocation() async {
+    final result = await getCurrentLocationWithDetails();
+    return result.position;
   }
 
   // Get last known location
@@ -67,5 +120,10 @@ class LocationUtils {
     double lon2,
   ) {
     return Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
+  }
+
+  /// Open device location settings
+  static Future<bool> openLocationSettings() async {
+    return await openAppSettings();
   }
 }

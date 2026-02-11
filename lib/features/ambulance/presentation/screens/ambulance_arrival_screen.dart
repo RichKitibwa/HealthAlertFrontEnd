@@ -26,6 +26,7 @@ class AmbulanceArrivalScreen extends StatelessWidget {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Arrival',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
