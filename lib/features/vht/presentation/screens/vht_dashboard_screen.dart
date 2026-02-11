@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'vht_navigation_bar.dart';
+import 'vht_active_cases_screen.dart';
+import 'vht_case_detail_screen.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../common/presentation/screens/notifications_screen.dart';
+import '../../../common/presentation/screens/settings_screen.dart';
+import '../../../common/presentation/screens/learning_resources_screen.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+
 // VHT Dashboard Screen
 // Main dashboard for Village Health Team members with emergency reporting
 
@@ -16,18 +23,70 @@ class VHTDashboardScreen extends StatefulWidget {
 }
 
 class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
-  int _currentIndex = 0; // 0 = Home, 1 = Map, 2 = Patients
+  int _currentIndex = 0;
 
   void _onNavItemSelected(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+    if (index == _currentIndex) return;
+    // Navigation is handled by VhtNavigationBar; dashboard is always "home" (index 0)
+  }
 
-    // Handle navigation between tabs/routes as needed
-    // For now, this keeps you on the dashboard and just updates the selected tab.
-    // Later you can add:
-    // if (index == 1) Navigator.pushNamed(context, '/vht-map');
-    // if (index == 2) Navigator.pushNamed(context, '/vht-patients');
+  Color _getUrgencyColor(String? u) {
+    switch (u?.toLowerCase()) {
+      case 'critical': return Colors.red;
+      case 'high': return Colors.deepOrange;
+      case 'medium': return Colors.orange;
+      case 'low': return Colors.green;
+      default: return AppColors.textSecondary;
+    }
+  }
+
+  Color _getStatusColor(String? s) {
+    switch (s?.toLowerCase()) {
+      case 'pending': return Colors.orange;
+      case 'advised': return Colors.blue;
+      case 'ambulancerequested': return Colors.deepPurple;
+      case 'dispatched': return AppColors.clinicAccent;
+      case 'enroute': return Colors.blue;
+      case 'arrived': return Colors.green;
+      case 'intransit': return Colors.indigo;
+      default: return AppColors.textSecondary;
+    }
+  }
+
+  String _getStatusLabel(String? s) {
+    switch (s?.toLowerCase()) {
+      case 'pending': return 'Pending';
+      case 'advised': return 'Advised';
+      case 'ambulancerequested': return 'Amb. Requested';
+      case 'dispatched': return 'Dispatched';
+      case 'enroute': return 'En Route';
+      case 'arrived': return 'Arrived';
+      case 'intransit': return 'In Transit';
+      default: return s ?? 'Unknown';
+    }
+  }
+
+  String _formatTimeAgo(Timestamp? ts) {
+    if (ts == null) return '';
+    final diff = DateTime.now().difference(ts.toDate());
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    final dt = ts.toDate();
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  Stream<QuerySnapshot> _getActiveCasesStream() {
+    final uid = CurrentUserSession.uid;
+    if (uid == null || uid.isEmpty) return const Stream.empty();
+
+    return FirebaseFirestore.instance
+        .collection('emergencyCases')
+        .where('vhtId', isEqualTo: uid)
+        .where('status', whereIn: ['pending', 'advised', 'ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit'])
+        .orderBy('createdAt', descending: true)
+        .limit(2)
+        .snapshots();
   }
 
   @override
@@ -37,305 +96,364 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Dashboard',
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/login',
-              (route) => false,
-            );
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
           }
         },
-        onDashboard: () {
-          // Already on dashboard, do nothing or refresh
-        },
+        onDashboard: () {},
         onSettings: () {
-          // TODO: Navigate to settings screen
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
         },
         onLearningResources: () {
-          // TODO: Navigate to learning resources screen (offline-first)
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
         },
       ),
       endDrawer: AppDrawer(
-        onDashboard: () {
-          // Already on dashboard
+        onDashboard: () {},
+        onNotifications: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
         },
         onSettings: () {
-          // TODO: Navigate to settings screen
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
         },
         onLearningResources: () {
-          // TODO: Navigate to learning resources screen
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
         },
         onLogout: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/login',
-              (route) => false,
-            );
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
           }
         },
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Column(
-              children: [
-                // Welcome message below navbar
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 12.0,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                    ),
+        child: Column(
+          children: [
+            // Welcome message
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                // Scrollable main content
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 12.0,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Status card: Network / Battery
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.border),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha(10),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
+              ),
+            ),
+            // Scrollable main content
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Report Emergency primary action
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/create-emergency');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.emergency, color: Colors.white, size: 24),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Report Emergency',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 0.2, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Active Cases Section
+                      _buildActiveCasesSection(),
+                      const SizedBox(height: 20),
+
+                      // Quick Actions header
+                      const Text(
+                        'Quick Actions',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // View Case History (completed/closed only)
+                      _buildActionCard(
+                        icon: Icons.description_outlined,
+                        iconColor: AppColors.clinicAccent,
+                        title: 'View Case History',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const VhtActiveCasesScreen(initialFilter: 'completed'),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Bottom Nav Bar
+            VhtNavigationBar(
+              currentIndex: _currentIndex,
+              onItemSelected: _onNavItemSelected,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 0,
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: AppColors.border.withValues(alpha: 0.8)),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: iconColor),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  /// Active cases section showing up to 2 cases + "View All" button
+  Widget _buildActiveCasesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Active Cases',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const VhtActiveCasesScreen(initialFilter: 'active'),
+                  ),
+                );
+              },
+              child: Text(
+                'View All',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.vhtAccent),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        StreamBuilder<QuerySnapshot>(
+          stream: _getActiveCasesStream(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Container(
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: const Center(
+                  child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.red.withAlpha(40)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.withAlpha(150), size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Could not load active cases.',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final docs = snapshot.data?.docs ?? [];
+
+            if (docs.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle_outline, color: Colors.green.withAlpha(150), size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'No active cases right now.',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Column(
+              children: docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final caseId = doc.id;
+                final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
+                final urgency = data['urgencyLevel'] as String? ?? 'medium';
+                final status = data['status'] as String? ?? 'pending';
+                final patientId = data['patientId'] as String? ?? '';
+                final patientFirstName = data['patientFirstName'] as String? ?? '';
+                final patientLastName = data['patientLastName'] as String? ?? '';
+                final patientName = '$patientFirstName $patientLastName'.trim();
+                final createdAt = data['createdAt'] as Timestamp?;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => VhtCaseDetailScreen(caseId: caseId)),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: status == 'pending' ? _getUrgencyColor(urgency).withAlpha(50) : AppColors.border,
+                        ),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 8, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // Left: type + patient
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    Icon(
-                                      Icons.wifi,
-                                      size: 18,
-                                      color: AppColors.vhtAccent,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      'Network: Online',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: const [
-                                    Icon(
-                                      Icons.battery_full,
-                                      size: 18,
-                                      color: Colors.green,
-                                    ),
-                                    SizedBox(width: 10),
                                     Text(
-                                      'Battery: Good',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textSecondary,
+                                      emergencyType,
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: _getUrgencyColor(urgency).withAlpha(20),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        urgency.toUpperCase(),
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 9, color: _getUrgencyColor(urgency)),
                                       ),
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  patientName.isNotEmpty ? patientName : (patientId.isNotEmpty ? 'ID: $patientId' : 'No Patient ID'),
+                                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                ),
+                                if (createdAt != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _formatTimeAgo(createdAt),
+                                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(150)),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
-                          const SizedBox(height: 24),
-
-                          // Report Emergency primary action
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/create-emergency',
-                                );
-                              },
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.vhtAccent,
-                                side: BorderSide(
-                                  color: AppColors.vhtAccent,
-                                  width: 2,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: AppColors.vhtAccent,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  const Text(
-                                    'Report Emergency',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          // Right: status badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(status).withAlpha(18),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: _getStatusColor(status).withAlpha(40)),
+                            ),
+                            child: Text(
+                              _getStatusLabel(status),
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _getStatusColor(status)),
                             ),
                           ),
-                          const SizedBox(height: 24),
-
-                          // Quick Actions header
-                          const Text(
-                            'Quick Actions',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // 📄 View Case History
-                          Card(
-                            elevation: 0,
-                            color: AppColors.surface,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              side: BorderSide(
-                                color: AppColors.border.withValues(alpha: 0.8),
-                              ),
-                            ),
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.description_outlined,
-                                color: AppColors.clinicAccent,
-                              ),
-                              title: Text(
-                                'View Case History',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                              ),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                // TODO: Navigate to case history
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // 📝 Send Follow-up Update
-                          Card(
-                            elevation: 0,
-                            color: AppColors.surface,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              side: BorderSide(
-                                color: AppColors.border.withValues(alpha: 0.8),
-                              ),
-                            ),
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.edit_note_outlined,
-                                color: AppColors.vhtAccent,
-                              ),
-                              title: Text(
-                                'Send Follow-up Update',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                              ),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                // TODO: Navigate to follow-up update
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // ⚙️ Settings
-                          Card(
-                            elevation: 0,
-                            color: AppColors.surface,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              side: BorderSide(
-                                color: AppColors.border.withValues(alpha: 0.8),
-                              ),
-                            ),
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.settings_outlined,
-                                color: AppColors.adminAccent,
-                              ),
-                              title: Text(
-                                'Settings',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                              ),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                // TODO: Navigate to settings
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+                          const SizedBox(width: 4),
+                          Icon(Icons.chevron_right, size: 20, color: AppColors.textSecondary),
                         ],
                       ),
                     ),
                   ),
-                ),
-
-                // Fixed Bottom Nav Bar (Home / Map / Patients)
-                VhtNavigationBar(
-                  currentIndex: _currentIndex,
-                  onItemSelected: _onNavItemSelected,
-                ),
-              ],
+                );
+              }).toList(),
             );
           },
         ),
-      ),
+      ],
     );
   }
 }

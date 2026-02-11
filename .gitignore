@@ -52,3 +52,8 @@ app.*.map.json
 .env
 .env.local
 .env.*.local
+
+# Release packages and APK files
+HealthApp-Release-Package*/
+*.zip
+APK_INSTALLATION_INSTRUCTIONS.md

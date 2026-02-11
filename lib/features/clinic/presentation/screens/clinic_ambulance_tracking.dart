@@ -18,6 +18,7 @@ class ClinicAmbulanceTrackingScreen extends StatelessWidget {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Ambulance Tracking',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

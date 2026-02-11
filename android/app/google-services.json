@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:439985340560:android:564a668e45d24e0cd7d815",
+        "android_client_info": {
+          "package_name": "com.dlab.healthapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCr4DH7y5CVP22oao7oN1V5Plc3Owhikt0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:439985340560:android:2662fb3b59b4d342d7d815",
         "android_client_info": {
           "package_name": "com.example.health_app_frontend"

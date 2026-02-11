@@ -19,6 +19,7 @@ class ClinicAssignStaffScreen extends StatelessWidget {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Assign Staff',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

@@ -84,6 +84,7 @@ class _VhtOnboardPatientScreenState extends State<VhtOnboardPatientScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Onboard Patient',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

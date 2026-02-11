@@ -1,27 +1,38 @@
 import 'package:flutter/material.dart';
+import '../../../common/presentation/widgets/notification_bell_with_badge.dart';
+import '../../../common/presentation/screens/notifications_screen.dart';
+import '../../../common/presentation/screens/learning_resources_screen.dart';
+import '../../../common/presentation/screens/map_screen.dart';
 
-/// Global VHT bottom navigation bar that you can import on any VHT page.
-///
-/// Usage:
-///
-/// Scaffold(
-///   body: ...,
-///   bottomNavigationBar: VhtNavigationBar(
-///     currentIndex: 0, // 0 = Home, 1 = Map, 2 = Patients
-///     onItemSelected: (index) {
-///       // handle navigation based on index
-///     },
-///   ),
-/// );
 class VhtNavigationBar extends StatelessWidget {
   final int currentIndex;
-  final ValueChanged<int> onItemSelected;
+  final ValueChanged<int>? onItemSelected;
 
   const VhtNavigationBar({
     super.key,
     required this.currentIndex,
-    required this.onItemSelected,
+    this.onItemSelected,
   });
+
+  void _handleTabTap(BuildContext context, int index) {
+    if (index == currentIndex) return;
+    onItemSelected?.call(index);
+
+    switch (index) {
+      case 0:
+        Navigator.pushNamedAndRemoveUntil(context, '/vht-dashboard', (r) => false);
+        break;
+      case 1:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        break;
+      case 2:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
+        break;
+      case 3:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen(title: 'Area Map')));
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,27 +43,32 @@ class VhtNavigationBar extends StatelessWidget {
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
-        onTap: onItemSelected,
+        onTap: (index) => _handleTabTap(context, index),
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF0077CC),
         unselectedItemColor: const Color(0xFF667085),
         showUnselectedLabels: true,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
+            icon: NotificationBellWithBadge(isSelected: currentIndex == 1),
+            activeIcon: NotificationBellWithBadge(isSelected: true),
+            label: 'Notifications',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book_outlined),
+            activeIcon: Icon(Icons.menu_book),
+            label: 'Learn',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.map_outlined),
             activeIcon: Icon(Icons.map),
             label: 'Map',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            activeIcon: Icon(Icons.people),
-            label: 'Patients',
           ),
         ],
       ),

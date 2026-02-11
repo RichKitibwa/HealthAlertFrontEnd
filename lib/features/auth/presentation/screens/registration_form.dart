@@ -98,8 +98,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
               if (value == null || value.isEmpty) {
                 return 'Please enter your phone number';
               }
-              if (!value.startsWith('+')) {
-                return 'Phone number must start with + and country code';
+              final cleaned = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+              if (cleaned.length < 9) {
+                return 'Phone number must be at least 9 digits';
               }
               return null;
             },

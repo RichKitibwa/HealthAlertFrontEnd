@@ -59,6 +59,7 @@ class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Set Location',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

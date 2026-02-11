@@ -124,6 +124,7 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Dispatch Confirmation',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

@@ -37,6 +37,10 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
   /// Optional callback for navigation to learning resources (VHT and Clinician only)
   final VoidCallback? onLearningResources;
 
+  /// Optional page title to display instead of the default role-based title.
+  /// If null, defaults to 'HealthAlert'.
+  final String? pageTitle;
+
   const TopNavigationBar({
     super.key,
     required this.role,
@@ -49,6 +53,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
     this.onReports,
     this.onAnalytics,
     this.onLearningResources,
+    this.pageTitle,
   });
 
   @override
@@ -73,23 +78,15 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       titleSpacing: showBackButton ? 0 : 16,
-      title: Row(
-        children: [
-          _buildAvatar(roleLabel),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              '$roleLabel Dashboard',
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+      title: Text(
+        pageTitle ?? 'HealthAlert',
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w700,
+          fontSize: 18,
+          color: Colors.white,
+        ),
       ),
       actions: [
         // Hamburger menu button - opens drawer
@@ -165,26 +162,5 @@ String _roleDisplayName(String role) {
 /// Returns a background color based on the role.
 
 Color _backgroundColorForRole(String role) {
-  final normalized = role.trim().toLowerCase();
-  switch (normalized) {
-    case 'vht':
-    case 'village health team':
-      // Teal / green for VHT
-      return const Color(0xFF0F766E);
-    case 'ambulance':
-    case 'driver':
-      // Red for ambulance / emergency
-      return const Color(0xFFB91C1C);
-    case 'clinic':
-    case 'clinician':
-      // Blue for clinic
-      return const Color(0xFF1D4ED8);
-    case 'admin':
-    case 'administrator':
-      // Purple for admin / oversight
-      return const Color(0xFF7C3AED);
-    default:
-      // Neutral teal-ish default
-      return const Color(0xFF0F766E);
-  }
+  return const Color(0xFF0F766E); // Uniform teal-green for all roles
 }

@@ -1,4 +1,4 @@
-package com.example.health_app_frontend
+package com.dlab.healthapp
 
 import io.flutter.embedding.android.FlutterActivity
 

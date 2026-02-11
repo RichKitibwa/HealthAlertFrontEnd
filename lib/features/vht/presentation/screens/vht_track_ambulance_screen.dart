@@ -15,6 +15,7 @@ class TrackAmbulanceScreen extends StatelessWidget {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Track Ambulance',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

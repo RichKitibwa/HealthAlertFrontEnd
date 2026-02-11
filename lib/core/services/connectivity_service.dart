@@ -1,30 +1,48 @@
 // Network connectivity monitoring service
 // Monitors internet connection and notifies app of changes
 
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 class ConnectivityService {
-  // Dependencies
-  // TODO: Initialize connectivity package
-  // TODO: Initialize stream controller for status updates
-  
-  // Properties
-  // TODO: Current connectivity status (online/offline)
-  // TODO: Connection quality indicator
-  // TODO: Last known connection time
-  
-  // Methods
-  // TODO: Initialize connectivity monitoring
-  // TODO: Get current connectivity status
-  // TODO: Stream connectivity changes
-  // TODO: Check actual internet connectivity (not just WiFi/mobile)
-  // TODO: Dispose resources
-  
-  // Callbacks
-  // TODO: Callback when connection is established
-  // TODO: Callback when connection is lost
-  // TODO: Trigger sync when coming online
+  static final ConnectivityService _instance = ConnectivityService._internal();
+  factory ConnectivityService() => _instance;
+  ConnectivityService._internal();
+
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
+
+  final StreamController<bool> _onlineController = StreamController<bool>.broadcast();
+  Stream<bool> get onConnectivityChanged => _onlineController.stream;
+
+  bool _isOnline = true;
+  bool get isOnline => _isOnline;
+
+  /// Initialize connectivity monitoring
+  Future<void> initialize() async {
+    // Check current status
+    final result = await _connectivity.checkConnectivity();
+    _isOnline = !result.contains(ConnectivityResult.none);
+
+    // Listen for changes
+    _subscription = _connectivity.onConnectivityChanged.listen((results) {
+      final wasOnline = _isOnline;
+      _isOnline = !results.contains(ConnectivityResult.none);
+      if (wasOnline != _isOnline) {
+        _onlineController.add(_isOnline);
+      }
+    });
+  }
+
+  /// Check if we currently have network connectivity
+  Future<bool> checkConnectivity() async {
+    final result = await _connectivity.checkConnectivity();
+    _isOnline = !result.contains(ConnectivityResult.none);
+    return _isOnline;
+  }
+
+  void dispose() {
+    _subscription?.cancel();
+    _onlineController.close();
+  }
 }
-
-
-
-
-

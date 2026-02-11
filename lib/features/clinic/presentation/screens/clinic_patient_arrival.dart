@@ -17,6 +17,7 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
+        pageTitle: 'Patient Arrival',
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);

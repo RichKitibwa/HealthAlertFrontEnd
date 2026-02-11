@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'ambulance_navigation_bar.dart';
 import 'ambulance_all_incoming_requests.dart';
+import 'ambulance_active_cases_screen.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
+import '../../../common/presentation/screens/notifications_screen.dart';
+import '../../../common/presentation/screens/settings_screen.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
@@ -19,13 +22,8 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
   int _currentIndex = 0; // 0 = Home, 1 = Map
 
   void _onNavItemSelected(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    // TODO: wire up navigation as needed
-    // Example:
-    // if (index == 0) Navigator.pushNamed(context, '/ambulance-dashboard');
-    // if (index == 1) Navigator.pushNamed(context, '/ambulance-map');
+    if (index == _currentIndex) return;
+    // Navigation is handled by AmbulanceNavigationBar; dashboard is always "home" (index 0)
   }
 
   @override
@@ -37,6 +35,7 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         showBackButton: false,
+        pageTitle: 'Dashboard',
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -51,15 +50,18 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
           // Already on dashboard
         },
         onSettings: () {
-          // TODO: Navigate to settings screen
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
         },
       ),
       endDrawer: AppDrawer(
         onDashboard: () {
           // Already on dashboard
         },
+        onNotifications: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        },
         onSettings: () {
-          // TODO: Navigate to settings screen
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
         },
         onLogout: () async {
           await LogoutUtils.logout();
@@ -155,7 +157,7 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                           const SizedBox(height: 14),
                           SizedBox(
                             width: double.infinity,
-                            child: ElevatedButton(
+                            child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.push(
                                   context,
@@ -165,6 +167,15 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                                   ),
                                 );
                               },
+                              icon: const Icon(Icons.local_shipping_rounded, size: 20),
+                              label: const Text(
+                                'View Dispatch',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.ambulanceAccent,
                                 padding: const EdgeInsets.symmetric(
@@ -175,14 +186,6 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                                 ),
                                 elevation: 4,
                               ),
-                              child: const Text(
-                                'View Dispatch',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
                             ),
                           ),
                         ],
@@ -191,60 +194,44 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Active Cases card
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        border: Border.all(color: AppColors.border),
-                        borderRadius: BorderRadius.circular(14),
+                    // Active Cases
+                    Text(
+                      'Active Cases',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Active Cases',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AmbulanceActiveCasesScreen(),
                             ),
+                          );
+                        },
+                        icon: const Icon(Icons.assignment_rounded, size: 20),
+                        label: Text(
+                          'View Active Cases',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
                           ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                // TODO: Navigate to active cases screen
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Active cases feature coming soon',
-                                    ),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.surface,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  side: BorderSide(color: AppColors.border),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: Text(
-                                'View Active Cases',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: AppColors.border),
                           ),
-                        ],
+                          elevation: 0,
+                        ),
                       ),
                     ),
 

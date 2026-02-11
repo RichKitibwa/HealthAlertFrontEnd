@@ -1,37 +1,34 @@
 // Emergency case status enumeration
 // Defines all possible states of an emergency case
-
 enum CaseStatus {
-  // Case created, awaiting dispatch
-  // TODO: Initial status when VHT creates case
+  // Case created by VHT, awaiting clinician review
   pending,
+
+  // Clinician sent advice to VHT (no ambulance needed)
+  advised,
+
+  // Clinician requested ambulance dispatch (admin assigns)
+  ambulanceRequested,
   
-  // Ambulance dispatched
-  // TODO: Ambulance has been assigned to case
+  // Admin dispatched an ambulance
   dispatched,
   
   // Ambulance en route to patient
-  // TODO: Ambulance is traveling to pickup location
   enRoute,
   
   // Ambulance arrived at patient location
-  // TODO: Ambulance has reached the patient
   arrived,
   
   // Patient picked up, heading to clinic
-  // TODO: Patient is in ambulance, traveling to clinic
   inTransit,
   
   // Patient delivered to clinic
-  // TODO: Patient has been handed over to clinic
   delivered,
   
   // Case completed successfully
-  // TODO: All procedures completed, case closed
   completed,
   
   // Case cancelled
-  // TODO: Case was cancelled (with reason)
   cancelled,
 }
 
@@ -40,7 +37,11 @@ extension CaseStatusExtension on CaseStatus {
   String get displayName {
     switch (this) {
       case CaseStatus.pending:
-        return 'Pending';
+        return 'Pending Review';
+      case CaseStatus.advised:
+        return 'Advised';
+      case CaseStatus.ambulanceRequested:
+        return 'Ambulance Requested';
       case CaseStatus.dispatched:
         return 'Dispatched';
       case CaseStatus.enRoute:
@@ -57,11 +58,15 @@ extension CaseStatusExtension on CaseStatus {
         return 'Cancelled';
     }
   }
-  
+
   String get value {
     switch (this) {
       case CaseStatus.pending:
         return 'pending';
+      case CaseStatus.advised:
+        return 'advised';
+      case CaseStatus.ambulanceRequested:
+        return 'ambulanceRequested';
       case CaseStatus.dispatched:
         return 'dispatched';
       case CaseStatus.enRoute:
@@ -78,11 +83,16 @@ extension CaseStatusExtension on CaseStatus {
         return 'cancelled';
     }
   }
-  
+
   static CaseStatus fromString(String value) {
     switch (value.toLowerCase()) {
       case 'pending':
         return CaseStatus.pending;
+      case 'advised':
+        return CaseStatus.advised;
+      case 'ambulancerequested':
+      case 'ambulance_requested':
+        return CaseStatus.ambulanceRequested;
       case 'dispatched':
         return CaseStatus.dispatched;
       case 'enroute':
@@ -103,18 +113,22 @@ extension CaseStatusExtension on CaseStatus {
         return CaseStatus.pending;
     }
   }
-  
+
   bool get isActive {
     return this != CaseStatus.completed && this != CaseStatus.cancelled;
   }
-  
+
   bool get isFinal {
     return this == CaseStatus.completed || this == CaseStatus.cancelled;
   }
-  
+
   List<CaseStatus> get nextPossibleStatuses {
     switch (this) {
       case CaseStatus.pending:
+        return [CaseStatus.advised, CaseStatus.ambulanceRequested, CaseStatus.cancelled];
+      case CaseStatus.advised:
+        return [CaseStatus.completed, CaseStatus.cancelled];
+      case CaseStatus.ambulanceRequested:
         return [CaseStatus.dispatched, CaseStatus.cancelled];
       case CaseStatus.dispatched:
         return [CaseStatus.enRoute, CaseStatus.cancelled];

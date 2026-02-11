@@ -60,10 +60,18 @@ dependencies:
   audioplayers: ^6.0.0
   just_audio: ^0.9.40
   permission_handler: ^11.3.1
+  url_launcher: ^6.3.2
+  syncfusion_flutter_pdfviewer: ^32.2.4
+  latlong2: ^0.9.1
+  flutter_local_notifications: ^18.0.1
+  pdf: ^3.11.1
+  printing: ^5.13.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.3
+  image: ^4.5.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -84,6 +92,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/documents/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -115,3 +124,12 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# App icon (green logo to match welcome/register screen)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/healthcare_logo_green.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/healthcare_logo_green.png"
+  remove_alpha_ios: true
