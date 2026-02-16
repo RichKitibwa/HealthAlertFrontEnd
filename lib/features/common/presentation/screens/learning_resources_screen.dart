@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../../../core/theme/app_colors.dart';
 
+import '../../../auth/current_user_session.dart';
+import '../../../vht/presentation/screens/vht_navigation_bar.dart';
+import '../../../ambulance/presentation/screens/ambulance_navigation_bar.dart';
+import '../../../clinic/presentation/screens/clinic_navigation_bar.dart';
+import '../../../admin/presentation/screens/admin_navigation_bar.dart';
+
 class _LearningResource {
   final String title;
   final String description;
@@ -27,6 +33,36 @@ class LearningResourcesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget? bottomNav;
+
+    switch (CurrentUserSession.role) {
+      case 'VHT':
+        bottomNav = VhtNavigationBar(
+          currentIndex: 2,
+          onItemSelected: (index) {},
+        );
+        break;
+      case 'Ambulance':
+        bottomNav = AmbulanceNavigationBar(
+          currentIndex: 2,
+          onItemSelected: (index) {},
+        );
+        break;
+      case 'Clinic':
+        bottomNav = ClinicNavigationBar(
+          currentIndex: 2,
+          onItemSelected: (index) {},
+        );
+        break;
+      case 'Admin':
+        bottomNav = AdminNavigationBar(
+          currentIndex: 2,
+          onItemSelected: (index) {},
+        );
+        break;
+      default:
+        bottomNav = null;
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -39,6 +75,7 @@ class LearningResourcesScreen extends StatelessWidget {
         foregroundColor: AppColors.textPrimary,
         surfaceTintColor: Colors.transparent,
       ),
+      bottomNavigationBar: bottomNav,
       body: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: _resources.length,
@@ -128,10 +165,7 @@ class _PdfViewerScreen extends StatefulWidget {
   final String title;
   final String assetPath;
 
-  const _PdfViewerScreen({
-    required this.title,
-    required this.assetPath,
-  });
+  const _PdfViewerScreen({required this.title, required this.assetPath});
 
   @override
   State<_PdfViewerScreen> createState() => _PdfViewerScreenState();
@@ -194,7 +228,9 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Could not load PDF: ${details.description}'),
+                      content: Text(
+                        'Could not load PDF: ${details.description}',
+                      ),
                       backgroundColor: AppColors.error,
                       behavior: SnackBarBehavior.floating,
                     ),

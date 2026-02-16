@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../ambulance/presentation/screens/ambulance_navigation_bar.dart';
 
 /// Robust navigation map for ambulance drivers.
 /// Shows current location, destination, route polyline, and navigation info.
@@ -134,10 +135,7 @@ class _MapScreenState extends State<MapScreen> {
   double? get _distanceKm {
     final dest = _destinationPoint;
     if (_currentLocation == null || dest == null) return null;
-    final meters = _distanceCalculator(
-      _currentLocation!,
-      dest,
-    );
+    final meters = _distanceCalculator(_currentLocation!, dest);
     return meters / 1000;
   }
 
@@ -156,11 +154,7 @@ class _MapScreenState extends State<MapScreen> {
           point: _currentLocation!,
           width: 48,
           height: 48,
-          child: const Icon(
-            Icons.local_shipping,
-            color: Colors.blue,
-            size: 40,
-          ),
+          child: const Icon(Icons.local_shipping, color: Colors.blue, size: 40),
         ),
       );
     }
@@ -212,7 +206,10 @@ class _MapScreenState extends State<MapScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open Google Maps: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Could not open Google Maps: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -239,7 +236,6 @@ class _MapScreenState extends State<MapScreen> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: AppColors.vhtAccent,
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -355,6 +351,10 @@ class _MapScreenState extends State<MapScreen> {
           color: _currentLocation != null ? Colors.blue : Colors.grey,
         ),
       ),
+      bottomNavigationBar: AmbulanceNavigationBar(
+        currentIndex: 1,
+        onItemSelected: (index) {},
+      ),
     );
   }
 
@@ -365,9 +365,7 @@ class _MapScreenState extends State<MapScreen> {
 
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -394,10 +392,7 @@ class _MapScreenState extends State<MapScreen> {
                       children: [
                         const Text(
                           'Destination',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(fontSize: 11, color: Colors.grey),
                         ),
                         Text(
                           widget.destinationLabel!,
@@ -480,17 +475,11 @@ class _InfoChip extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
             ),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ],
         ),

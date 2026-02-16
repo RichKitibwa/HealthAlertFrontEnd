@@ -3,6 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/current_user_session.dart';
 
+import '../../../vht/presentation/screens/vht_navigation_bar.dart';
+import '../../../ambulance/presentation/screens/ambulance_navigation_bar.dart';
+import '../../../clinic/presentation/screens/clinic_navigation_bar.dart';
+import '../../../admin/presentation/screens/admin_navigation_bar.dart';
+
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -19,9 +24,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           .update({'read': true});
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to mark as read: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to mark as read: $e')));
       }
     }
   }
@@ -104,10 +109,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           backgroundColor: AppColors.surface,
           foregroundColor: AppColors.textPrimary,
         ),
-        body: const Center(
-          child: Text('Please sign in to view notifications'),
-        ),
+        body: const Center(child: Text('Please sign in to view notifications')),
       );
+    }
+
+    Widget? bottomNav;
+
+    switch (CurrentUserSession.role) {
+      case 'VHT':
+        bottomNav = VhtNavigationBar(
+          currentIndex: 2,
+          onItemSelected: (index) {},
+        );
+        break;
+      case 'Ambulance':
+        bottomNav = AmbulanceNavigationBar(
+          currentIndex: 2,
+          onItemSelected: (index) {},
+        );
+        break;
+      case 'Clinic':
+        bottomNav = ClinicNavigationBar(
+          currentIndex: 2,
+          onItemSelected: (index) {},
+        );
+        break;
+      case 'Admin':
+        bottomNav = AdminNavigationBar(
+          currentIndex: 2,
+          onItemSelected: (index) {},
+        );
+        break;
+      default:
+        bottomNav = null;
     }
 
     return Scaffold(
@@ -134,6 +168,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: bottomNav,
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('notifications')

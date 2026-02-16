@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'ambulance_en_route_screen.dart';
+import 'ambulance_navigation_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/current_user_session.dart';
 
@@ -17,7 +18,8 @@ class AmbulanceActiveCasesScreen extends StatefulWidget {
       _AmbulanceActiveCasesScreenState();
 }
 
-class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen> {
+class _AmbulanceActiveCasesScreenState
+    extends State<AmbulanceActiveCasesScreen> {
   static const List<String> _activeStatuses = [
     'dispatched',
     'enRoute',
@@ -50,7 +52,8 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
     final q = _searchQuery.toLowerCase();
     final firstName = (data['patientFirstName'] as String? ?? '').toLowerCase();
     final lastName = (data['patientLastName'] as String? ?? '').toLowerCase();
-    final emergencyType = (data['emergencyType'] as String? ?? '').toLowerCase();
+    final emergencyType = (data['emergencyType'] as String? ?? '')
+        .toLowerCase();
     return firstName.contains(q) ||
         lastName.contains(q) ||
         emergencyType.contains(q);
@@ -58,19 +61,27 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
 
   IconData _getEmergencyIcon(String? type) {
     switch (type?.toLowerCase()) {
-      case 'birth': return Icons.pregnant_woman_rounded;
-      case 'trauma': return Icons.local_hospital_rounded;
-      case 'infection': return Icons.coronavirus_rounded;
-      default: return Icons.warning_amber_rounded;
+      case 'birth':
+        return Icons.pregnant_woman_rounded;
+      case 'trauma':
+        return Icons.local_hospital_rounded;
+      case 'infection':
+        return Icons.coronavirus_rounded;
+      default:
+        return Icons.warning_amber_rounded;
     }
   }
 
   Color _getEmergencyIconColor(String? type) {
     switch (type?.toLowerCase()) {
-      case 'birth': return Colors.pink;
-      case 'trauma': return Colors.red;
-      case 'infection': return Colors.orange;
-      default: return Colors.amber;
+      case 'birth':
+        return Colors.pink;
+      case 'trauma':
+        return Colors.red;
+      case 'infection':
+        return Colors.orange;
+      default:
+        return Colors.amber;
     }
   }
 
@@ -149,6 +160,12 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
           onPressed: () => Navigator.pop(context),
         ),
       ),
+      bottomNavigationBar: AmbulanceNavigationBar(
+        currentIndex: 0,
+        onItemSelected: (index) {
+          // TODO: Wire up navigation if needed
+        },
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -175,8 +192,10 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
                       : null,
                   filled: true,
                   fillColor: AppColors.surface,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: AppColors.border),
@@ -193,7 +212,8 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
                     ),
                   ),
                 ),
-                onChanged: (value) => setState(() => _searchQuery = value.trim()),
+                onChanged: (value) =>
+                    setState(() => _searchQuery = value.trim()),
               ),
             ),
 
@@ -203,9 +223,7 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
                 stream: _getCasesStream(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   if (snapshot.hasError) {
@@ -245,14 +263,12 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
                   }
 
                   final allDocs = snapshot.data?.docs ?? [];
-                  final filteredDocs = allDocs
-                      .where((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        final status = data['status'] as String? ?? '';
-                        if (!_activeStatuses.contains(status)) return false;
-                        return _matchesSearch(data);
-                      })
-                      .toList();
+                  final filteredDocs = allDocs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final status = data['status'] as String? ?? '';
+                    if (!_activeStatuses.contains(status)) return false;
+                    return _matchesSearch(data);
+                  }).toList();
 
                   // Client-side sort by createdAt descending
                   filteredDocs.sort((a, b) {
@@ -343,9 +359,7 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: _getUrgencyColor(urgency).withAlpha(50),
-          ),
+          border: Border.all(color: _getUrgencyColor(urgency).withAlpha(50)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withAlpha(6),
@@ -377,7 +391,10 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(status).withAlpha(18),
                     borderRadius: BorderRadius.circular(20),
@@ -433,10 +450,7 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
             if (vhtName.isNotEmpty)
               Text(
                 'VHT: $vhtName',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 overflow: TextOverflow.ellipsis,
               ),
             if (vhtName.isNotEmpty) const SizedBox(height: 2),
@@ -445,10 +459,7 @@ class _AmbulanceActiveCasesScreenState extends State<AmbulanceActiveCasesScreen>
             if (clinicName.isNotEmpty)
               Text(
                 'Clinic: $clinicName',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 overflow: TextOverflow.ellipsis,
               ),
             const SizedBox(height: 4),
