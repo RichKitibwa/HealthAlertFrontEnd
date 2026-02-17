@@ -8,6 +8,7 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/back_handling_pop_scope.dart';
 
 class AdminManageUsersScreen extends StatefulWidget {
   const AdminManageUsersScreen({super.key});
@@ -63,13 +64,21 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackHandlingPopScope(
+      dashboardRoute: '/admin-dashboard',
+      child: Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         pageTitle: 'Manage Users',
         showBackButton: true,
-        onBack: () => Navigator.pop(context),
+        onBack: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+          }
+        },
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -88,12 +97,8 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
       endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/admin-dashboard'),
       backgroundColor: AppColors.background,
       bottomNavigationBar: AdminNavigationBar(
-        currentIndex: 0,
-        onItemSelected: (index) {
-          if (index == 0) {
-            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
-          }
-        },
+        currentIndex: 3, // Admin nav: 0=Home, 1=Notifications, 2=Analytics, 3=Users
+        // Navigation is handled by AdminNavigationBar itself
       ),
       body: SafeArea(
         child: Column(
@@ -294,6 +299,7 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

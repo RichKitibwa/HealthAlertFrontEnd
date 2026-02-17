@@ -4,23 +4,44 @@ import '../../features/common/presentation/screens/notifications_screen.dart';
 import '../../features/common/presentation/screens/learning_resources_screen.dart';
 import '../../features/common/presentation/widgets/app_drawer.dart';
 import '../../features/auth/current_user_session.dart';
+import '../../features/admin/presentation/screens/admin_case_analytics.dart';
+import '../../features/admin/utils/admin_reports_export.dart';
 import 'logout_utils.dart';
 
 /// Builds a standard AppDrawer with properly wired callbacks for Settings,
-/// Notifications, Learning Resources, and Logout. Use this from any screen
-/// that has the hamburger menu / endDrawer.
-///
-/// [context] - the BuildContext of the screen
-/// [dashboardRoute] - the named route for the current user's dashboard
-///   (e.g. '/vht-dashboard', '/clinic-dashboard', etc.)
-/// [onReports] - optional admin-only reports callback
-/// [onAnalytics] - optional admin-only analytics callback
+/// Notifications, Learning Resources, and Logout. U
+
 AppDrawer buildStandardDrawer({
   required BuildContext context,
   required String dashboardRoute,
   VoidCallback? onReports,
   VoidCallback? onAnalytics,
 }) {
+  final role = (CurrentUserSession.role ?? '').toLowerCase();
+  final isAdmin = role == 'admin';
+
+  // Default handlers for admin Reports and Analytics
+  VoidCallback? reportsHandler = onReports;
+  VoidCallback? analyticsHandler = onAnalytics;
+
+  if (isAdmin) {
+    // If admin and no custom handler provided, use default navigation
+    if (analyticsHandler == null) {
+      analyticsHandler = () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminCaseAnalyticsScreen()),
+        );
+      };
+    }
+    // Reports: same as Export Reports (PDF export)
+    if (reportsHandler == null) {
+      reportsHandler = () {
+        exportReportsPdf(context);
+      };
+    }
+  }
+
   return AppDrawer(
     onDashboard: () {
       Navigator.pushNamedAndRemoveUntil(context, dashboardRoute, (r) => false);
@@ -43,12 +64,12 @@ AppDrawer buildStandardDrawer({
         MaterialPageRoute(builder: (_) => const LearningResourcesScreen()),
       );
     },
-    onReports: onReports,
-    onAnalytics: onAnalytics,
+    onReports: reportsHandler,
+    onAnalytics: analyticsHandler,
     onLogout: () async {
       await LogoutUtils.logout();
       if (context.mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       }
     },
   );

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 
 import 'admin_navigation_bar.dart';
 import 'admin_all_cases_list_screen.dart';
@@ -12,90 +9,31 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/back_handling_pop_scope.dart';
+import '../../utils/admin_reports_export.dart';
 
 class AdminCaseAnalyticsScreen extends StatelessWidget {
   final String? caseId;
 
   const AdminCaseAnalyticsScreen({super.key, this.caseId});
 
-  Future<void> _exportReportsPdf(BuildContext context) async {
-    try {
-      final casesSnapshot = await FirebaseFirestore.instance.collection('emergencyCases').get();
-      final cases = casesSnapshot.docs;
-      
-      final totalCases = cases.length;
-      final activeCases = cases.where((d) {
-        final s = (d.data()['status'] as String?) ?? '';
-        return !['completed', 'cancelled'].contains(s);
-      }).length;
-      final completedCases = cases.where((d) => (d.data()['status'] as String?) == 'completed').length;
-      
-      final pdf = pw.Document();
-      pdf.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat.a4,
-          build: (pw.Context context) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text('HealthAlert - Case Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 8),
-                pw.Text('Generated: ${DateTime.now().toString().substring(0, 16)}', style: const pw.TextStyle(fontSize: 12)),
-                pw.SizedBox(height: 20),
-                pw.Text('Summary', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 8),
-                pw.Text('Total Cases: $totalCases'),
-                pw.Text('Active Cases: $activeCases'),
-                pw.Text('Completed Cases: $completedCases'),
-                pw.SizedBox(height: 20),
-                pw.Text('Case Details', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 8),
-                pw.Table.fromTextArray(
-                  headers: ['ID', 'Type', 'Urgency', 'Status', 'Patient'],
-                  data: cases.take(50).map((doc) {
-                    final d = doc.data();
-                    final first = d['patientFirstName'] as String? ?? '';
-                    final last = d['patientLastName'] as String? ?? '';
-                    return [
-                      doc.id.substring(0, 8),
-                      d['emergencyType'] as String? ?? '-',
-                      d['urgencyLevel'] as String? ?? '-',
-                      d['status'] as String? ?? '-',
-                      '$first $last'.trim(),
-                    ];
-                  }).toList(),
-                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
-                  cellStyle: const pw.TextStyle(fontSize: 9),
-                  cellAlignment: pw.Alignment.centerLeft,
-                ),
-              ],
-            );
-          },
-        ),
-      );
-      
-      await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => pdf.save(),
-        name: 'HealthAlert_Report',
-      );
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate report: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackHandlingPopScope(
+      dashboardRoute: '/admin-dashboard',
+      child: Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         pageTitle: 'Analytics',
         showBackButton: true,
-        onBack: () => Navigator.pop(context),
+        onBack: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+          }
+        },
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -114,12 +52,8 @@ class AdminCaseAnalyticsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/admin-dashboard'),
       bottomNavigationBar: AdminNavigationBar(
-        currentIndex: 1,
-        onItemSelected: (index) {
-          if (index == 0) {
-            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
-          }
-        },
+        currentIndex: 2,
+        // Navigation is handled by AdminNavigationBar itself
       ),
       body: SafeArea(
         child: Column(
@@ -276,7 +210,7 @@ class AdminCaseAnalyticsScreen extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () => _exportReportsPdf(context),
+                            onPressed: () => exportReportsPdf(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.adminAccent,
                               foregroundColor: Colors.white,
@@ -299,6 +233,7 @@ class AdminCaseAnalyticsScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

@@ -19,13 +19,23 @@ class AmbulanceNavigationBar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        Navigator.pushNamedAndRemoveUntil(context, '/ambulance-dashboard', (r) => false);
+        // Home - clear all routes and go to dashboard
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+          '/ambulance-dashboard',
+          (route) => false,
+        );
         break;
       case 1:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
         break;
       case 2:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen(title: 'Navigation Map')));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MapScreen(title: 'Navigation Map')),
+        );
         break;
     }
   }

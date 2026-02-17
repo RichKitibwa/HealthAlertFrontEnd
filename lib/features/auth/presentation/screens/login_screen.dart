@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../current_user_session.dart';
 import '../../../../core/utils/pin_utils.dart';
 import '../../../../core/services/device_storage_service.dart';
@@ -40,6 +41,8 @@ class _LoginScreenState extends State<LoginScreen> {
         _showPhoneInput = true;
         _isRegisteredOnDevice = false;
         _isCheckingRegistration = false;
+        _userData = null; // Clear any cached user data to force phone input
+        _phoneNumber = null; // Clear phone number
       });
     } else {
       _checkDeviceRegistration();
@@ -93,6 +96,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     try {
+      // Prefer fetch by UID when user is already signed in (passes Firestore rules)
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+        if (userDoc.exists && mounted) {
+          final data = userDoc.data()!;
+          data['uid'] = userDoc.id;
+          data['id'] = userDoc.id;
+          setState(() => _userData = data);
+          return;
+        }
+      }
+
+      // Otherwise query by phoneNumber (allowed by rules when auth.token.phone_number matches)
       final usersQuery = await FirebaseFirestore.instance
           .collection('users')
           .where('phoneNumber', isEqualTo: _phoneNumber)
@@ -125,6 +145,28 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      // Prefer fetch by UID when already signed in
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+        if (userDoc.exists && mounted) {
+          final data = userDoc.data()!;
+          data['uid'] = userDoc.id;
+          data['id'] = userDoc.id;
+          setState(() {
+            _userData = data;
+            _phoneNumber = phoneNumber;
+            _userName = '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
+            if (_userName?.isEmpty ?? true) _userName = 'User';
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
       final usersQuery = await FirebaseFirestore.instance
           .collection('users')
           .where('phoneNumber', isEqualTo: phoneNumber)
@@ -238,6 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _userData!['profileImageUrl'] as String?;
       CurrentUserSession.workplace = _userData!['workplace'] as String?;
       CurrentUserSession.specialty = _userData!['specialty'] as String?;
+      CurrentUserSession.email = _userData!['email'] as String?;
 
       // Save user data to device for future logins
       if (!_isRegisteredOnDevice && _phoneNumber != null) {
@@ -249,7 +292,13 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // Initialize FCM and save token to user document
-      FCMNotificationService().initialize();
+      final fcmService = FCMNotificationService();
+      fcmService.initialize();
+      // Start real-time notification listener for popup delivery
+      final sessionUid = CurrentUserSession.uid;
+      if (sessionUid != null && sessionUid.isNotEmpty) {
+        fcmService.startNotificationListener(sessionUid);
+      }
 
       setState(() => _isLoading = false);
 
@@ -386,9 +435,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your phone number';
-                        }
-                        if (!value.startsWith('+')) {
-                          return 'Phone number must start with + and country code';
                         }
                         return null;
                       },

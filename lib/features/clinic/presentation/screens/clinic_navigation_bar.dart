@@ -20,16 +20,29 @@ class ClinicNavigationBar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        Navigator.pushNamedAndRemoveUntil(context, '/clinic-dashboard', (r) => false);
+        // Home - clear all routes and go to dashboard
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+          '/clinic-dashboard',
+          (route) => false,
+        );
         break;
       case 1:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const ClinicIncomingCaseScreen()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ClinicIncomingCaseScreen()),
+        );
         break;
       case 2:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
         break;
       case 3:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LearningResourcesScreen()),
+        );
         break;
     }
   }

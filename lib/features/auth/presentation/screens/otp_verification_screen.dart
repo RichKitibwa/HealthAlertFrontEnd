@@ -95,6 +95,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           CurrentUserSession.profileImageUrl = data?['profileImageUrl'];
           CurrentUserSession.workplace = data?['workplace'];
           CurrentUserSession.specialty = data?['specialty'];
+          CurrentUserSession.email = data?['email'];
 
           _navigateToRoleDashboard(role);
         }

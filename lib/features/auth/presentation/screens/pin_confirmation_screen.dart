@@ -3,7 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 
 class PinConfirmationScreen extends StatefulWidget {
   final String pin;
-  final Function() onConfirm;
+  final void Function(BuildContext context) onConfirm;
 
   const PinConfirmationScreen({
     Key? key,
@@ -54,8 +54,7 @@ class _PinConfirmationScreenState extends State<PinConfirmationScreen> {
     // PINs match, proceed
     setState(() => _isLoading = true);
     
-    // Call the confirmation callback (will complete registration and navigate to dashboard)
-    widget.onConfirm();
+    widget.onConfirm(context);
   }
 
   @override

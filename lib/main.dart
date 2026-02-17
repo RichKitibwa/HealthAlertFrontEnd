@@ -16,6 +16,8 @@ import 'features/admin/presentation/screens/admin_case_dashboard.dart';
 import 'features/vht/presentation/screens/vht_dashboard_screen.dart';
 import 'features/vht/presentation/screens/create_emergency_screen.dart';
 import 'features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'features/auth/presentation/screens/admin_email_otp_screen.dart';
+import 'features/auth/presentation/screens/pin_setup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,6 +73,27 @@ class HealthCommApp extends StatelessWidget {
         '/clinic-incoming-case': (context) => const ClinicIncomingCaseScreen(),
         '/admin-case-dashboard': (context) => const AdminCaseDashboardScreen(),
         '/admin-dashboard': (context) => AdminDashboardScreen(),
+        '/admin-email-otp': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return AdminEmailOTPScreen(
+            email: args['email'],
+            firstName: args['firstName'],
+            lastName: args['lastName'],
+            phoneNumber: args['phoneNumber'],
+            organization: args['organization'],
+            position: args['position'],
+          );
+        },
+        '/pin-setup': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return PinSetupScreen(
+            registrationData: args,
+            onPinConfirmed: (pin, confirmContext) {
+              // Handle PIN confirmation - this will be handled by the calling screen
+              Navigator.pop(confirmContext);
+            },
+          );
+        },
       },
     );
   }

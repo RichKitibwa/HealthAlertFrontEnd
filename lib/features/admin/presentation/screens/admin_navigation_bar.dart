@@ -18,20 +18,38 @@ class AdminNavigationBar extends StatelessWidget {
     if (index == currentIndex) return;
     onItemSelected?.call(index);
 
-    switch (index) {
-      case 0:
-        Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (r) => false);
-        break;
-      case 1:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
-        break;
-      case 2:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminCaseAnalyticsScreen()));
-        break;
-      case 3:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminManageUsersScreen()));
-        break;
-    }
+    // Use push (like hamburger menu) so back button can pop to dashboard instead of crashing.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+
+      switch (index) {
+        case 0:
+          // Home - clear all routes and go to dashboard
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/admin-dashboard',
+            (route) => false,
+          );
+          break;
+        case 1:
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          );
+          break;
+        case 2:
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminCaseAnalyticsScreen()),
+          );
+          break;
+        case 3:
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminManageUsersScreen()),
+          );
+          break;
+      }
+    });
   }
 
   @override

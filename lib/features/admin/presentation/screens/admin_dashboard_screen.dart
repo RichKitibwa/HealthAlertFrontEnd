@@ -10,6 +10,7 @@ import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
+import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/theme/app_colors.dart';
 
 // Admin Dashboard Screen
@@ -125,23 +126,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onReports: () {},
         onAnalytics: () {},
       ),
-      endDrawer: AppDrawer(
-        onDashboard: () {},
-        onNotifications: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
-        },
-        onSettings: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
-        },
-        onReports: () {},
-        onAnalytics: () {},
-        onLogout: () async {
-          await LogoutUtils.logout();
-          if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
-          }
-        },
-      ),
+      endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/admin-dashboard'),
       bottomNavigationBar: AdminNavigationBar(
         currentIndex: _currentIndex,
         onItemSelected: _onNavItemSelected,

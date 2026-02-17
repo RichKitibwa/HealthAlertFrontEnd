@@ -9,6 +9,9 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/location_utils.dart';
+import '../../../../core/widgets/back_handling_pop_scope.dart';
+import '../../../../core/services/fcm_notification_service.dart';
 
 class AdminCaseTimelineScreen extends StatefulWidget {
   final String caseId;
@@ -172,21 +175,55 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
     setState(() => _isDispatching = true);
 
     try {
-      // Find nearest available ambulance driver
+      final caseDoc = await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).get();
+      final caseData = caseDoc.data() as Map<String, dynamic>?;
+      double? pickupLat = (caseData?['latitude'] as num?)?.toDouble() ?? (caseData?['vhtLatitude'] as num?)?.toDouble();
+      double? pickupLon = (caseData?['longitude'] as num?)?.toDouble() ?? (caseData?['vhtLongitude'] as num?)?.toDouble();
+
+      // Fetch all ambulance drivers and pick nearest by distance
       final driversQuery = await FirebaseFirestore.instance
           .collection('users')
           .where('role', isEqualTo: 'Ambulance Driver')
-          .limit(5)
           .get();
 
       String? assignedDriverId;
       String? assignedDriverName;
       if (driversQuery.docs.isNotEmpty) {
-        final driver = driversQuery.docs.first;
-        final driverData = driver.data();
-        assignedDriverId = driver.id;
-        assignedDriverName = '${driverData['firstName'] ?? ''} ${driverData['lastName'] ?? ''}'.trim();
+        final driversWithDistance = <Map<String, dynamic>>[];
+        for (final doc in driversQuery.docs) {
+          final d = doc.data();
+          final lat = (d['latitude'] as num?)?.toDouble();
+          final lon = (d['longitude'] as num?)?.toDouble();
+          double distance = double.maxFinite;
+          if (pickupLat != null && pickupLon != null && lat != null && lon != null) {
+            distance = LocationUtils.calculateDistance(pickupLat, pickupLon, lat, lon);
+          }
+          driversWithDistance.add({
+            'id': doc.id,
+            'firstName': d['firstName'] ?? '',
+            'lastName': d['lastName'] ?? '',
+            'distance': distance,
+          });
+        }
+        driversWithDistance.sort((a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
+        final nearest = driversWithDistance.first;
+        assignedDriverId = nearest['id'] as String;
+        assignedDriverName = '${nearest['firstName']} ${nearest['lastName']}'.trim();
       }
+
+      // Fetch all case data needed for notifications
+      final freshCaseDoc = await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).get();
+      final freshData = freshCaseDoc.data() as Map<String, dynamic>? ?? {};
+      final vhtId = freshData['vhtId'] as String? ?? '';
+      final clinicianId = freshData['assignedClinicId'] as String? ?? '';
+      final patientFirst = freshData['patientFirstName'] as String? ?? '';
+      final patientLast = freshData['patientLastName'] as String? ?? '';
+      final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
+          ? '$patientFirst $patientLast'.trim()
+          : 'Unknown Patient';
+      final emergencyType = freshData['emergencyType'] as String? ?? 'Unknown';
+      final clinicName = freshData['assignedClinicName'] as String? ?? 'Clinic';
+      final vhtName = freshData['vhtName'] as String? ?? 'VHT';
 
       await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
         'status': 'dispatched',
@@ -197,7 +234,25 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Note: Cloud Function handles notifications for dispatched status (driver and VHT)
+      // Notify VHT (popup+inapp), clinician (popup+inapp), and driver (popup+inapp)
+      try {
+        final notifService = FCMNotificationService();
+        final driverName = assignedDriverName ?? 'the driver';
+        final driverId = assignedDriverId ?? '';
+        await notifService.notifyOnAmbulanceDispatched(
+          caseId: widget.caseId,
+          emergencyType: emergencyType,
+          patientName: patientName,
+          vhtId: vhtId,
+          clinicianId: clinicianId,
+          driverId: driverId,
+          driverName: driverName,
+          clinicName: clinicName,
+          vhtName: vhtName,
+        );
+      } catch (e) {
+        debugPrint('Failed to send dispatch notifications: $e');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -217,13 +272,21 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackHandlingPopScope(
+      dashboardRoute: '/admin-dashboard',
+      child: Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         pageTitle: 'Case Timeline',
         showBackButton: true,
-        onBack: () => Navigator.pop(context),
+        onBack: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+          }
+        },
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -243,11 +306,6 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
       endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/admin-dashboard'),
       bottomNavigationBar: AdminNavigationBar(
         currentIndex: 0,
-        onItemSelected: (index) {
-          if (index == 0) {
-            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
-          }
-        },
       ),
       body: SafeArea(
         child: StreamBuilder<DocumentSnapshot>(
@@ -458,33 +516,13 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // View Analytics button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => AdminCaseAnalyticsScreen(caseId: widget.caseId)),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.adminAccent.withAlpha(20),
-                        foregroundColor: AppColors.adminAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
-                      ),
-                      child: const Text('View Analytics', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
                 ],
               ),
             );
           },
         ),
       ),
+    ),
     );
   }
 

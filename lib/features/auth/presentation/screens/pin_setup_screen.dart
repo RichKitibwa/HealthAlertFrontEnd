@@ -5,7 +5,7 @@ import 'pin_confirmation_screen.dart';
 
 class PinSetupScreen extends StatefulWidget {
   final Map<String, dynamic> registrationData;
-  final Function(String pin) onPinConfirmed;
+  final void Function(String pin, BuildContext context) onPinConfirmed;
 
   const PinSetupScreen({
     Key? key,
@@ -59,11 +59,8 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
         MaterialPageRoute(
           builder: (context) => PinConfirmationScreen(
             pin: pin,
-            onConfirm: () {
-              // Close both PIN screens and call the callback
-              Navigator.pop(context); // Close confirmation screen
-              Navigator.pop(context); // Close setup screen
-              widget.onPinConfirmed(pin);
+            onConfirm: (confirmContext) {
+              widget.onPinConfirmed(pin, confirmContext);
             },
           ),
         ),

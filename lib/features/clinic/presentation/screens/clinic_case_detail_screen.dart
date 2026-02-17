@@ -10,6 +10,7 @@ import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/fcm_notification_service.dart';
+import '../../../../core/widgets/inline_voice_note_player.dart';
 
 /// Clinic Case Detail Screen
 ///
@@ -201,27 +202,29 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Notify all admins about ambulance dispatch request
-      // Note: Cloud Function handles VHT notification for ambulanceRequested status
-      final notifService = FCMNotificationService();
-      final emergencyType = caseData['emergencyType'] as String? ?? 'Unknown';
-      final patientFirst = caseData['patientFirstName'] as String? ?? '';
-      final patientLast = caseData['patientLastName'] as String? ?? '';
-      final patientName = '$patientFirst $patientLast'.trim();
+      // Notify nearest admin: popup + in-app
       try {
-        final adminsQuery = await FirebaseFirestore.instance
-            .collection('users')
-            .where('role', isEqualTo: 'Admin')
-            .get();
-        for (final adminDoc in adminsQuery.docs) {
-          notifService.sendInAppNotification(
-            userId: adminDoc.id,
-            title: 'Ambulance Dispatch Requested',
-            message: 'Clinician requested ambulance for $emergencyType case. Patient: ${patientName.isNotEmpty ? patientName : "Unknown"}. Please dispatch an ambulance.',
-            type: 'dispatch_request',
-            caseId: widget.caseId,
-          );
-        }
+        final notifService = FCMNotificationService();
+        final emergencyType = caseData['emergencyType'] as String? ?? 'Unknown';
+        final patientFirst = caseData['patientFirstName'] as String? ?? '';
+        final patientLast = caseData['patientLastName'] as String? ?? '';
+        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
+            ? '$patientFirst $patientLast'.trim()
+            : 'Unknown';
+        final clinicianName = CurrentUserSession.fullName;
+        // Use VHT coordinates from the case to find the nearest admin.
+        final vhtLat = (caseData['vhtLatitude'] as num?)?.toDouble() ??
+            (caseData['latitude'] as num?)?.toDouble();
+        final vhtLng = (caseData['vhtLongitude'] as num?)?.toDouble() ??
+            (caseData['longitude'] as num?)?.toDouble();
+        await notifService.notifyAdminsOfAmbulanceRequest(
+          caseId: widget.caseId,
+          emergencyType: emergencyType,
+          patientName: patientName,
+          clinicianName: clinicianName,
+          vhtLatitude: vhtLat,
+          vhtLongitude: vhtLng,
+        );
       } catch (e) {
         debugPrint('Failed to notify admins: $e');
       }
@@ -254,15 +257,35 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     setState(() => _isUpdating = true);
 
     try {
+      final notes = _notesController.text.trim();
       await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
         'status': 'advised',
-        'clinicianNotes': _notesController.text.trim(),
+        'clinicianNotes': notes,
         'clinicianDecision': 'advise_vht',
         'clinicianDecisionAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Note: Cloud Function handles VHT notification for advised status
+      // Notify VHT: popup + in-app
+      try {
+        final notifService = FCMNotificationService();
+        final vhtId = caseData['vhtId'] as String? ?? '';
+        final patientFirst = caseData['patientFirstName'] as String? ?? '';
+        final patientLast = caseData['patientLastName'] as String? ?? '';
+        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty ? '$patientFirst $patientLast'.trim() : 'Unknown Patient';
+        final clinicianName = CurrentUserSession.fullName;
+        if (vhtId.isNotEmpty) {
+          await notifService.notifyVhtOfClinicianAdvice(
+            vhtId: vhtId,
+            caseId: widget.caseId,
+            patientName: patientName,
+            clinicianName: clinicianName,
+            advice: notes,
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to notify VHT of advice: $e');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -359,7 +382,29 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Note: Cloud Function handles VHT notification for completed status
+      // Notify VHT: popup + in-app (case closed via advice path)
+      try {
+        final notifService = FCMNotificationService();
+        final vhtId = caseData['vhtId'] as String? ?? '';
+        final patientFirst = caseData['patientFirstName'] as String? ?? '';
+        final patientLast = caseData['patientLastName'] as String? ?? '';
+        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
+            ? '$patientFirst $patientLast'.trim()
+            : 'Unknown Patient';
+        final clinicianName = CurrentUserSession.fullName;
+        final emergencyType = caseData['emergencyType'] as String? ?? 'Emergency';
+        if (vhtId.isNotEmpty) {
+          await notifService.notifyOnCaseClosed(
+            caseId: widget.caseId,
+            emergencyType: emergencyType,
+            patientName: patientName,
+            vhtId: vhtId,
+            clinicianName: clinicianName,
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to notify VHT of case closure: $e');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -523,7 +568,31 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Note: Cloud Function handles notifications for completed status
+      // Notify VHT (popup+inapp) and admin (popup+inapp) on discharge
+      try {
+        final notifService = FCMNotificationService();
+        final vhtId = data['vhtId'] as String? ?? '';
+        final patientFirst = data['patientFirstName'] as String? ?? '';
+        final patientLast = data['patientLastName'] as String? ?? '';
+        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
+            ? '$patientFirst $patientLast'.trim()
+            : 'Unknown Patient';
+        final clinicName = data['assignedClinicName'] as String? ?? 'Clinic';
+        final clinicianName = CurrentUserSession.fullName;
+        final emergencyType = data['emergencyType'] as String? ?? 'Emergency';
+        if (vhtId.isNotEmpty) {
+          await notifService.notifyOnPatientDischarged(
+            caseId: widget.caseId,
+            emergencyType: emergencyType,
+            patientName: patientName,
+            vhtId: vhtId,
+            clinicName: clinicName,
+            clinicianName: clinicianName,
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to send discharge notifications: $e');
+      }
 
       if (mounted) {
         _treatmentController.clear();
@@ -881,43 +950,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       ],
                       if (voiceNoteUrl.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        InkWell(
-                          onTap: () async {
-                            try {
-                              final uri = Uri.parse(voiceNoteUrl);
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open voice note'), backgroundColor: Colors.red));
-                              }
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.purple.withAlpha(10),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.purple.withAlpha(30)),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.mic_rounded, color: Colors.purple, size: 24),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Voice Note Attached', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.purple)),
-                                      Text('Tap to listen', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                    ],
-                                  ),
-                                ),
-                                Icon(Icons.play_circle_outline, color: Colors.purple, size: 22),
-                              ],
-                            ),
-                          ),
-                        ),
+                        InlineVoiceNotePlayer(voiceNoteUrl: voiceNoteUrl),
                       ],
                   ]),
                   const SizedBox(height: 12),

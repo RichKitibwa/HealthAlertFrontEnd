@@ -45,6 +45,9 @@ class CurrentUserSession {
   /// Specialty (for Clinic Staff).
   static String? specialty;
 
+  /// Email address (for Admin users).
+  static String? email;
+
   /// Convenience getter: true if a user is currently "logged in" in memory.
   static bool get isLoggedIn => uid != null;
 
@@ -71,5 +74,6 @@ class CurrentUserSession {
     profileImageUrl = null;
     workplace = null;
     specialty = null;
+    email = null;
   }
 }

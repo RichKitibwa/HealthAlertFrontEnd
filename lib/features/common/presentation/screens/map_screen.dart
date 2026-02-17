@@ -1,13 +1,20 @@
+import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart' show CacheStore;
+import 'package:flutter_map_cache/flutter_map_cache.dart';
+import 'package:http_cache_file_store/http_cache_file_store.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/current_user_session.dart';
+import '../../../../core/widgets/back_handling_pop_scope.dart';
+import '../../../vht/presentation/screens/vht_navigation_bar.dart';
 import '../../../ambulance/presentation/screens/ambulance_navigation_bar.dart';
 
-/// Robust navigation map for ambulance drivers.
-/// Shows current location, destination, route polyline, and navigation info.
 class MapScreen extends StatefulWidget {
   final String title;
   final double? destinationLat;
@@ -21,7 +28,7 @@ class MapScreen extends StatefulWidget {
     this.destinationLat,
     this.destinationLng,
     this.destinationLabel,
-    this.destinationType = 'clinic', // 'clinic' or 'vht'
+    this.destinationType = 'clinic', 
   });
 
   @override
@@ -34,6 +41,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _loadingLocation = true;
   String? _locationError;
   bool _hasFittedBounds = false;
+  StreamSubscription<Position>? _positionSubscription;
 
   static const LatLng _defaultCenter = LatLng(0.3476, 32.5825);
   static const double _defaultZoom = 14.0;
@@ -41,10 +49,24 @@ class _MapScreenState extends State<MapScreen> {
 
   final Distance _distanceCalculator = const DistanceHaversine();
 
+  /// Tile cache for offline use: tiles you view are stored and work without internet (global OSM).
+  static Future<CacheStore> _getTileCacheStore() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return FileCacheStore('${dir.path}${Platform.pathSeparator}MapTiles');
+  }
+
+  late final Future<CacheStore> _cacheStoreFuture = _getTileCacheStore();
+
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    _positionSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -96,6 +118,8 @@ class _MapScreenState extends State<MapScreen> {
           _loadingLocation = false;
         });
         _fitBoundsWhenReady();
+        _centerMapOnUserIfNoDestination();
+        _startLocationStream();
       }
     } catch (e) {
       if (mounted) {
@@ -125,6 +149,31 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  void _centerMapOnUserIfNoDestination() {
+    if (_currentLocation == null || _destinationPoint != null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hasFittedBounds) return;
+      _mapController.move(_currentLocation!, 15.0);
+      _hasFittedBounds = true;
+    });
+  }
+
+  void _startLocationStream() {
+    _positionSubscription?.cancel();
+    _positionSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.medium,
+        distanceFilter: 20,
+      ),
+    ).listen((Position position) {
+      if (mounted) {
+        setState(() {
+          _currentLocation = LatLng(position.latitude, position.longitude);
+        });
+      }
+    });
+  }
+
   LatLng? get _destinationPoint {
     if (widget.destinationLat != null && widget.destinationLng != null) {
       return LatLng(widget.destinationLat!, widget.destinationLng!);
@@ -147,36 +196,119 @@ class _MapScreenState extends State<MapScreen> {
 
   List<Marker> get _markers {
     final markers = <Marker>[];
+    final role = CurrentUserSession.role ?? '';
 
+    // Current user location marker
     if (_currentLocation != null) {
       markers.add(
         Marker(
           point: _currentLocation!,
-          width: 48,
-          height: 48,
-          child: const Icon(Icons.local_shipping, color: Colors.blue, size: 40),
+          width: 56,
+          height: 56,
+          child: _buildCurrentLocationMarker(role),
         ),
       );
     }
 
+    // Destination marker
     final dest = _destinationPoint;
     if (dest != null) {
-      final isVht = widget.destinationType.toLowerCase() == 'vht';
+      final destType = widget.destinationType.toLowerCase();
       markers.add(
         Marker(
           point: dest,
-          width: 48,
-          height: 48,
-          child: Icon(
-            isVht ? Icons.health_and_safety : Icons.local_hospital,
-            color: isVht ? Colors.green : Colors.red,
-            size: 40,
-          ),
+          width: 56,
+          height: 56,
+          child: _buildDestinationMarker(destType),
         ),
       );
     }
 
     return markers;
+  }
+
+  Widget _buildCurrentLocationMarker(String role) {
+    IconData icon;
+    Color bg;
+    Color iconColor = Colors.white;
+
+    if (role == 'Ambulance Driver' || role == 'Ambulance') {
+      icon = Icons.emergency;
+      bg = const Color(0xFFDC2626); // Red for ambulance
+    } else if (role == 'VHT') {
+      icon = Icons.person_pin_circle;
+      bg = const Color(0xFF16A34A); // Green for VHT
+    } else {
+      icon = Icons.my_location;
+      bg = Colors.blue;
+    }
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: bg,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: bg.withAlpha(100),
+            blurRadius: 8,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Icon(icon, color: iconColor, size: 26),
+    );
+  }
+
+  Widget _buildDestinationMarker(String destType) {
+    IconData icon;
+    Color bg;
+
+    switch (destType) {
+      case 'vht':
+        icon = Icons.personal_injury_rounded; // VHT / patient pickup
+        bg = const Color(0xFF16A34A); // Green
+        break;
+      case 'clinic':
+      case 'hospital':
+        icon = Icons.local_hospital_rounded;
+        bg = const Color(0xFF1D4ED8); // Blue for clinic/hospital
+        break;
+      default:
+        icon = Icons.location_on_rounded;
+        bg = Colors.red;
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: bg,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: bg.withAlpha(100),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 24),
+        ),
+        // Pin pointer
+        Container(
+          width: 3,
+          height: 8,
+          color: bg,
+        ),
+      ],
+    );
   }
 
   List<Polyline> get _polylines {
@@ -223,46 +355,119 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  Widget? _buildBottomNavigationBar() {
+    final role = CurrentUserSession.role;
+    final mapIndex = role == 'VHT' ? 3 : (role == 'Ambulance Driver' || role == 'Ambulance' ? 2 : null);
+    
+    if (mapIndex == null) return null;
+    
+    if (role == 'VHT') {
+      return VhtNavigationBar(
+        currentIndex: mapIndex,
+        onItemSelected: (index) {},
+      );
+    } else if (role == 'Ambulance Driver' || role == 'Ambulance') {
+      return AmbulanceNavigationBar(
+        currentIndex: mapIndex,
+        onItemSelected: (index) {},
+      );
+    }
+    
+    return null;
+  }
+
+  Color _appBarColor() {
+    final role = CurrentUserSession.role ?? '';
+    if (role == 'Ambulance Driver' || role == 'Ambulance') {
+      return const Color(0xFFDC2626); // Red for ambulance
+    } else if (role == 'VHT') {
+      return const Color(0xFF16A34A); // Green for VHT
+    } else if (role == 'Clinic Staff' || role == 'Clinic') {
+      return const Color(0xFF1D4ED8); // Blue for clinic
+    }
+    return AppColors.primary;
+  }
+
+  void _handleBack(BuildContext context) {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      final role = CurrentUserSession.role?.toLowerCase() ?? '';
+      String route = '/login';
+      if (role == 'admin') route = '/admin-dashboard';
+      else if (role == 'vht') route = '/vht-dashboard';
+      else if (role.contains('clinic')) route = '/clinic-dashboard';
+      else if (role.contains('ambulance')) route = '/ambulance-dashboard';
+      Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackHandlingPopScope(
+      child: Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.title,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            color: Colors.white,
-          ),
+        backgroundColor: _appBarColor(),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.title,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              'Live map • Tiles cached for offline use',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white.withAlpha(200),
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
         ),
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => _handleBack(context),
         ),
       ),
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _defaultCenter,
-              initialZoom: _defaultZoom,
-              onMapReady: () {
-                _fitBoundsWhenReady();
-              },
-            ),
+      body: FutureBuilder<CacheStore>(
+        future: _cacheStoreFuture,
+        builder: (context, cacheSnapshot) {
+          final tileProvider = cacheSnapshot.hasData
+              ? CachedTileProvider(
+                  store: cacheSnapshot.data!,
+                  maxStale: const Duration(days: 30),
+                )
+              : null;
+          return Stack(
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.healthapp.frontend',
+              FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: _defaultCenter,
+                  initialZoom: _defaultZoom,
+                  onMapReady: () {
+                    _fitBoundsWhenReady();
+                  },
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.healthapp.frontend',
+                    tileProvider: tileProvider,
+                  ),
+                  PolylineLayer(polylines: _polylines),
+                  MarkerLayer(markers: _markers),
+                ],
               ),
-              PolylineLayer(polylines: _polylines),
-              MarkerLayer(markers: _markers),
-            ],
-          ),
 
           if (_loadingLocation)
             Positioned(
@@ -341,7 +546,9 @@ class _MapScreenState extends State<MapScreen> {
             bottom: 16,
             child: _buildBottomInfoCard(),
           ),
-        ],
+            ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _centerOnUser,
@@ -351,10 +558,8 @@ class _MapScreenState extends State<MapScreen> {
           color: _currentLocation != null ? Colors.blue : Colors.grey,
         ),
       ),
-      bottomNavigationBar: AmbulanceNavigationBar(
-        currentIndex: 1,
-        onItemSelected: (index) {},
-      ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
+    ),
     );
   }
 
@@ -377,11 +582,11 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   Icon(
                     widget.destinationType.toLowerCase() == 'vht'
-                        ? Icons.health_and_safety
-                        : Icons.local_hospital,
+                        ? Icons.personal_injury_rounded
+                        : Icons.local_hospital_rounded,
                     color: widget.destinationType.toLowerCase() == 'vht'
-                        ? Colors.green
-                        : Colors.red,
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF1D4ED8),
                     size: 24,
                   ),
                   const SizedBox(width: 12),

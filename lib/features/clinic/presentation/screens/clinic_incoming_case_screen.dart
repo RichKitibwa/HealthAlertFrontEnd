@@ -191,15 +191,9 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
       endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/clinic-dashboard'),
       backgroundColor: AppColors.background,
       bottomNavigationBar: ClinicNavigationBar(
-        currentIndex: 2,
+        currentIndex: 1,
         onItemSelected: (index) {
-          if (index == 0) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/clinic-dashboard',
-              (route) => false,
-            );
-          }
+          // Navigation is handled by ClinicNavigationBar
         },
       ),
       body: SafeArea(

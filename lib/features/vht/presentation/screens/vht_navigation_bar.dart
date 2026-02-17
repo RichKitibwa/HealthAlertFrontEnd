@@ -20,16 +20,30 @@ class VhtNavigationBar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        Navigator.pushNamedAndRemoveUntil(context, '/vht-dashboard', (r) => false);
+        // Home - clear all routes and go to dashboard
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+          '/vht-dashboard',
+          (route) => false,
+        );
         break;
       case 1:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        // Push (like hamburger menu) so back button pops to dashboard
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
         break;
       case 2:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LearningResourcesScreen()),
+        );
         break;
       case 3:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen(title: 'Area Map')));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MapScreen(title: 'Area Map')),
+        );
         break;
     }
   }
