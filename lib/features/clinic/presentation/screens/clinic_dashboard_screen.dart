@@ -7,12 +7,11 @@ import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/user_location_update_service.dart';
 import '../../../common/presentation/screens/notifications_screen.dart';
 import '../../../common/presentation/screens/settings_screen.dart';
 import '../../../common/presentation/screens/learning_resources_screen.dart';
 
-// Clinic Staff Dashboard Screen
-// Main dashboard for clinic staff - shows important info at a glance
 
 class ClinicDashboardScreen extends StatefulWidget {
   const ClinicDashboardScreen({Key? key}) : super(key: key);
@@ -24,9 +23,20 @@ class ClinicDashboardScreen extends StatefulWidget {
 class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    UserLocationUpdateService.startUpdating();
+  }
+
+  @override
+  void dispose() {
+    UserLocationUpdateService.stopUpdating();
+    super.dispose();
+  }
+
   void _onNavItemSelected(int index) {
     if (index == _currentIndex) return;
-    // Navigation is handled by ClinicNavigationBar; dashboard is always "home" (index 0)
   }
 
   String get _currentUserId => CurrentUserSession.uid ?? '';
@@ -69,6 +79,21 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     final dt = ts.toDate();
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  String _getWelcomeMessage() {
+    final firstName = CurrentUserSession.firstName ?? 'Doctor';
+    final specialty = CurrentUserSession.specialty?.toLowerCase() ?? '';
+    
+    final shouldAddDrPrefix = specialty.contains('doctor') || 
+                               specialty.contains('clinic officer') || 
+                               specialty.contains('medical officer');
+    
+    if (shouldAddDrPrefix) {
+      return 'Welcome, Dr. $firstName';
+    }
+    
+    return 'Welcome, $firstName';
   }
 
   @override
@@ -124,53 +149,8 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Clinic name + welcome
-              if (CurrentUserSession.workplace != null &&
-                  CurrentUserSession.workplace!.isNotEmpty)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        height: 40,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.clinicAccent.withAlpha(18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.local_hospital_outlined, color: AppColors.clinicAccent),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              CurrentUserSession.workplace!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textPrimary),
-                            ),
-                            Text(
-                              CurrentUserSession.specialty ?? 'General Medicine',
-                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
               Text(
-                'Welcome, ${CurrentUserSession.firstName ?? 'Doctor'}',
+                _getWelcomeMessage(),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
@@ -224,7 +204,6 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
               ),
               const SizedBox(height: 20),
 
-              // View Incoming Emergencies button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -311,7 +290,6 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                     );
                   }
 
-                  // Show up to 3 pending cases
                   final displayDocs = docs.take(3).toList();
 
                   return Column(
@@ -532,7 +510,6 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Top row: type + urgency + status badge
                                 Row(
                                   children: [
                                     Expanded(

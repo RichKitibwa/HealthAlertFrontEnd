@@ -38,7 +38,13 @@ class AdminUserDetailScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+            }
+          },
         ),
       ),
       body: StreamBuilder<DocumentSnapshot>(

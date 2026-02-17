@@ -99,6 +99,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
       CurrentUserSession.profileImageUrl = widget.userData['profileImageUrl'] as String?;
       CurrentUserSession.workplace = widget.userData['workplace'] as String?;
       CurrentUserSession.specialty = widget.userData['specialty'] as String?;
+      CurrentUserSession.email = widget.userData['email'] as String?;
 
       setState(() => _isLoading = false);
 

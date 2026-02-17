@@ -10,6 +10,7 @@ import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../common/presentation/screens/map_screen.dart';
+import '../../../../core/services/fcm_notification_service.dart';
 
 class AmbulanceEnRouteScreen extends StatefulWidget {
   final String caseId;
@@ -71,6 +72,13 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
     setState(() => _isUpdatingStatus = true);
 
     try {
+      // Fetch current case data before update (needed for notifications)
+      final caseDoc = await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(widget.caseId)
+          .get();
+      final caseData = caseDoc.data() ?? {};
+
       await FirebaseFirestore.instance
           .collection('emergencyCases')
           .doc(widget.caseId)
@@ -87,7 +95,37 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
         ]),
       });
 
-      // Note: Cloud Function handles notifications for all status changes (arrived, inTransit, delivered, etc.)
+      // Notify parties when patient is delivered to clinic
+      if (newStatus == 'delivered') {
+        try {
+          final notifService = FCMNotificationService();
+          final fetchedVhtId = caseData['vhtId'] as String? ?? '';
+          final clinicianId = caseData['assignedClinicId'] as String? ?? '';
+          final patientFirst = caseData['patientFirstName'] as String? ?? '';
+          final patientLast = caseData['patientLastName'] as String? ?? '';
+          final patName = '$patientFirst $patientLast'.trim().isNotEmpty
+              ? '$patientFirst $patientLast'.trim()
+              : patientName ?? 'Unknown Patient';
+          final emergencyType = caseData['emergencyType'] as String? ?? 'Emergency';
+          final clinicName = caseData['assignedClinicName'] as String? ?? 'Clinic';
+          final driverName =
+              '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'.trim();
+          if (fetchedVhtId.isNotEmpty) {
+            await notifService.notifyOnPatientDelivered(
+              caseId: widget.caseId,
+              emergencyType: emergencyType,
+              patientName: patName,
+              vhtId: fetchedVhtId,
+              clinicianId: clinicianId,
+              clinicName: clinicName,
+              driverName: driverName.isNotEmpty ? driverName : 'the driver',
+            );
+          }
+        } catch (e) {
+          debugPrint('Failed to send delivery notifications: $e');
+        }
+      }
+      // No notifications for arrived, inTransit — just status updates
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -292,6 +330,14 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             final clinicianId = caseData['assignedClinicianId'] as String?;
             final currentStatusIndex = _statusIndex(currentStatus);
 
+            // Coordinates for map navigation
+            final vhtLat = (caseData['vhtLatitude'] as num?)?.toDouble()
+                ?? (caseData['latitude'] as num?)?.toDouble();
+            final vhtLng = (caseData['vhtLongitude'] as num?)?.toDouble()
+                ?? (caseData['longitude'] as num?)?.toDouble();
+            final clinicLat = (caseData['clinicLatitude'] as num?)?.toDouble();
+            final clinicLng = (caseData['clinicLongitude'] as num?)?.toDouble();
+
             return SingleChildScrollView(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom + 16,
@@ -322,7 +368,6 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Case Info Card (simplified - no detailed patient info)
                     _buildCaseInfoCard(
                       emergencyType: emergencyType,
                       patientName: patientName,
@@ -336,7 +381,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                     const SizedBox(height: 20),
 
                     // Contact Buttons
-                    _buildContactButtons(vhtId: vhtId, clinicianId: clinicianId, clinicId: clinicId, vhtName: vhtName, clinicName: clinicName, currentStatus: currentStatus),
+                    _buildContactButtons(vhtId: vhtId, clinicianId: clinicianId, clinicId: clinicId, vhtName: vhtName, clinicName: clinicName, currentStatus: currentStatus, vhtLat: vhtLat, vhtLng: vhtLng, clinicLat: clinicLat, clinicLng: clinicLng),
                     const SizedBox(height: 20),
 
                     // Status Action Buttons (contextual)
@@ -573,6 +618,10 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
     String? vhtName,
     String? clinicName,
     String? currentStatus,
+    double? vhtLat,
+    double? vhtLng,
+    double? clinicLat,
+    double? clinicLng,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -606,13 +655,20 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
+                // Route to VHT when dispatched/enRoute, to clinic when arrived/inTransit
+                final goingToVht = currentStatus == 'dispatched' || currentStatus == 'enRoute';
+                final destLat = goingToVht ? vhtLat : clinicLat;
+                final destLng = goingToVht ? vhtLng : clinicLng;
+                final destLabel = goingToVht ? (vhtName ?? 'VHT Location') : (clinicName ?? 'Clinic');
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => MapScreen(
-                      title: 'Navigate to Destination',
-                      destinationLabel: clinicName ?? vhtName ?? 'Destination',
-                      destinationType: currentStatus == 'dispatched' || currentStatus == 'enRoute' ? 'vht' : 'clinic',
+                      title: goingToVht ? 'Navigate to VHT' : 'Navigate to Clinic',
+                      destinationLabel: destLabel,
+                      destinationType: goingToVht ? 'vht' : 'clinic',
+                      destinationLat: destLat,
+                      destinationLng: destLng,
                     ),
                   ),
                 );

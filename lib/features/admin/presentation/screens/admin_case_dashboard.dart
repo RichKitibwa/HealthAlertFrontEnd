@@ -8,6 +8,7 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/back_handling_pop_scope.dart';
 
 class AdminCaseDashboardScreen extends StatefulWidget {
   const AdminCaseDashboardScreen({super.key});
@@ -154,13 +155,21 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackHandlingPopScope(
+      dashboardRoute: '/admin-dashboard',
+      child: Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         pageTitle: 'Active Cases',
         showBackButton: true,
-        onBack: () => Navigator.pop(context),
+        onBack: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+          }
+        },
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -180,11 +189,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
       backgroundColor: AppColors.background,
       bottomNavigationBar: AdminNavigationBar(
         currentIndex: 0,
-        onItemSelected: (index) {
-          if (index == 0) {
-            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
-          }
-        },
+        // Navigation is handled by AdminNavigationBar itself
       ),
       body: SafeArea(
         child: Column(
@@ -365,6 +370,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

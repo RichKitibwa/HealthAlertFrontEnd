@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_case_timeline.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/back_handling_pop_scope.dart';
 
 class AdminAllCasesListScreen extends StatefulWidget {
   final String? filterStatus;
@@ -171,7 +172,9 @@ class _AdminAllCasesListScreenState extends State<AdminAllCasesListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackHandlingPopScope(
+      dashboardRoute: '/admin-dashboard',
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(_getTitle(), style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
@@ -179,7 +182,13 @@ class _AdminAllCasesListScreenState extends State<AdminAllCasesListScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+            }
+          },
         ),
       ),
       body: SafeArea(
@@ -276,7 +285,8 @@ class _AdminAllCasesListScreenState extends State<AdminAllCasesListScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildCaseCard(BuildContext context, DocumentSnapshot doc) {

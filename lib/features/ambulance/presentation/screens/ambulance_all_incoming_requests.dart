@@ -30,11 +30,11 @@ class _AmbulanceAllIncomingRequestsScreenState
     final uid = CurrentUserSession.uid;
     if (uid == null || uid.isEmpty) return const Stream.empty();
 
-    // Show cases dispatched to this driver, OR all dispatched cases if no specific assignment
-    // Note: orderBy removed to avoid composite index requirement; sorting done client-side
+    // Only show cases dispatched to this driver (privacy: driver sees only their dispatches)
     return FirebaseFirestore.instance
         .collection('emergencyCases')
-        .where('status', whereIn: ['dispatched', 'ambulanceRequested'])
+        .where('status', isEqualTo: 'dispatched')
+        .where('assignedAmbulanceId', isEqualTo: uid)
         .snapshots();
   }
 
@@ -168,10 +168,9 @@ class _AmbulanceAllIncomingRequestsScreenState
                   final activeDocs = docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     final status = data['status'] as String? ?? '';
-                    return ['dispatched', 'ambulanceRequested', 'enRoute', 'arrived', 'inTransit'].contains(status);
+                    return ['dispatched', 'enRoute', 'arrived', 'inTransit'].contains(status);
                   }).toList();
                   
-                  // Sort client-side by createdAt descending
                   activeDocs.sort((a, b) {
                     final aData = a.data() as Map<String, dynamic>;
                     final bData = b.data() as Map<String, dynamic>;

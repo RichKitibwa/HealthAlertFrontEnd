@@ -9,6 +9,8 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/inline_voice_note_player.dart';
+import '../../../../core/services/fcm_notification_service.dart';
 
 /// VHT Case Detail Screen
 ///
@@ -198,7 +200,7 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
     );
   }
 
-  Future<void> _sendFollowUpUpdate(String caseId, String currentStatus) async {
+  Future<void> _sendFollowUpUpdate(String caseId, String currentStatus, {String? clinicianId, String? patientName}) async {
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
@@ -256,6 +258,22 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
         'lastFollowUpAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      if (clinicianId != null && clinicianId.isNotEmpty) {
+        try {
+          await FCMNotificationService().notifyClinicianOfVhtFollowUp(
+            clinicianId: clinicianId,
+            caseId: caseId,
+            patientName: patientName?.isNotEmpty == true ? patientName! : 'patient',
+            vhtName: vhtName,
+            followUpMessage: result,
+          );
+        } catch (e) {
+          if (mounted) {
+            debugPrint('Failed to notify clinician of follow-up: $e');
+          }
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -648,37 +666,7 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                       ],
                       if (voiceNoteUrl.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        InkWell(
-                          onTap: () async {
-                            final uri = Uri.parse(voiceNoteUrl);
-                            if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.purple.withAlpha(10),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.purple.withAlpha(30)),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.mic_rounded, color: Colors.purple, size: 24),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Voice Note', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.purple)),
-                                      Text('Tap to listen', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                    ],
-                                  ),
-                                ),
-                                Icon(Icons.play_circle_outline, color: Colors.purple, size: 22),
-                              ],
-                            ),
-                          ),
-                        ),
+                        InlineVoiceNotePlayer(voiceNoteUrl: voiceNoteUrl),
                       ],
                     ]),
                     const SizedBox(height: 12),
@@ -753,7 +741,12 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () => _sendFollowUpUpdate(widget.caseId, status),
+                                  onPressed: () => _sendFollowUpUpdate(
+                                    widget.caseId,
+                                    status,
+                                    clinicianId: data['assignedClinicId'] as String?,
+                                    patientName: '${data['patientFirstName'] ?? ''} ${data['patientLastName'] ?? ''}'.trim(),
+                                  ),
                                   icon: Icon(Icons.message, size: 16, color: Colors.deepPurple),
                                   label: Text('Message', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.deepPurple)),
                                   style: OutlinedButton.styleFrom(
@@ -788,7 +781,12 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: _isSendingFollowUp ? null : () => _sendFollowUpUpdate(widget.caseId, status),
+                        onPressed: _isSendingFollowUp ? null : () => _sendFollowUpUpdate(
+                        widget.caseId,
+                        status,
+                        clinicianId: data['assignedClinicId'] as String?,
+                        patientName: '${data['patientFirstName'] ?? ''} ${data['patientLastName'] ?? ''}'.trim(),
+                      ),
                         icon: _isSendingFollowUp
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.edit_note_rounded),

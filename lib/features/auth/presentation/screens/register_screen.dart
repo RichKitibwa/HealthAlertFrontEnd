@@ -43,6 +43,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _sendOTP() async {
     if (_formKey.currentState!.validate()) {
+      // Admin registration uses email OTP verification instead of admin code
+      // Email OTP provides the security layer
+      
       setState(() => _isLoading = true);
 
       try {
@@ -278,10 +281,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 28),
                   Image.asset(
                     'assets/images/healthcare_logo.png',
-                    height: 92,
+                    height: 100,
                     fit: BoxFit.contain,
                     color: AppColors.primary,
-                    colorBlendMode: BlendMode.srcIn,
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -516,7 +518,7 @@ class _VHTDetailsScreenState extends State<VHTDetailsScreen> {
             'district': district,
             'subCounty': subCounty,
           },
-          onPinConfirmed: (pin) => _completeRegistration(
+          onPinConfirmed: (pin, _) => _completeRegistration(
             firstName: firstName,
             lastName: lastName,
             phoneNumber: phoneNumber,
@@ -574,9 +576,8 @@ class _VHTDetailsScreenState extends State<VHTDetailsScreen> {
       );
 
       if (mounted) {
-        Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushNamedAndRemoveUntil(
-          context,
+        // Navigate to dashboard and clear entire navigation stack
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
           '/vht-dashboard',
           (route) => false,
         );
@@ -602,17 +603,28 @@ class _VHTDetailsScreenState extends State<VHTDetailsScreen> {
         backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24.0,
-            right: 24.0,
-            top: 24.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
-          ),
-          child: VHTDetailsForm(
-            phoneNumber: widget.phoneNumber,
-            onSubmit: _onDetailsSubmitted,
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 24.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+                child: Align(
+                  alignment: Alignment.center,
+                  widthFactor: 1.0,
+                  child: VHTDetailsForm(
+                    phoneNumber: widget.phoneNumber,
+                    onSubmit: _onDetailsSubmitted,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -658,7 +670,7 @@ class _AmbulanceDriverDetailsScreenState
             'ambulanceNumber': ambulanceNumber,
             'organization': organization,
           },
-          onPinConfirmed: (pin) => _completeRegistration(
+          onPinConfirmed: (pin, _) => _completeRegistration(
             firstName: firstName,
             lastName: lastName,
             phoneNumber: phoneNumber,
@@ -716,9 +728,8 @@ class _AmbulanceDriverDetailsScreenState
       );
 
       if (mounted) {
-        Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushNamedAndRemoveUntil(
-          context,
+        // Navigate to dashboard and clear entire navigation stack
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
           '/ambulance-dashboard',
           (route) => false,
         );
@@ -744,17 +755,28 @@ class _AmbulanceDriverDetailsScreenState
         backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24.0,
-            right: 24.0,
-            top: 24.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
-          ),
-          child: AmbulanceDriverDetailsForm(
-            phoneNumber: widget.phoneNumber,
-            onSubmit: _onDetailsSubmitted,
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 24.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+                child: Align(
+                  alignment: Alignment.center,
+                  widthFactor: 1.0,
+                  child: AmbulanceDriverDetailsForm(
+                    phoneNumber: widget.phoneNumber,
+                    onSubmit: _onDetailsSubmitted,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -798,7 +820,7 @@ class _AdminDetailsScreenState extends State<AdminDetailsScreen> {
             'position': position,
             'email': email,
           },
-          onPinConfirmed: (pin) => _completeRegistration(
+          onPinConfirmed: (pin, _) => _completeRegistration(
             firstName: firstName,
             lastName: lastName,
             phoneNumber: phoneNumber,
@@ -847,6 +869,7 @@ class _AdminDetailsScreenState extends State<AdminDetailsScreen> {
       CurrentUserSession.firstName = firstName;
       CurrentUserSession.lastName = lastName;
       CurrentUserSession.phoneNumber = phoneNumber;
+      if (email != null) CurrentUserSession.email = email;
 
       // Save user data to device for future sessions
       await DeviceStorageService.saveRegisteredUser(
@@ -856,9 +879,8 @@ class _AdminDetailsScreenState extends State<AdminDetailsScreen> {
       );
 
       if (mounted) {
-        Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushNamedAndRemoveUntil(
-          context,
+        // Navigate to dashboard and clear entire navigation stack
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
           '/admin-dashboard',
           (route) => false,
         );
@@ -884,17 +906,28 @@ class _AdminDetailsScreenState extends State<AdminDetailsScreen> {
         backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24.0,
-            right: 24.0,
-            top: 24.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
-          ),
-          child: AdminDetailsForm(
-            phoneNumber: widget.phoneNumber,
-            onSubmit: _onDetailsSubmitted,
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 24.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+                child: Align(
+                  alignment: Alignment.center,
+                  widthFactor: 1.0,
+                  child: AdminDetailsForm(
+                    phoneNumber: widget.phoneNumber,
+                    onSubmit: _onDetailsSubmitted,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -936,7 +969,7 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
             'specialty': specialty,
             'workplace': workplace,
           },
-          onPinConfirmed: (pin) => _completeRegistration(
+          onPinConfirmed: (pin, _) => _completeRegistration(
             firstName: firstName,
             lastName: lastName,
             phoneNumber: phoneNumber,
@@ -993,9 +1026,8 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
       );
 
       if (mounted) {
-        Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushNamedAndRemoveUntil(
-          context,
+        // Navigate to dashboard and clear entire navigation stack
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
           '/clinic-dashboard',
           (route) => false,
         );
@@ -1021,17 +1053,28 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
         backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24.0,
-            right: 24.0,
-            top: 24.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
-          ),
-          child: ClinicianRegistrationForm(
-            phoneNumber: widget.phoneNumber,
-            onSubmit: _onDetailsSubmitted,
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 24.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+                child: Align(
+                  alignment: Alignment.center,
+                  widthFactor: 1.0,
+                  child: ClinicianRegistrationForm(
+                    phoneNumber: widget.phoneNumber,
+                    onSubmit: _onDetailsSubmitted,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

@@ -8,6 +8,7 @@ class UserModel {
   final String? pinHash; // Hashed PIN for authentication
   final String? specialty; // For clinicians
   final String? workplace; // For clinicians - facility/hospital name
+  final String? email; // For admin users
 
   UserModel({
     required this.id,
@@ -19,6 +20,7 @@ class UserModel {
     this.pinHash,
     this.specialty,
     this.workplace,
+    this.email,
   });
 
   // Create from Firestore document
@@ -35,6 +37,7 @@ class UserModel {
       pinHash: json['pinHash'] as String?,
       specialty: json['specialty'] as String?,
       workplace: json['workplace'] as String?,
+      email: json['email'] as String?,
     );
   }
 
@@ -51,6 +54,7 @@ class UserModel {
       if (pinHash != null) 'pinHash': pinHash,
       if (specialty != null) 'specialty': specialty,
       if (workplace != null) 'workplace': workplace,
+      if (email != null) 'email': email,
     };
   }
 

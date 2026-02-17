@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../../core/widgets/back_handling_pop_scope.dart';
 
 import '../../../vht/presentation/screens/vht_navigation_bar.dart';
 import '../../../ambulance/presentation/screens/ambulance_navigation_bar.dart';
@@ -94,22 +95,205 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
+  Widget _buildBody(String uid) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(color: AppColors.error),
+            ),
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          );
+        }
+        final docs = snapshot.data?.docs ?? [];
+        final sortedDocs = List<QueryDocumentSnapshot>.from(docs)
+          ..sort((a, b) {
+            final aData = a.data() as Map<String, dynamic>?;
+            final bData = b.data() as Map<String, dynamic>?;
+            final aTs = aData?['createdAt'];
+            final bTs = bData?['createdAt'];
+            if (aTs == null && bTs == null) return 0;
+            if (aTs == null) return 1;
+            if (bTs == null) return -1;
+            late DateTime aDt;
+            late DateTime bDt;
+            if (aTs is Timestamp) {
+              aDt = aTs.toDate();
+            } else if (aTs is DateTime) {
+              aDt = aTs;
+            } else {
+              aDt = DateTime.now();
+            }
+            if (bTs is Timestamp) {
+              bDt = bTs.toDate();
+            } else if (bTs is DateTime) {
+              bDt = bTs;
+            } else {
+              bDt = DateTime.now();
+            }
+            return bDt.compareTo(aDt);
+          });
+        if (sortedDocs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.notifications_none,
+                  size: 64,
+                  color: AppColors.textTertiary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No notifications yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Notifications will appear here',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          itemCount: sortedDocs.length,
+          itemBuilder: (context, index) {
+            final doc = sortedDocs[index];
+            final data = doc.data() as Map<String, dynamic>;
+            final title = data['title'] as String? ?? 'Notification';
+            final message = data['message'] as String? ?? '';
+            final type = data['type'] as String?;
+            final read = data['read'] as bool? ?? false;
+            final createdAt = data['createdAt'];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              elevation: 0,
+              color: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: AppColors.border),
+              ),
+              child: InkWell(
+                onTap: () => _markAsRead(doc.id),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: TextStyle(
+                                      fontWeight: read
+                                          ? FontWeight.w500
+                                          : FontWeight.w700,
+                                      fontSize: 16,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                if (!read)
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            if (message.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                message,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 6),
+                            Text(
+                              _formatTimeAgo(createdAt),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = CurrentUserSession.uid;
     if (uid == null || uid.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Notifications'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(),
+      return BackHandlingPopScope(
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            title: const Text('Notifications'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  final role = CurrentUserSession.role?.toLowerCase() ?? '';
+                  String route = '/login';
+                  if (role == 'admin') route = '/admin-dashboard';
+                  else if (role == 'vht') route = '/vht-dashboard';
+                  else if (role.contains('clinic')) route = '/clinic-dashboard';
+                  else if (role.contains('ambulance')) route = '/ambulance-dashboard';
+                  Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+                }
+              },
+            ),
+            backgroundColor: AppColors.surface,
+            foregroundColor: AppColors.textPrimary,
           ),
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.textPrimary,
+          body: const Center(child: Text('Please sign in to view notifications')),
         ),
-        body: const Center(child: Text('Please sign in to view notifications')),
       );
     }
 
@@ -118,17 +302,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     switch (CurrentUserSession.role) {
       case 'VHT':
         bottomNav = VhtNavigationBar(
-          currentIndex: 2,
+          currentIndex: 1,
           onItemSelected: (index) {},
         );
         break;
       case 'Ambulance':
+      case 'Ambulance Driver':
         bottomNav = AmbulanceNavigationBar(
-          currentIndex: 2,
+          currentIndex: 1,
           onItemSelected: (index) {},
         );
         break;
       case 'Clinic':
+      case 'Clinic Staff':
         bottomNav = ClinicNavigationBar(
           currentIndex: 2,
           onItemSelected: (index) {},
@@ -136,7 +322,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         break;
       case 'Admin':
         bottomNav = AdminNavigationBar(
-          currentIndex: 2,
+          currentIndex: 1, // Admin nav: 0=Home, 1=Notifications, 2=Analytics, 3=Users
           onItemSelected: (index) {},
         );
         break;
@@ -144,13 +330,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         bottomNav = null;
     }
 
-    return Scaffold(
+    return BackHandlingPopScope(
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Notifications'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              final role = CurrentUserSession.role?.toLowerCase() ?? '';
+              String route = '/login';
+              if (role == 'admin') route = '/admin-dashboard';
+              else if (role == 'vht') route = '/vht-dashboard';
+              else if (role.contains('clinic')) route = '/clinic-dashboard';
+              else if (role.contains('ambulance')) route = '/ambulance-dashboard';
+              Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+            }
+          },
         ),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
@@ -169,191 +368,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
       bottomNavigationBar: bottomNav,
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notifications')
-            .where('userId', isEqualTo: uid)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: const TextStyle(color: AppColors.error),
-              ),
-            );
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-            );
-          }
-
-          final docs = snapshot.data?.docs ?? [];
-          final sortedDocs = List<QueryDocumentSnapshot>.from(docs)
-            ..sort((a, b) {
-              final aData = a.data() as Map<String, dynamic>?;
-              final bData = b.data() as Map<String, dynamic>?;
-              final aTs = aData?['createdAt'];
-              final bTs = bData?['createdAt'];
-              if (aTs == null && bTs == null) return 0;
-              if (aTs == null) return 1;
-              if (bTs == null) return -1;
-              late DateTime aDt;
-              late DateTime bDt;
-              if (aTs is Timestamp) {
-                aDt = aTs.toDate();
-              } else if (aTs is DateTime) {
-                aDt = aTs;
-              } else {
-                aDt = DateTime.now();
-              }
-              if (bTs is Timestamp) {
-                bDt = bTs.toDate();
-              } else if (bTs is DateTime) {
-                bDt = bTs;
-              } else {
-                bDt = DateTime.now();
-              }
-              return bDt.compareTo(aDt);
-            });
-
-          if (sortedDocs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_none,
-                    size: 64,
-                    color: AppColors.textTertiary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No notifications yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Notifications will appear here',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: sortedDocs.length,
-            itemBuilder: (context, index) {
-              final doc = sortedDocs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              final title = data['title'] as String? ?? 'Notification';
-              final message = data['message'] as String? ?? '';
-              final type = data['type'] as String?;
-              final read = data['read'] as bool? ?? false;
-              final createdAt = data['createdAt'];
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                elevation: 0,
-                color: AppColors.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: AppColors.border),
-                ),
-                child: InkWell(
-                  onTap: () => _markAsRead(doc.id),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryContainer,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            _getIconForType(type),
-                            color: AppColors.primary,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      title,
-                                      style: TextStyle(
-                                        fontWeight: read
-                                            ? FontWeight.w500
-                                            : FontWeight.w700,
-                                        fontSize: 16,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                  if (!read)
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.primary,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              if (message.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  message,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 6),
-                              Text(
-                                _formatTimeAgo(createdAt),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textTertiary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+      body: _buildBody(uid),
+    ),
     );
   }
 }

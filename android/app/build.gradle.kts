@@ -37,7 +37,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion  // Android 5.0 Lollipop - Covers ~95% of devices
-        targetSdk = 34  // Latest Android for best performance
+        targetSdk = 35  // Required by Google Play Store
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true  // Required for Firebase

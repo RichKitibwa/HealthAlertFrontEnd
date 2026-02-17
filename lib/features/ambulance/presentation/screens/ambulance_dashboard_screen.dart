@@ -9,6 +9,7 @@ import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/user_location_update_service.dart';
 
 class AmbulanceDashboardScreen extends StatefulWidget {
   const AmbulanceDashboardScreen({Key? key}) : super(key: key);
@@ -19,11 +20,22 @@ class AmbulanceDashboardScreen extends StatefulWidget {
 }
 
 class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
-  int _currentIndex = 0; // 0 = Home, 1 = Map
+  int _currentIndex = 0; 
+
+  @override
+  void initState() {
+    super.initState();
+    UserLocationUpdateService.startUpdating();
+  }
+
+  @override
+  void dispose() {
+    UserLocationUpdateService.stopUpdating();
+    super.dispose();
+  }
 
   void _onNavItemSelected(int index) {
     if (index == _currentIndex) return;
-    // Navigation is handled by AmbulanceNavigationBar; dashboard is always "home" (index 0)
   }
 
   @override
@@ -47,7 +59,6 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
           }
         },
         onDashboard: () {
-          // Already on dashboard
         },
         onSettings: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
@@ -55,7 +66,6 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
       ),
       endDrawer: AppDrawer(
         onDashboard: () {
-          // Already on dashboard
         },
         onNotifications: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
@@ -88,7 +98,6 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Welcome message below navbar
                     Text(
                       'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
                       style: theme.textTheme.headlineSmall?.copyWith(
@@ -130,7 +139,6 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Main action card - View Incoming Dispatch
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -247,7 +255,6 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
 
                     const SizedBox(height: 8),
 
-                    // RecentCases card ("No open cases")
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -264,7 +271,6 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                       ),
                     ),
 
-                    // Fill remaining space so content doesn't look cramped at the top on tall screens
                     const SizedBox(height: 16),
                   ],
                 ),

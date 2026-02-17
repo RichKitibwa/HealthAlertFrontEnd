@@ -66,14 +66,13 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
 
   Future<void> _generatePatientId() async {
     final now = DateTime.now();
-    final year = now.year.toString().substring(2); // Last 2 digits (26 for 2026)
+    final year = now.year.toString().substring(2); 
 
     try {
       // Check connectivity first
       final isOnline = await ConnectivityService().checkConnectivity();
 
       if (isOnline) {
-        // Online: use Firestore transaction for consistent counter
         final counterRef = _firestore.collection('counters').doc('patientCounter');
 
         final patientNumber = await _firestore.runTransaction<int>((transaction) async {
@@ -213,7 +212,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
     return true;
   }
 
-  /// Request location permission with user-friendly dialogs
+  /// Request location permission 
   Future<LocationResult> _getLocationWithPermission() async {
     final result = await LocationUtils.getCurrentLocationWithDetails();
 
@@ -317,20 +316,22 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       if (clinicMatch != null) 'assignedClinicName': clinicMatch['clinicName'],
       if (clinicMatch != null) 'assignedClinicianName': clinicMatch['clinicianName'],
       if (clinicMatch != null) 'clinicianPhoneNumber': clinicMatch['phoneNumber'],
+      if (clinicMatch != null && clinicMatch['clinicLatitude'] != null) 'clinicLatitude': clinicMatch['clinicLatitude'],
+      if (clinicMatch != null && clinicMatch['clinicLongitude'] != null) 'clinicLongitude': clinicMatch['clinicLongitude'],
       'status': 'pending',
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
       if (latitude != null) 'vhtLatitude': latitude,
       if (longitude != null) 'vhtLongitude': longitude,
-      if (imageUrl != null) 'imageUrl': imageUrl,
-      if (videoUrl != null) 'videoUrl': videoUrl,
-      if (voiceNoteUrl != null) 'voiceNoteUrl': voiceNoteUrl,
+      'imageUrl': imageUrl ?? '',
+      'videoUrl': videoUrl ?? '',
+      'voiceNoteUrl': voiceNoteUrl ?? '',
       'createdAt': DateTime.now().toIso8601String(),
       'updatedAt': DateTime.now().toIso8601String(),
     };
   }
 
-  /// Save the case locally first (offline-first approach)
+  /// Save the case locally first 
   Future<void> _saveCaseLocally(Map<String, dynamic> caseData, {bool isSynced = false}) async {
     try {
       final localCase = EmergencyCaseModel(
@@ -359,7 +360,6 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
 
       await LocalStorageService.saveEmergencyCaseLocally(localCase);
     } catch (e) {
-      // Local save failed - not critical, continue
       debugPrint('Failed to save case locally: $e');
     }
   }
@@ -373,7 +373,6 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
     });
 
     try {
-      // Step 1: Try to get location (non-blocking fallback)
       final locationResult = await _getLocationWithPermission();
       double? latitude;
       double? longitude;
@@ -382,16 +381,16 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         latitude = locationResult.position!.latitude;
         longitude = locationResult.position!.longitude;
       }
-      // If location fails, we continue without it - clinician will be matched by expertise
+      // If location fails, continue without it. clinician will be matched by expertise
 
       final vhtName = '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'.trim();
 
-      // Step 2: Check connectivity
+      // Check connectivity
       final connectivityService = ConnectivityService();
       final isOnline = await connectivityService.checkConnectivity();
 
       if (!isOnline) {
-        // OFFLINE PATH: Save locally and queue for sync
+        // Save locally and queue for sync
         final offlineCaseId = 'offline_${DateTime.now().millisecondsSinceEpoch}';
         final caseData = _buildCaseData(
           caseId: offlineCaseId,
@@ -428,7 +427,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       }
 
       // ONLINE PATH: Save locally first, then sync to Firestore
-      // Step 3: Find matching clinic (with or without location)
+      //  Find matching clinic (with or without location)
       Map<String, dynamic>? clinicMatch;
 
       if (latitude != null && longitude != null) {
@@ -441,7 +440,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         );
       }
 
-      // Fallback: match by expertise only (no location)
+      // Fallback: match by expertise only
       clinicMatch ??= await _clinicMatchingService.findMatchingClinicianWithoutLocation(
         emergencyType: widget.emergencyType,
         patientAge: _age,
@@ -464,7 +463,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         return;
       }
 
-      // Step 4: Create case reference and upload media
+      // Create case reference and upload media
       final caseRef = _firestore.collection('emergencyCases').doc();
 
       // Upload media files in parallel
@@ -522,16 +521,40 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         voiceNoteUrl: voiceNoteUrl,
       );
 
-      // Step 5: Save locally first (offline-first)
+      // Save locally first (offline-first)
       await _saveCaseLocally(caseData, isSynced: true);
 
-      // Step 6: Save to Firestore
+      //  Save to Firestore
       final firestoreData = Map<String, dynamic>.from(caseData);
       firestoreData['createdAt'] = FieldValue.serverTimestamp();
       firestoreData['updatedAt'] = FieldValue.serverTimestamp();
       await caseRef.set(firestoreData);
 
-      // Note: Cloud Function (onEmergencyCaseCreated) handles clinician notification for new cases
+      // Send notifications: clinician gets popup+in-app, VHT gets in-app only
+      try {
+        final clinicianId = (clinicMatch ?? {})['clinicianId'] as String? ?? '';
+        final clinicName = (clinicMatch ?? {})['clinicName'] as String? ?? 'clinic';
+        final patientFirst = _firstNameController.text.trim();
+        final patientLast = _lastNameController.text.trim();
+        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
+            ? '$patientFirst $patientLast'.trim()
+            : 'Unknown Patient';
+        final vhtId = CurrentUserSession.uid ?? '';
+        if (clinicianId.isNotEmpty && vhtId.isNotEmpty) {
+          await _fcmService.notifyOnCaseCreated(
+            clinicianId: clinicianId,
+            vhtId: vhtId,
+            caseId: caseRef.id,
+            emergencyType: widget.emergencyType,
+            patientName: patientName,
+            urgencyLevel: _selectedUrgency ?? 'medium',
+            clinicName: clinicName,
+            vhtName: vhtName,
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to send case creation notifications: $e');
+      }
 
       if (mounted) {
         // Navigate to case submitted confirmation screen
@@ -665,10 +688,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
           );
         },
         onSettings: () {
-          // TODO: Navigate to settings screen
         },
         onLearningResources: () {
-          // TODO: Navigate to learning resources screen (offline-first)
         },
       ),
       endDrawer: AppDrawer(
@@ -680,10 +701,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
           );
         },
         onSettings: () {
-          // TODO: Navigate to settings screen
         },
         onLearningResources: () {
-          // TODO: Navigate to learning resources screen
         },
         onLogout: () async {
           await LogoutUtils.logout();
@@ -698,8 +717,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       ),
       backgroundColor: AppColors.background,
       bottomNavigationBar: VhtNavigationBar(
-        currentIndex:
-            0, // this screen is part of the VHT Home/report emergency flow
+        currentIndex: 0,
         onItemSelected: (index) {
           // TODO: wire up navigation to other VHT tabs if desired
           // Example:

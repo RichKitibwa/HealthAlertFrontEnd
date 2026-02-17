@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../../../core/theme/app_colors.dart';
-
 import '../../../auth/current_user_session.dart';
+import '../../../../core/widgets/back_handling_pop_scope.dart';
 import '../../../vht/presentation/screens/vht_navigation_bar.dart';
 import '../../../ambulance/presentation/screens/ambulance_navigation_bar.dart';
 import '../../../clinic/presentation/screens/clinic_navigation_bar.dart';
@@ -38,39 +38,51 @@ class LearningResourcesScreen extends StatelessWidget {
     switch (CurrentUserSession.role) {
       case 'VHT':
         bottomNav = VhtNavigationBar(
-          currentIndex: 2,
+          currentIndex: 2, // Learn index for VHT
           onItemSelected: (index) {},
         );
         break;
       case 'Ambulance':
-        bottomNav = AmbulanceNavigationBar(
-          currentIndex: 2,
-          onItemSelected: (index) {},
-        );
+      case 'Ambulance Driver':
+        // Ambulance doesn't have Learn tab, so no bottom nav
+        bottomNav = null;
         break;
       case 'Clinic':
+      case 'Clinic Staff':
         bottomNav = ClinicNavigationBar(
-          currentIndex: 2,
+          currentIndex: 3, // Learn index for Clinic
           onItemSelected: (index) {},
         );
         break;
       case 'Admin':
-        bottomNav = AdminNavigationBar(
-          currentIndex: 2,
-          onItemSelected: (index) {},
-        );
+        // Admin doesn't have Learn tab, so no bottom nav
+        bottomNav = null;
         break;
       default:
         bottomNav = null;
     }
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Learning Resources'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+    return BackHandlingPopScope(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Learning Resources'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                // Navigate to appropriate dashboard based on role
+                final role = CurrentUserSession.role?.toLowerCase() ?? '';
+                String route = '/login';
+                if (role == 'admin') route = '/admin-dashboard';
+                else if (role == 'vht') route = '/vht-dashboard';
+                else if (role.contains('clinic')) route = '/clinic-dashboard';
+                else if (role.contains('ambulance')) route = '/ambulance-dashboard';
+                Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+              }
+            },
+          ),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         surfaceTintColor: Colors.transparent,
@@ -154,6 +166,7 @@ class LearningResourcesScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }

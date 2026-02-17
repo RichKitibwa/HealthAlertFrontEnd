@@ -65,19 +65,11 @@ class _ClinicianRegistrationFormState extends State<ClinicianRegistrationForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
                 // First Name
                 TextFormField(
                   controller: _firstNameController,
@@ -268,9 +260,6 @@ class _ClinicianRegistrationFormState extends State<ClinicianRegistrationForm> {
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
+          );
   }
 }

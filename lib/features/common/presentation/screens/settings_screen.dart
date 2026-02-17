@@ -83,7 +83,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Settings'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              // Navigate to appropriate dashboard based on role
+              final role = CurrentUserSession.role?.toLowerCase() ?? '';
+              String route = '/login';
+              if (role == 'admin') route = '/admin-dashboard';
+              else if (role == 'vht') route = '/vht-dashboard';
+              else if (role.contains('clinic')) route = '/clinic-dashboard';
+              else if (role.contains('ambulance')) route = '/ambulance-dashboard';
+              Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+            }
+          },
         ),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
@@ -122,6 +135,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: 'Phone',
                       subtitle: CurrentUserSession.phoneNumber ?? '—',
                     ),
+                    if (CurrentUserSession.email != null) ...[
+                      Divider(height: 1, color: AppColors.divider),
+                      _buildListTile(
+                        icon: Icons.email,
+                        title: 'Email',
+                        subtitle: CurrentUserSession.email ?? '—',
+                      ),
+                    ],
                   ],
                 ),
               ),

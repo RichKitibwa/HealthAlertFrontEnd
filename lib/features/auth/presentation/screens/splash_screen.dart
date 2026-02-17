@@ -74,9 +74,16 @@ class _SplashScreenState extends State<SplashScreen>
           CurrentUserSession.profileImageUrl = data?['profileImageUrl'];
           CurrentUserSession.workplace = data?['workplace'];
           CurrentUserSession.specialty = data?['specialty'];
+          CurrentUserSession.email = data?['email'];
 
           // Initialize FCM and save token to user document
-          FCMNotificationService().initialize();
+          final fcmService = FCMNotificationService();
+          fcmService.initialize();
+          // Start real-time notification listener for popup delivery
+          final uid = CurrentUserSession.uid;
+          if (uid != null && uid.isNotEmpty) {
+            fcmService.startNotificationListener(uid);
+          }
 
           // Navigate to appropriate dashboard
           _navigateToRoleDashboard(role);

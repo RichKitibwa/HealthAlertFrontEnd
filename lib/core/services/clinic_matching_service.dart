@@ -1,5 +1,5 @@
 // Clinic matching service
-// Finds the nearest clinic and matches emergency type to clinician specialty
+// Finds the nearest clinic and matches emergency type to clinician specialty.
 
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,33 +8,68 @@ import '../utils/location_utils.dart';
 class ClinicMatchingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Maps emergency types to preferred specialties
-  Map<String, List<String>> _getEmergencyTypeToSpecialty() {
-    return {
-      'Birth': ['Obstetrics & Gynecology', 'Clinical Officer', 'Nurse', 'General Medicine'],
-      'Trauma': ['Surgery', 'General Medicine', 'Clinical Officer', 'Nurse'],
-      'Infection': ['General Medicine', 'Clinical Officer', 'Nurse'],
-      'Other': ['General Medicine', 'Clinical Officer', 'Nurse'],
+  /// Returns the preferred specialty list for a given emergency type and age.
+  List<String> _preferredSpecialties(String emergencyType, int? patientAge) {
+    final pediatric = patientAge != null && patientAge < 18;
+    final map = pediatric ? _pediatricMap() : _adultMap();
+    return map[emergencyType] ??
+        (pediatric
+            ? ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse']
+            : ['General Medicine', 'Clinical Officer', 'Nurse']);
+  }
+
+  Map<String, List<String>> _adultMap() => {
+        'Birth': ['Obstetrics & Gynecology', 'Clinical Officer', 'Nurse', 'General Medicine'],
+        'Trauma': ['Surgery', 'General Medicine', 'Clinical Officer', 'Nurse'],
+        'Infection': ['General Medicine', 'Clinical Officer', 'Nurse'],
+        'Other': ['General Medicine', 'Clinical Officer', 'Nurse'],
+      };
+
+  Map<String, List<String>> _pediatricMap() => {
+        'Birth': ['Pediatrics', 'Obstetrics & Gynecology', 'Clinical Officer', 'Nurse', 'General Medicine'],
+        'Trauma': ['Pediatrics', 'Surgery', 'General Medicine', 'Clinical Officer', 'Nurse'],
+        'Infection': ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse'],
+        'Other': ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse'],
+      };
+
+  static const List<String> _generalFallbackSpecialties = [
+    'General Medicine',
+    'Clinical Officer',
+    'Nurse',
+  ];
+
+  /// Build clinician info map from a Firestore document + calculated distance.
+  Map<String, dynamic> _buildClinicianInfo(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+    double distance,
+  ) {
+    final data = doc.data()!;
+    final clinicLat = (data['clinicLatitude'] as num?)?.toDouble() ??
+        (data['latitude'] as num?)?.toDouble();
+    final clinicLon = (data['clinicLongitude'] as num?)?.toDouble() ??
+        (data['longitude'] as num?)?.toDouble();
+    return <String, dynamic>{
+      'clinicianId': doc.id,
+      'specialty': data['specialty'] as String? ?? 'General Medicine',
+      'distance': distance,
+      'fcmToken': data['fcmToken'] as String? ?? '',
+      'clinicName': data['workplace'] as String? ?? 'Unknown Clinic',
+      'clinicianName':
+          '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim(),
+      'phoneNumber': data['phoneNumber'] as String? ?? '',
+      if (clinicLat != null) 'clinicLatitude': clinicLat,
+      if (clinicLon != null) 'clinicLongitude': clinicLon,
     };
   }
 
-  /// Maps emergency types to pediatric specialties (if patient is a child)
-  Map<String, List<String>> _getPediatricSpecialty() {
-    return {
-      'Birth': ['Pediatrics', 'Obstetrics & Gynecology', 'Clinical Officer', 'Nurse', 'General Medicine'],
-      'Trauma': ['Pediatrics', 'Surgery', 'General Medicine', 'Clinical Officer', 'Nurse'],
-      'Infection': ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse'],
-      'Other': ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse'],
-    };
-  }
-
-  /// Find the nearest clinic with matching specialty.
-  /// Returns clinician info including document ID, name, clinic name, etc.
+  /// Find the nearest available clinician, with specialty match as a secondary
+  /// tiebreaker.
   ///
-  /// Matching priority:
-  /// 1. Specialty match + has location → sorted by distance
-  /// 2. Specialty match + no location → any matching clinician
-  /// 3. No specialty match → fall back to any available clinician
+  /// SELECTION PRIORITY (distance is ALWAYS first):
+  /// 1. Nearest clinician whose specialty is in the preferred list.
+  /// 2. Nearest clinician whose specialty is a general fallback
+  ///    (General Medicine / Clinical Officer / Nurse).
+  /// 3. Absolute nearest available clinician, regardless of specialty.
   Future<Map<String, dynamic>?> findNearestMatchingClinic({
     required double vhtLatitude,
     required double vhtLongitude,
@@ -42,130 +77,55 @@ class ClinicMatchingService {
     int? patientAge,
   }) async {
     try {
-      // Determine preferred specialties based on emergency type and patient age
-      List<String> preferredSpecialties;
-      if (patientAge != null && patientAge < 18) {
-        preferredSpecialties = _getPediatricSpecialty()[emergencyType] ??
-            ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse'];
-      } else {
-        preferredSpecialties = _getEmergencyTypeToSpecialty()[emergencyType] ??
-            ['General Medicine', 'Clinical Officer', 'Nurse'];
-      }
+      final preferred = _preferredSpecialties(emergencyType, patientAge);
 
-      // Query clinicians - role is stored as 'Clinic Staff' during registration
-      final cliniciansSnapshot = await _firestore
+      final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'Clinic Staff')
           .get();
 
-      if (cliniciansSnapshot.docs.isEmpty) {
-        return null;
-      }
+      if (snapshot.docs.isEmpty) return null;
 
-      // Separate clinicians into those with and without location data
-      List<Map<String, dynamic>> matchingWithLocation = [];
-      List<Map<String, dynamic>> matchingWithoutLocation = [];
-
-      for (var doc in cliniciansSnapshot.docs) {
-        final data = doc.data();
-        final specialty = data['specialty'] as String?;
-        final isAvailable = data['isAvailable'] as bool? ?? true;
-
-        // Skip if not available
-        if (!isAvailable) {
-          continue;
-        }
-
-        // Check if specialty matches preferred list
-        final hasSpecialtyMatch = specialty != null && preferredSpecialties.contains(specialty);
-
-        if (!hasSpecialtyMatch) {
-          continue;
-        }
-
-        final Map<String, dynamic> clinicianInfo = {
-          'clinicianId': doc.id,
-          'specialty': specialty ?? 'General Medicine',
-          'fcmToken': data['fcmToken'] as String? ?? '',
-          'clinicName': data['workplace'] as String? ?? 'Unknown Clinic',
-          'clinicianName': '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim(),
-          'phoneNumber': data['phoneNumber'] as String? ?? '',
-        };
-
-        // Check if clinician has location data
-        final clinicLat = (data['clinicLatitude'] as num?)?.toDouble()
-            ?? (data['latitude'] as num?)?.toDouble();
-        final clinicLon = (data['clinicLongitude'] as num?)?.toDouble()
-            ?? (data['longitude'] as num?)?.toDouble();
-
-        if (clinicLat != null && clinicLon != null) {
-          final distance = LocationUtils.calculateDistance(
-            vhtLatitude,
-            vhtLongitude,
-            clinicLat,
-            clinicLon,
-          );
-          clinicianInfo['distance'] = distance;
-          clinicianInfo['clinicLatitude'] = clinicLat;
-          clinicianInfo['clinicLongitude'] = clinicLon;
-          matchingWithLocation.add(clinicianInfo);
-        } else {
-          clinicianInfo['distance'] = double.maxFinite;
-          matchingWithoutLocation.add(clinicianInfo);
-        }
-      }
-
-      // Priority 1: Specialty match + has location → sorted by distance
-      if (matchingWithLocation.isNotEmpty) {
-        matchingWithLocation.sort(
-          (a, b) => (a['distance'] as double).compareTo(b['distance'] as double),
-        );
-        return matchingWithLocation.first;
-      }
-
-      // Priority 2: Specialty match + no location → return first available
-      if (matchingWithoutLocation.isNotEmpty) {
-        return matchingWithoutLocation.first;
-      }
-
-      // Priority 3: No specialty match → fall back to ANY available clinician
-      for (var doc in cliniciansSnapshot.docs) {
+      // Build all available clinicians with their distances
+      final all = <Map<String, dynamic>>[];
+      for (final doc in snapshot.docs) {
         final data = doc.data();
         final isAvailable = data['isAvailable'] as bool? ?? true;
+        if (!isAvailable) continue;
 
-        if (!isAvailable) {
-          continue;
-        }
+        final clinicLat = (data['clinicLatitude'] as num?)?.toDouble() ??
+            (data['latitude'] as num?)?.toDouble();
+        final clinicLon = (data['clinicLongitude'] as num?)?.toDouble() ??
+            (data['longitude'] as num?)?.toDouble();
 
-        final clinicLat = (data['clinicLatitude'] as num?)?.toDouble()
-            ?? (data['latitude'] as num?)?.toDouble();
-        final clinicLon = (data['clinicLongitude'] as num?)?.toDouble()
-            ?? (data['longitude'] as num?)?.toDouble();
+        final distance = (clinicLat != null && clinicLon != null)
+            ? LocationUtils.calculateDistance(
+                vhtLatitude, vhtLongitude, clinicLat, clinicLon)
+            : double.maxFinite;
 
-        double distance = double.maxFinite;
-        if (clinicLat != null && clinicLon != null) {
-          distance = LocationUtils.calculateDistance(
-            vhtLatitude,
-            vhtLongitude,
-            clinicLat,
-            clinicLon,
-          );
-        }
-
-        return {
-          'clinicianId': doc.id,
-          'specialty': data['specialty'] as String? ?? 'General Medicine',
-          'distance': distance,
-          'fcmToken': data['fcmToken'] as String? ?? '',
-          'clinicName': data['workplace'] as String? ?? 'Unknown Clinic',
-          'clinicianName': '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim(),
-          'phoneNumber': data['phoneNumber'] as String? ?? '',
-          if (clinicLat != null) 'clinicLatitude': clinicLat,
-          if (clinicLon != null) 'clinicLongitude': clinicLon,
-        };
+        all.add(_buildClinicianInfo(doc, distance));
       }
 
-      return null;
+      if (all.isEmpty) return null;
+
+      // Sort ALL by distance — nearest first, always.
+      all.sort(
+          (a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
+
+      // Pass 1: nearest clinician with a preferred specialty match
+      for (final c in all) {
+        if (preferred.contains(c['specialty'] as String)) return c;
+      }
+
+      // Pass 2: nearest clinician with a general fallback specialty
+      for (final c in all) {
+        if (_generalFallbackSpecialties.contains(c['specialty'] as String)) {
+          return c;
+        }
+      }
+
+      // Pass 3: absolute nearest available clinician
+      return all.first;
     } catch (e) {
       debugPrint('Error finding nearest clinic: $e');
       return null;
@@ -174,69 +134,101 @@ class ClinicMatchingService {
 
   /// Find any clinician whose specialty matches the emergency type.
   /// Used as a fallback when VHT location is unavailable.
-  /// Does NOT consider distance — just matches by expertise.
+  /// Still prefers specialty match, then general fallback, then any available.
   Future<Map<String, dynamic>?> findMatchingClinicianWithoutLocation({
     required String emergencyType,
     int? patientAge,
   }) async {
     try {
-      List<String> preferredSpecialties;
-      if (patientAge != null && patientAge < 18) {
-        preferredSpecialties = _getPediatricSpecialty()[emergencyType] ??
-            ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse'];
-      } else {
-        preferredSpecialties = _getEmergencyTypeToSpecialty()[emergencyType] ??
-            ['General Medicine', 'Clinical Officer', 'Nurse'];
-      }
+      final preferred = _preferredSpecialties(emergencyType, patientAge);
 
-      final cliniciansSnapshot = await _firestore
+      final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'Clinic Staff')
           .get();
 
-      if (cliniciansSnapshot.docs.isEmpty) return null;
+      if (snapshot.docs.isEmpty) return null;
 
-      // Try specialty match first
-      for (var doc in cliniciansSnapshot.docs) {
+      final available = <Map<String, dynamic>>[];
+      for (final doc in snapshot.docs) {
         final data = doc.data();
-        final specialty = data['specialty'] as String?;
         final isAvailable = data['isAvailable'] as bool? ?? true;
-
         if (!isAvailable) continue;
+        available.add(_buildClinicianInfo(doc, double.maxFinite));
+      }
 
-        if (specialty != null && preferredSpecialties.contains(specialty)) {
-          return {
-            'clinicianId': doc.id,
-            'specialty': specialty,
-            'fcmToken': data['fcmToken'] as String? ?? '',
-            'clinicName': data['workplace'] as String? ?? 'Unknown Clinic',
-            'clinicianName': '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim(),
-            'phoneNumber': data['phoneNumber'] as String? ?? '',
-            'distance': double.maxFinite,
-          };
+      if (available.isEmpty) return null;
+
+      // Pass 1: preferred specialty
+      for (final c in available) {
+        if (preferred.contains(c['specialty'] as String)) return c;
+      }
+
+      // Pass 2: general fallback
+      for (final c in available) {
+        if (_generalFallbackSpecialties.contains(c['specialty'] as String)) {
+          return c;
         }
       }
 
-      // Fall back to any available clinician
-      for (var doc in cliniciansSnapshot.docs) {
-        final data = doc.data();
-        final isAvailable = data['isAvailable'] as bool? ?? true;
-        if (!isAvailable) continue;
-
-        return {
-          'clinicianId': doc.id,
-          'specialty': data['specialty'] as String? ?? 'General Medicine',
-          'fcmToken': data['fcmToken'] as String? ?? '',
-          'clinicName': data['workplace'] as String? ?? 'Unknown Clinic',
-          'clinicianName': '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim(),
-          'phoneNumber': data['phoneNumber'] as String? ?? '',
-          'distance': double.maxFinite,
-        };
-      }
-
-      return null;
+      // Pass 3: any available clinician
+      return available.first;
     } catch (e) {
       debugPrint('Error finding clinician without location: $e');
+      return null;
+    }
+  }
+
+  /// Find the nearest available admin to a given location.
+  /// Used when deciding which admin to notify for ambulance dispatch requests.
+  ///
+  /// Returns null if no admins exist.
+  Future<Map<String, dynamic>?> findNearestAdmin({
+    double? nearLat,
+    double? nearLng,
+  }) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'Admin')
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+
+      final admins = <Map<String, dynamic>>[];
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final adminLat = (data['latitude'] as num?)?.toDouble();
+        final adminLng = (data['longitude'] as num?)?.toDouble();
+
+        double distance = double.maxFinite;
+        if (nearLat != null &&
+            nearLng != null &&
+            adminLat != null &&
+            adminLng != null) {
+          distance = LocationUtils.calculateDistance(
+              nearLat, nearLng, adminLat, adminLng);
+        }
+
+        admins.add({
+          'adminId': doc.id,
+          'adminName':
+              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim(),
+          'phoneNumber': data['phoneNumber'] as String? ?? '',
+          'fcmToken': data['fcmToken'] as String? ?? '',
+          'distance': distance,
+        });
+      }
+
+      if (admins.isEmpty) return null;
+
+      // Sort by distance if location was available, otherwise just pick first
+      admins.sort(
+          (a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
+
+      return admins.first;
+    } catch (e) {
+      debugPrint('Error finding nearest admin: $e');
       return null;
     }
   }

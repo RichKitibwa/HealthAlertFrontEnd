@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../auth/current_user_session.dart';
 
 /// Global top navigation bar used across all role-based dashboards (VHT,
 /// Ambulance, Clinic, Admin).
@@ -74,7 +75,20 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
               color: Colors.white,
-              onPressed: onBack ?? () => Navigator.pop(context),
+              onPressed: onBack ?? () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.pop(context);
+                } else {
+                  // If can't pop, navigate to appropriate dashboard based on role
+                  final role = CurrentUserSession.role?.toLowerCase() ?? '';
+                  String route = '/login';
+                  if (role == 'admin') route = '/admin-dashboard';
+                  else if (role == 'vht') route = '/vht-dashboard';
+                  else if (role.contains('clinic')) route = '/clinic-dashboard';
+                  else if (role.contains('ambulance')) route = '/ambulance-dashboard';
+                  Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+                }
+              },
             )
           : null,
       titleSpacing: showBackButton ? 0 : 16,
