@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'ambulance_incoming_dispatch_screen.dart';
 import 'ambulance_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -48,12 +49,12 @@ class _AmbulanceAllIncomingRequestsScreenState
     }
   }
 
-  String _formatTimeAgo(Timestamp? ts) {
+  String _formatTimeAgo(Timestamp? ts, AppLocalizations l10n) {
     if (ts == null) return '';
     final diff = DateTime.now().difference(ts.toDate());
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
     final dt = ts.toDate();
     return '${dt.day}/${dt.month}/${dt.year}';
   }
@@ -78,7 +79,7 @@ class _AmbulanceAllIncomingRequestsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: TopNavigationBar(
@@ -116,10 +117,10 @@ class _AmbulanceAllIncomingRequestsScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Text(
-                'Incoming Dispatch Requests',
+                l10n.incomingDispatchRequests,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Inter',
@@ -133,7 +134,7 @@ class _AmbulanceAllIncomingRequestsScreenState
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Accept a dispatch to start your ride.',
+                l10n.acceptDispatchToStart,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
@@ -154,7 +155,7 @@ class _AmbulanceAllIncomingRequestsScreenState
                         children: [
                           Icon(Icons.error_outline, size: 48, color: Colors.red.withAlpha(150)),
                           const SizedBox(height: 12),
-                          Text('Error loading requests', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                          Text(l10n.errorLoadingRequests, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                           const SizedBox(height: 4),
                           Text('${snapshot.error}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                         ],
@@ -189,9 +190,9 @@ class _AmbulanceAllIncomingRequestsScreenState
                         children: [
                           Icon(Icons.inbox_outlined, size: 56, color: AppColors.textSecondary.withAlpha(80)),
                           const SizedBox(height: 12),
-                          Text('No incoming requests', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary)),
+                          Text(l10n.noIncomingRequests, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary)),
                           const SizedBox(height: 4),
-                          Text('Dispatched cases will appear here.', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                          Text(l10n.dispatchedCasesAppearHere, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                         ],
                       ),
                     );
@@ -268,7 +269,7 @@ class _AmbulanceAllIncomingRequestsScreenState
                               ),
                               const SizedBox(height: 6),
                               if (patientName.isNotEmpty)
-                                Text('Patient: $patientName', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                                Text('${l10n.patientLabel}: $patientName', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
                               Text('$patientDesc', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                               const SizedBox(height: 4),
                               Row(
@@ -277,10 +278,10 @@ class _AmbulanceAllIncomingRequestsScreenState
                                     Text('VHT: $vhtName', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                                   if (clinicName.isNotEmpty) ...[
                                     Text(' • ', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                    Flexible(child: Text('To: $clinicName', style: TextStyle(fontSize: 11, color: AppColors.textSecondary), overflow: TextOverflow.ellipsis)),
+                                    Flexible(child: Text('${l10n.destination}: $clinicName', style: TextStyle(fontSize: 11, color: AppColors.textSecondary), overflow: TextOverflow.ellipsis)),
                                   ],
                                   const Spacer(),
-                                  Text(_formatTimeAgo(createdAt), style: TextStyle(fontSize: 10, color: AppColors.textSecondary.withAlpha(150))),
+                                  Text(_formatTimeAgo(createdAt, l10n), style: TextStyle(fontSize: 10, color: AppColors.textSecondary.withAlpha(150))),
                                 ],
                               ),
                             ],

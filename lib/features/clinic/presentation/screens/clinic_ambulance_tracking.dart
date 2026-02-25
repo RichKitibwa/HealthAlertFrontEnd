@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'clinic_patient_arrival.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -12,13 +13,14 @@ class ClinicAmbulanceTrackingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Ambulance Tracking',
+        pageTitle: l10n.ambulanceTracking,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -83,7 +85,7 @@ class ClinicAmbulanceTrackingScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Ambulance Tracking',
+                    l10n.ambulanceTracking,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
@@ -92,7 +94,7 @@ class ClinicAmbulanceTrackingScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Track the assigned ambulance ETA and status for this case.',
+                    l10n.trackAmbulanceEtaStatus,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w500,
@@ -132,7 +134,7 @@ class ClinicAmbulanceTrackingScreen extends StatelessWidget {
                             height: size.height * 0.35,
                             child: Center(
                               child: Text(
-                                'Map / ETA Placeholder',
+                                l10n.mapEtaPlaceholder,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'Inter',
@@ -176,8 +178,8 @@ class ClinicAmbulanceTrackingScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            child: const Text(
-                              'On Time',
+                            child: Text(
+                              l10n.onTime,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',

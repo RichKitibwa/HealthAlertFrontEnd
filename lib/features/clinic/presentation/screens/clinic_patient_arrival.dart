@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
@@ -11,13 +12,14 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Patient Arrival',
+        pageTitle: l10n.patientArrival,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -86,7 +88,7 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Patient Arrival',
+                          l10n.patientArrival,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 fontFamily: 'Inter',
@@ -96,7 +98,7 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Confirm staff assignment and close the case once the patient is received.',
+                          l10n.confirmStaffAssignmentCloseCase,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 fontFamily: 'Inter',
@@ -125,7 +127,7 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Patient',
+                                l10n.patientLabel,
                                 style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.w800,
@@ -136,7 +138,7 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Adult Female',
+                                l10n.adultFemale,
                                 style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.w900,
@@ -146,7 +148,7 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 14),
                               Text(
-                                'Emergency',
+                                l10n.emergencyLabel,
                                 style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.w800,
@@ -158,18 +160,14 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Text(
-                                    '🚑',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 14,
-                                      color: AppColors.textPrimary,
-                                    ),
+                                  Icon(
+                                    Icons.local_shipping_rounded,
+                                    size: 16,
+                                    color: AppColors.ambulanceAccent,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Trauma',
+                                    l10n.trauma,
                                     style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontWeight: FontWeight.w900,
@@ -181,7 +179,7 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 14),
                               Text(
-                                'Staff assigned',
+                                l10n.staffAssigned,
                                 style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.w800,
@@ -221,8 +219,8 @@ class ClinicPatientArrivalScreen extends StatelessWidget {
                               ),
                               elevation: 6,
                             ),
-                            child: const Text(
-                              'Patient Received / Close Case',
+                            child: Text(
+                              l10n.patientReceivedCloseCase,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',

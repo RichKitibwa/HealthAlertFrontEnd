@@ -12,6 +12,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/location_utils.dart';
 import '../../../../core/widgets/back_handling_pop_scope.dart';
 import '../../../../core/services/fcm_notification_service.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AdminCaseTimelineScreen extends StatefulWidget {
   final String caseId;
@@ -44,22 +45,22 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
     }
   }
 
-  String _getStatusLabel(String? status) {
+  String _getStatusLabel(String? status, AppLocalizations l10n) {
     switch (status?.toLowerCase()) {
-      case 'pending': return 'Pending Review';
-      case 'advised': return 'Advice Sent';
-      case 'ambulancerequested': return 'Ambulance Requested';
-      case 'dispatched': return 'Dispatched';
-      case 'enroute': return 'En Route';
-      case 'arrived': return 'Arrived';
-      case 'intransit': return 'In Transit';
-      case 'delivered': return 'Delivered';
-      case 'intreatment': return 'In Treatment';
-      case 'admitted': return 'Admitted';
-      case 'discharged': return 'Discharged';
-      case 'completed': return 'Completed';
-      case 'cancelled': return 'Cancelled';
-      default: return status ?? 'Unknown';
+      case 'pending': return l10n.pendingReview;
+      case 'advised': return l10n.adviceSent;
+      case 'ambulancerequested': return l10n.ambulanceRequested;
+      case 'dispatched': return l10n.ambulanceDispatched;
+      case 'enroute': return l10n.enRoute;
+      case 'arrived': return l10n.arrived;
+      case 'intransit': return l10n.patientInTransit;
+      case 'delivered': return l10n.patientDelivered;
+      case 'intreatment': return l10n.inTreatment;
+      case 'admitted': return l10n.admitted;
+      case 'discharged': return l10n.discharged;
+      case 'completed': return l10n.caseCompleted;
+      case 'cancelled': return l10n.caseCancelled;
+      default: return status ?? l10n.unknown;
     }
   }
 
@@ -104,71 +105,76 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open dialer for $phone'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.couldNotOpenDialer(phone)), backgroundColor: Colors.red),
         );
       }
     }
   }
 
   Future<void> _dispatchAmbulance(Map<String, dynamic> caseData) async {
+    final l10n = AppLocalizations.of(context)!;
     // Show ambulance selection dialog
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.local_shipping_rounded, color: AppColors.adminAccent, size: 22),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text('Dispatch Ambulance', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16), maxLines: 1),
-            ),
-          ],
-        ),
-        content: const Text('Dispatch the nearest available ambulance to this case?', style: TextStyle(fontSize: 14)),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          Row(
+      builder: (ctx) {
+        final dialogL10n = AppLocalizations.of(ctx)!;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
             children: [
+              Icon(Icons.local_shipping_rounded, color: AppColors.adminAccent, size: 22),
+              const SizedBox(width: 10),
               Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.adminAccent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: const Text('Dispatch', style: TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
-                    ),
-                  ),
-                ),
+                child: Text(dialogL10n.dispatchAmbulance, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16), maxLines: 1),
               ),
             ],
           ),
-        ],
-      ),
+          content: Text(dialogL10n.assigningNearestAmbulance, style: const TextStyle(fontSize: 14)),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(dialogL10n.cancel, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.adminAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(dialogL10n.dispatch, style: const TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
 
     if (confirm != true) return;
@@ -256,13 +262,13 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ambulance dispatched successfully.'), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.ambulanceDispatchedSuccessfully), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -278,7 +284,7 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Case Timeline',
+        pageTitle: AppLocalizations.of(context)!.caseTimeline,
         showBackButton: true,
         onBack: () {
           if (Navigator.of(context).canPop()) {
@@ -315,7 +321,8 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (!snapshot.hasData || !snapshot.data!.exists) {
-              return const Center(child: Text('Case not found.'));
+              final l10n = AppLocalizations.of(context)!;
+              return Center(child: Text(l10n.caseNotFound));
             }
 
             final data = snapshot.data!.data() as Map<String, dynamic>;
@@ -352,14 +359,15 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
             }
             final currentIndex = statuses.indexOf(status);
 
+            final l10n = AppLocalizations.of(context)!;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Case Timeline', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  Text(l10n.caseTimeline, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                   const SizedBox(height: 6),
-                  Text('Review events for this emergency case.', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  Text(l10n.reviewEventsForCase, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                   const SizedBox(height: 16),
 
                   // Status + Urgency Banner
@@ -380,7 +388,7 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
                             children: [
                               Text(emergencyType, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: statusColor)),
                               const SizedBox(height: 2),
-                              Text(_getStatusLabel(status), style: TextStyle(fontSize: 13, color: statusColor)),
+                              Text(_getStatusLabel(status, l10n), style: TextStyle(fontSize: 13, color: statusColor)),
                             ],
                           ),
                         ),
@@ -398,22 +406,22 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
                   const SizedBox(height: 16),
 
                   // Patient + Case Info
-                  _buildInfoCard('Case Details', [
-                    if (patientName.isNotEmpty) _buildInfoRow('Patient', patientName),
-                    if (patientId.isNotEmpty) _buildInfoRow('Patient ID', patientId),
-                    if (patientAge != null) _buildInfoRow('Age', '$patientAge years'),
-                    if (vhtName.isNotEmpty) _buildInfoRow('VHT', vhtName),
-                    if (clinicName.isNotEmpty) _buildInfoRow('Clinic', clinicName),
-                    if (clinicianName.isNotEmpty) _buildInfoRow('Clinician', clinicianName),
+                  _buildInfoCard(l10n.caseDetails, [
+                    if (patientName.isNotEmpty) _buildInfoRow(l10n.patientLabel, patientName),
+                    if (patientId.isNotEmpty) _buildInfoRow(l10n.patientIdLabel, patientId),
+                    if (patientAge != null) _buildInfoRow(l10n.age, l10n.ageYears(patientAge)),
+                    if (vhtName.isNotEmpty) _buildInfoRow(l10n.vht, vhtName),
+                    if (clinicName.isNotEmpty) _buildInfoRow(l10n.clinicLabel, clinicName),
+                    if (clinicianName.isNotEmpty) _buildInfoRow(l10n.clinicianLabel, clinicianName),
                   ]),
                   const SizedBox(height: 12),
 
                   // Contact section
-                  _buildInfoCard('Contacts', [
+                  _buildInfoCard(l10n.contactSection, [
                     if (vhtPhone.isNotEmpty)
-                      _buildContactRow('VHT', vhtName, vhtPhone),
+                      _buildContactRow(l10n.vht, vhtName, vhtPhone),
                     if (clinicianPhone.isNotEmpty)
-                      _buildContactRow('Clinician', clinicianName, clinicianPhone),
+                      _buildContactRow(l10n.clinicianLabel, clinicianName, clinicianPhone),
                   ]),
                   const SizedBox(height: 16),
 
@@ -428,7 +436,7 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Progress Timeline', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                        Text(l10n.progressTimeline, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
                         const SizedBox(height: 12),
                         ...List.generate(statuses.length, (index) {
                           final isCompleted = index <= currentIndex;
@@ -470,7 +478,7 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        _getStatusLabel(s),
+                                        _getStatusLabel(s, l10n),
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
@@ -502,7 +510,7 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : const Icon(Icons.local_shipping_rounded),
                         label: Text(
-                          _isDispatching ? 'Dispatching...' : 'Dispatch Ambulance',
+                          _isDispatching ? l10n.dispatching : l10n.dispatchAmbulance,
                           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -559,19 +567,28 @@ class _AdminCaseTimelineScreenState extends State<AdminCaseTimelineScreen> {
   }
 
   Widget _buildContactRow(String role, String name, String phone) {
+    final l10n = AppLocalizations.of(context)!;
+    String callLabel;
+    if (role == l10n.vht) {
+      callLabel = l10n.callVht;
+    } else if (role == l10n.clinicianLabel) {
+      callLabel = l10n.callClinician;
+    } else {
+      callLabel = '${l10n.callsLabel} $role';
+    }
     return InkWell(
       onTap: () => _callPhone(phone),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
-            Icon(Icons.phone, color: Colors.green, size: 20),
+            const Icon(Icons.phone, color: Colors.green, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Call $role', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                  Text(callLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
                   if (name.isNotEmpty) Text(name, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                 ],
               ),

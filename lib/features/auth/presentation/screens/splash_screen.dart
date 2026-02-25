@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import '../../current_user_session.dart';
 import '../../../../core/services/device_storage_service.dart';
 import '../../../../core/services/fcm_notification_service.dart';
+import '../../../../core/services/locale_notifier.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
@@ -74,12 +77,20 @@ class _SplashScreenState extends State<SplashScreen>
           CurrentUserSession.profileImageUrl = data?['profileImageUrl'];
           CurrentUserSession.workplace = data?['workplace'];
           CurrentUserSession.specialty = data?['specialty'];
+          CurrentUserSession.camp = data?['camp'];
           CurrentUserSession.email = data?['email'];
+
+          // Restore this user's saved language preference.
+          if (mounted) {
+            final localeNotifier =
+                Provider.of<LocaleNotifier>(context, listen: false);
+            await localeNotifier.loadAndApplyLocaleForUser(user.uid);
+          }
 
           // Initialize FCM and save token to user document
           final fcmService = FCMNotificationService();
           fcmService.initialize();
-          // Start real-time notification listener for popup delivery
+          // Start real-time notification listener (badge/list updates)
           final uid = CurrentUserSession.uid;
           if (uid != null && uid.isNotEmpty) {
             fcmService.startNotificationListener(uid);
@@ -141,6 +152,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: FadeTransition(
@@ -159,9 +171,9 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 24),
 
               // App Name
-              const Text(
-                'HealthAlert',
-                style: TextStyle(
+              Text(
+                l10n.splashAppName,
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary,
@@ -170,12 +182,12 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 16),
 
               // Tagline
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40.0),
                 child: Text(
-                  'Emergency communication for front line health response',
+                  l10n.splashTagline,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
                     color: Colors.grey,
                     fontWeight: FontWeight.w500,

@@ -9,6 +9,7 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// VHT Active Cases Screen
 ///
@@ -33,7 +34,18 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
   String? _selectedCategory;
   final TextEditingController _searchController = TextEditingController();
 
-  static const List<String> _categories = ['Birth', 'Trauma', 'Infection', 'Other'];
+  static const List<String> _categoryKeys = ['Birth', 'Trauma', 'Infection', 'Other'];
+
+  String _getCategoryLabel(BuildContext context, String key) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (key.toLowerCase()) {
+      case 'birth': return l10n.birth;
+      case 'trauma': return l10n.trauma;
+      case 'infection': return l10n.infection;
+      case 'other': return l10n.other;
+      default: return key;
+    }
+  }
 
   @override
   void initState() {
@@ -111,28 +123,30 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
     }
   }
 
-  String _getStatusLabel(String? s) {
+  String _getStatusLabel(BuildContext context, String? s) {
+    final l10n = AppLocalizations.of(context)!;
     switch (s?.toLowerCase()) {
-      case 'pending': return 'Pending';
-      case 'advised': return 'Advised';
-      case 'ambulancerequested': return 'Amb. Requested';
-      case 'dispatched': return 'Dispatched';
-      case 'enroute': return 'En Route';
-      case 'arrived': return 'Arrived';
-      case 'intransit': return 'In Transit';
-      case 'delivered': return 'Delivered';
-      case 'completed': return 'Completed';
-      case 'cancelled': return 'Cancelled';
-      default: return s ?? 'Unknown';
+      case 'pending': return l10n.pendingReview;
+      case 'advised': return l10n.clinicianAdvised;
+      case 'ambulancerequested': return l10n.ambulanceRequested;
+      case 'dispatched': return l10n.ambulanceDispatched;
+      case 'enroute': return l10n.ambulanceEnRoute;
+      case 'arrived': return l10n.ambulanceArrived;
+      case 'intransit': return l10n.patientInTransit;
+      case 'delivered': return l10n.patientDelivered;
+      case 'completed': return l10n.caseCompleted;
+      case 'cancelled': return l10n.caseCancelled;
+      default: return s ?? l10n.unknown;
     }
   }
 
-  String _formatTimeAgo(Timestamp? ts) {
+  String _formatTimeAgo(BuildContext context, Timestamp? ts) {
     if (ts == null) return '';
+    final l10n = AppLocalizations.of(context)!;
     final diff = DateTime.now().difference(ts.toDate());
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
     final dt = ts.toDate();
     return '${dt.day}/${dt.month}/${dt.year}';
   }
@@ -160,12 +174,13 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Active Cases',
+        pageTitle: l10n.activeCases,
         showBackButton: true,
         onBack: () => Navigator.pop(context),
         onSignOut: () async {
@@ -203,7 +218,7 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      _filter == 'active' ? 'Active Cases' : _filter == 'completed' ? 'Case History' : 'All Cases',
+                      _filter == 'active' ? l10n.activeCases : _filter == 'completed' ? l10n.caseHistory : l10n.allCases,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -221,7 +236,7 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search by patient name, ID, or type...',
+                  hintText: l10n.searchByPatientNameIdOrType,
                   hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondary.withAlpha(150)),
                   prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -250,11 +265,11 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  _buildChip('Active', 'active'),
+                  _buildChip(l10n.activeFilter, 'active'),
                   const SizedBox(width: 8),
-                  _buildChip('All', 'all'),
+                  _buildChip(l10n.allFilter, 'all'),
                   const SizedBox(width: 8),
-                  _buildChip('Completed', 'completed'),
+                  _buildChip(l10n.completedFilter, 'completed'),
                 ],
               ),
             ),
@@ -268,11 +283,11 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _buildCategoryChip('All Types', null),
+                    _buildCategoryChip(l10n.allTypes, null),
                     const SizedBox(width: 6),
-                    ..._categories.map((cat) => Padding(
+                    ..._categoryKeys.map((cat) => Padding(
                       padding: const EdgeInsets.only(right: 6),
-                      child: _buildCategoryChip(cat, cat),
+                      child: _buildCategoryChip(_getCategoryLabel(context, cat), cat),
                     )),
                   ],
                 ),
@@ -298,8 +313,8 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
                           children: [
                             Icon(Icons.error_outline, size: 48, color: Colors.red.withAlpha(150)),
                             const SizedBox(height: 12),
-                            const Text(
-                              'Error loading cases',
+                            Text(
+                              l10n.errorLoadingCases,
                               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary),
                             ),
                             const SizedBox(height: 4),
@@ -328,12 +343,12 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
                           Icon(Icons.inbox_outlined, size: 56, color: AppColors.textSecondary.withAlpha(80)),
                           const SizedBox(height: 12),
                           Text(
-                            _filter == 'active' ? 'No active cases' : _filter == 'completed' ? 'No completed cases' : 'No cases found',
+                            _filter == 'active' ? l10n.noActiveCases : _filter == 'completed' ? l10n.noCompletedCases : l10n.noCasesFound,
                             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Cases you report will appear here.',
+                            l10n.casesReportedAppearHere,
                             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                           ),
                         ],
@@ -405,9 +420,10 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
   }
 
   Widget _buildCaseCard(BuildContext context, DocumentSnapshot doc) {
+    final l10n = AppLocalizations.of(context)!;
     final data = doc.data() as Map<String, dynamic>;
     final caseId = doc.id;
-    final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
+    final emergencyType = data['emergencyType'] as String? ?? l10n.unknown;
     final urgency = data['urgencyLevel'] as String? ?? 'medium';
     final status = data['status'] as String? ?? 'pending';
     final patientId = data['patientId'] as String? ?? '';
@@ -458,7 +474,7 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
                     border: Border.all(color: _getStatusColor(status).withAlpha(40)),
                   ),
                   child: Text(
-                    _getStatusLabel(status),
+                    _getStatusLabel(context, status),
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _getStatusColor(status)),
                   ),
                 ),
@@ -515,11 +531,11 @@ class _VhtActiveCasesScreenState extends State<VhtActiveCasesScreen> {
             ),
             if (clinicName.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text('Clinic: $clinicName', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text('${l10n.clinicLabel}: $clinicName', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
             ],
             const SizedBox(height: 4),
             Text(
-              _formatTimeAgo(createdAt),
+              _formatTimeAgo(context, createdAt),
               style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(150)),
             ),
           ],

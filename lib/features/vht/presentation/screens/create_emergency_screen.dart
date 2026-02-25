@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'vht_add_media_screen.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
@@ -44,11 +45,12 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'New Emergency',
+        pageTitle: l10n.newEmergency,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -129,7 +131,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Report Emergency',
+                  l10n.reportEmergency,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
@@ -138,7 +140,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Select the type of emergency',
+                  l10n.selectTypeOfEmergency,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -148,7 +150,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                 const SizedBox(height: 32),
                 _EmergencyTypeCard(
                   icon: Icons.pregnant_woman_rounded,
-                  title: 'Birth',
+                  title: l10n.birth,
                   accentColor: AppColors.vhtAccent,
                   disableHover: _isScrolling,
                   onTap: () => _goToAddMedia('Birth'),
@@ -156,7 +158,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                 const SizedBox(height: 12),
                 _EmergencyTypeCard(
                   icon: Icons.car_crash_rounded,
-                  title: 'Trauma',
+                  title: l10n.trauma,
                   accentColor: AppColors.warningDark,
                   disableHover: _isScrolling,
                   onTap: () => _goToAddMedia('Trauma'),
@@ -164,7 +166,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                 const SizedBox(height: 12),
                 _EmergencyTypeCard(
                   icon: Icons.coronavirus_rounded,
-                  title: 'Infection',
+                  title: l10n.infection,
                   accentColor: AppColors.secondary,
                   disableHover: _isScrolling,
                   onTap: () => _goToAddMedia('Infection'),
@@ -172,7 +174,7 @@ class _CreateEmergencyScreenState extends State<CreateEmergencyScreen> {
                 const SizedBox(height: 12),
                 _EmergencyTypeCard(
                   icon: Icons.more_horiz_rounded,
-                  title: 'Other',
+                  title: l10n.other,
                   accentColor: AppColors.adminAccent,
                   disableHover: _isScrolling,
                   onTap: () => _goToAddMedia('Other'),

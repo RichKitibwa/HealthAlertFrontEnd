@@ -12,6 +12,7 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 // Admin Dashboard Screen
 // Main dashboard for administrators and NGOs
@@ -34,6 +35,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     Widget buildDashboardCard({
       required IconData icon,
@@ -112,7 +114,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         showBackButton: false,
-        pageTitle: 'Dashboard',
+        pageTitle: l10n.dashboard,
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -141,7 +143,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
+                    l10n.welcomeName(CurrentUserSession.firstName ?? l10n.user),
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
@@ -150,7 +152,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Choose what you want to manage today.',
+                    l10n.chooseWhatToManageToday,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Inter',
                       color: AppColors.textSecondary,
@@ -208,7 +210,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              const Text('Dispatch Needed', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.red)),
+                                              Text(l10n.dispatchNeeded, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.red)),
                                               const SizedBox(height: 2),
                                               Text('$type${patientName.isNotEmpty ? " - $patientName" : ""}', style: TextStyle(fontSize: 13, color: Colors.grey[700])),
                                             ],
@@ -220,7 +222,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                             color: Colors.red,
                                             borderRadius: BorderRadius.circular(8),
                                           ),
-                                          child: const Text('Dispatch', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                                          child: Text(l10n.dispatchLabel, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
                                         ),
                                       ],
                                     ),
@@ -233,8 +235,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                         buildDashboardCard(
                           icon: Icons.assignment_rounded,
-                          title: 'Active Cases',
-                          subtitle: 'View and manage all ongoing cases.',
+                          title: l10n.activeCases,
+                          subtitle: l10n.viewAndManageOngoingCases,
                           onTap: () {
                             Navigator.pushNamed(
                               context,
@@ -245,9 +247,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         const SizedBox(height: 16),
                         buildDashboardCard(
                           icon: Icons.insights_rounded,
-                          title: 'Analytics',
-                          subtitle:
-                              'View ambulance dispatch and VHT report insights.',
+                          title: l10n.analytics,
+                          subtitle: l10n.analyticsSubtitle,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -258,8 +259,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         const SizedBox(height: 16),
                         buildDashboardCard(
                           icon: Icons.people_alt_rounded,
-                          title: 'Manage Users',
-                          subtitle: 'Add or remove system users.',
+                          title: l10n.manageUsers,
+                          subtitle: l10n.manageUsersSubtitle,
                           onTap: () {
                             Navigator.push(
                               context,

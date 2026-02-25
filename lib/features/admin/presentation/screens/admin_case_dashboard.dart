@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'admin_case_timeline.dart';
 import 'admin_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -88,30 +89,41 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
     }
   }
 
-  String _getStatusLabel(String? status) {
+  String _getStatusLabel(String? status, AppLocalizations l10n) {
     switch (status?.toLowerCase()) {
-      case 'pending': return 'Pending';
-      case 'advised': return 'Advised';
-      case 'ambulancerequested': return 'Amb. Requested';
-      case 'dispatched': return 'Dispatched';
-      case 'enroute': return 'En Route';
-      case 'arrived': return 'Arrived';
-      case 'intransit': return 'In Transit';
-      case 'delivered': return 'Delivered';
-      case 'completed': return 'Completed';
-      case 'cancelled': return 'Cancelled';
-      default: return status ?? 'Unknown';
+      case 'pending': return l10n.pendingReview;
+      case 'advised': return l10n.adviceSent;
+      case 'ambulancerequested': return l10n.ambulanceRequested;
+      case 'dispatched': return l10n.dispatched;
+      case 'enroute': return l10n.enRoute;
+      case 'arrived': return l10n.arrived;
+      case 'intransit': return l10n.patientInTransit;
+      case 'delivered': return l10n.patientDelivered;
+      case 'completed': return l10n.caseCompleted;
+      case 'cancelled': return l10n.caseCancelled;
+      default: return status ?? l10n.unknown;
     }
   }
 
-  String _formatTimeAgo(Timestamp? ts) {
+  String _formatTimeAgo(Timestamp? ts, AppLocalizations l10n) {
     if (ts == null) return '';
     final diff = DateTime.now().difference(ts.toDate());
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
     final dt = ts.toDate();
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  String _getCategoryLabel(String? cat, AppLocalizations l10n) {
+    if (cat == null) return l10n.allTypes;
+    switch (cat.toLowerCase()) {
+      case 'birth': return l10n.birth;
+      case 'trauma': return l10n.trauma;
+      case 'infection': return l10n.infection;
+      case 'other': return l10n.other;
+      default: return cat;
+    }
   }
 
   List<DocumentSnapshot> _sortDocs(List<DocumentSnapshot> docs) {
@@ -155,13 +167,14 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return BackHandlingPopScope(
       dashboardRoute: '/admin-dashboard',
       child: Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Active Cases',
+        pageTitle: l10n.activeCasesTitle,
         showBackButton: true,
         onBack: () {
           if (Navigator.of(context).canPop()) {
@@ -200,7 +213,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Active Cases',
+                    l10n.activeCasesTitle,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
@@ -209,7 +222,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Monitor ongoing emergencies across VHTs, ambulances, and clinics.',
+                    l10n.viewAndManageOngoingCases,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w500,
@@ -227,7 +240,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search by patient, VHT, or type...',
+                  hintText: l10n.searchByPatientVhtOrType,
                   hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondary.withAlpha(150)),
                   prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -256,18 +269,18 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  _buildFilterChip('Active', 'active'),
+                  _buildFilterChip(l10n.activeFilter, 'active'),
                   const SizedBox(width: 8),
-                  _buildFilterChip('All', 'all'),
+                  _buildFilterChip(l10n.allFilter, 'all'),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Completed', 'completed'),
+                  _buildFilterChip(l10n.completedFilter, 'completed'),
                   const Spacer(),
                   PopupMenuButton<String>(
                     onSelected: (value) => setState(() => _sortBy = value),
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(value: 'Time', child: Text('Sort by time')),
-                      PopupMenuItem(value: 'Severity', child: Text('Sort by severity')),
-                      PopupMenuItem(value: 'Status', child: Text('Sort by status')),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(value: 'Time', child: Text(l10n.sortByTime)),
+                      PopupMenuItem(value: 'Severity', child: Text(l10n.sortBySeverity)),
+                      PopupMenuItem(value: 'Status', child: Text(l10n.sortByStatus)),
                     ],
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -281,7 +294,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                         children: [
                           Icon(Icons.sort, size: 18, color: AppColors.adminAccent),
                           const SizedBox(width: 6),
-                          Text(_sortBy, style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.adminAccent)),
+                          Text(_sortBy == 'Time' ? l10n.sortByTime : _sortBy == 'Severity' ? l10n.sortBySeverity : l10n.sortByStatus, style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.adminAccent)),
                         ],
                       ),
                     ),
@@ -299,11 +312,11 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _buildCategoryChip('All Types', null),
+                    _buildCategoryChip(l10n.allTypes, null),
                     const SizedBox(width: 6),
                     ..._categories.map((cat) => Padding(
                       padding: const EdgeInsets.only(right: 6),
-                      child: _buildCategoryChip(cat, cat),
+                      child: _buildCategoryChip(_getCategoryLabel(cat, l10n), cat),
                     )),
                   ],
                 ),
@@ -327,7 +340,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                         children: [
                           Icon(Icons.error_outline, size: 48, color: Colors.red.withAlpha(150)),
                           const SizedBox(height: 12),
-                          Text('Error loading cases', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                          Text(l10n.errorLoadingCases, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                           const SizedBox(height: 4),
                           Text('${snapshot.error}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary), textAlign: TextAlign.center),
                         ],
@@ -350,7 +363,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                           Icon(Icons.inbox_outlined, size: 56, color: AppColors.textSecondary.withAlpha(80)),
                           const SizedBox(height: 12),
                           Text(
-                            _selectedFilter == 'active' ? 'No active cases' : 'No cases found',
+                            _selectedFilter == 'active' ? l10n.noActiveCases : l10n.noCasesFound,
                             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary),
                           ),
                         ],
@@ -362,7 +375,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: docs.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) => _buildCaseCard(context, docs[index]),
+                    itemBuilder: (context, index) => _buildCaseCard(context, docs[index], l10n),
                   );
                 },
               ),
@@ -412,11 +425,22 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
     );
   }
 
-  Widget _buildCaseCard(BuildContext context, DocumentSnapshot doc) {
+  String _getUrgencyLabel(String? u, AppLocalizations l10n) {
+    switch (u?.toLowerCase()) {
+      case 'critical': return l10n.critical;
+      case 'high': return l10n.high;
+      case 'medium': return l10n.moderate;
+      case 'low': return l10n.low;
+      default: return l10n.unknown;
+    }
+  }
+
+  Widget _buildCaseCard(BuildContext context, DocumentSnapshot doc, AppLocalizations l10n) {
     final data = doc.data() as Map<String, dynamic>;
     final caseId = doc.id;
-    final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
-    final urgency = data['urgencyLevel'] as String? ?? 'medium';
+    final emergencyType = _getCategoryLabel(data['emergencyType'] as String?, l10n);
+    final urgency = _getUrgencyLabel(data['urgencyLevel'] as String?, l10n);
+    final urgencyRaw = data['urgencyLevel'] as String? ?? 'medium';
     final status = data['status'] as String? ?? 'pending';
     final patientId = data['patientId'] as String? ?? '';
     final patientFirstName = data['patientFirstName'] as String? ?? '';
@@ -439,7 +463,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: status == 'pending' ? _getUrgencyColor(urgency).withAlpha(50) : AppColors.border),
+          border: Border.all(color: status == 'pending' ? _getUrgencyColor(urgencyRaw).withAlpha(50) : AppColors.border),
           boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 18, offset: const Offset(0, 12))],
         ),
         child: Column(
@@ -461,7 +485,7 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                     border: Border.all(color: _getStatusColor(status).withAlpha(40)),
                   ),
                   child: Text(
-                    _getStatusLabel(status),
+                    _getStatusLabel(status, l10n),
                     style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 11, color: _getStatusColor(status)),
                   ),
                 ),
@@ -477,25 +501,25 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                       if (patientName.isNotEmpty)
                         Text(patientName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
                       if (patientId.isNotEmpty)
-                        Text('ID: $patientId', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        Text('${l10n.idLabel}: $patientId', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                     ],
                   ),
                 ),
                 if (patientAge != null)
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
-                    child: Text('$patientAge yrs', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.adminAccent)),
+                    child: Text(l10n.yearsShort(patientAge), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.adminAccent)),
                   ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _getUrgencyColor(urgency).withAlpha(22),
+                    color: _getUrgencyColor(urgencyRaw).withAlpha(22),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: _getUrgencyColor(urgency).withAlpha(80)),
+                    border: Border.all(color: _getUrgencyColor(urgencyRaw).withAlpha(80)),
                   ),
                   child: Text(
-                    urgency.toUpperCase(),
-                    style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w800, fontSize: 10, color: _getUrgencyColor(urgency)),
+                    urgency,
+                    style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w800, fontSize: 10, color: _getUrgencyColor(urgencyRaw)),
                   ),
                 ),
               ],
@@ -508,9 +532,9 @@ class _AdminCaseDashboardScreenState extends State<AdminCaseDashboardScreen> {
                 if (vhtName.isNotEmpty && clinicName.isNotEmpty)
                   Text(' • ', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                 if (clinicName.isNotEmpty)
-                  Flexible(child: Text('Clinic: $clinicName', style: TextStyle(fontSize: 11, color: AppColors.textSecondary), overflow: TextOverflow.ellipsis)),
+                  Flexible(child: Text('${l10n.clinicLabel}: $clinicName', style: TextStyle(fontSize: 11, color: AppColors.textSecondary), overflow: TextOverflow.ellipsis)),
                 const Spacer(),
-                Text(_formatTimeAgo(createdAt), style: TextStyle(fontSize: 10, color: AppColors.textSecondary.withAlpha(150))),
+                Text(_formatTimeAgo(createdAt, l10n), style: TextStyle(fontSize: 10, color: AppColors.textSecondary.withAlpha(150))),
               ],
             ),
           ],

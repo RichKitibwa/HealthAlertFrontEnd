@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'vht_dispatch_confirmation_screen.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -45,20 +46,19 @@ class _VhtOnboardPatientScreenState extends State<VhtOnboardPatientScreen> {
 
   void _callClinic() {
     // TODO: integrate real phone call (e.g. with url_launcher).
+    final l10n = AppLocalizations.of(context)!;
     if (_notesController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add some notes before calling the clinic.'),
+        SnackBar(
+          content: Text(l10n.pleaseAddNotesBeforeCallingClinic),
         ),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Calling clinic to discuss whether an ambulance is needed...',
-        ),
+      SnackBar(
+        content: Text(l10n.callingClinicToDiscuss),
       ),
     );
   }
@@ -76,6 +76,7 @@ class _VhtOnboardPatientScreenState extends State<VhtOnboardPatientScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final width = MediaQuery.of(context).size.width;
 
@@ -84,7 +85,7 @@ class _VhtOnboardPatientScreenState extends State<VhtOnboardPatientScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Onboard Patient',
+        pageTitle: l10n.onboardPatient,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -143,9 +144,9 @@ class _VhtOnboardPatientScreenState extends State<VhtOnboardPatientScreen> {
                                 Icons.call_rounded,
                                 color: Colors.white,
                               ),
-                              label: const Text(
-                                'Call clinic to discuss case',
-                                style: TextStyle(
+                              label: Text(
+                                l10n.callClinicToDiscussCase,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.w500,
@@ -183,8 +184,8 @@ class _VhtOnboardPatientScreenState extends State<VhtOnboardPatientScreen> {
                                   horizontal: 16,
                                 ),
                               ),
-                              child: const Text(
-                                'Continue to dispatch ambulance',
+                              child: Text(
+                                l10n.continueToDispatchAmbulance,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'Inter',

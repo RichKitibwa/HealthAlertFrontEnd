@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'clinic_ambulance_tracking.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -13,13 +14,14 @@ class ClinicAssignStaffScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Assign Staff',
+        pageTitle: l10n.assignStaff,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -89,7 +91,7 @@ class ClinicAssignStaffScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Assign Staff',
+                          l10n.assignStaff,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 fontFamily: 'Inter',
@@ -99,7 +101,7 @@ class ClinicAssignStaffScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Confirm available personnel and required equipment for this case.',
+                          l10n.confirmPersonnelEquipment,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 fontFamily: 'Inter',
@@ -129,7 +131,7 @@ class ClinicAssignStaffScreen extends StatelessWidget {
                           ),
                           child: const Center(
                             child: Text(
-                              'Nurse: Available',
+                              l10n.nurseAvailable,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',
@@ -163,7 +165,7 @@ class ClinicAssignStaffScreen extends StatelessWidget {
                           ),
                           child: const Center(
                             child: Text(
-                              'Clinician: Available',
+                              l10n.clinicianAvailable,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',
@@ -190,7 +192,7 @@ class ClinicAssignStaffScreen extends StatelessWidget {
                           ),
                           child: const Center(
                             child: Text(
-                              'Checklist: Delivery Kit, Trauma Kit, PPE',
+                              l10n.checklistDeliveryKit,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',
@@ -229,8 +231,8 @@ class ClinicAssignStaffScreen extends StatelessWidget {
                                 ),
                                 elevation: 6,
                               ),
-                              child: const Text(
-                                'Confirm Staff',
+                              child: Text(
+                                l10n.confirmStaff,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'Inter',

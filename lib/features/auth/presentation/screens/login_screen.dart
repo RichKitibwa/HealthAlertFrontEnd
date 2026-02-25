@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../current_user_session.dart';
 import '../../../../core/utils/pin_utils.dart';
 import '../../../../core/services/device_storage_service.dart';
 import '../../../../core/services/fcm_notification_service.dart';
+import '../../../../core/services/locale_notifier.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -25,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePin = true;
   String? _errorMessage;
+  bool _showForgotPin = false;
   bool _isRegisteredOnDevice = false;
   String? _userName;
   String? _phoneNumber;
@@ -70,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isRegisteredOnDevice = true;
           _phoneNumber = phone;
-          _userName = name ?? 'User';
+          _userName = name ?? AppLocalizations.of(context)!.user;
           _showPhoneInput = false;
           _isCheckingRegistration = false;
         });
@@ -160,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _userData = data;
             _phoneNumber = phoneNumber;
             _userName = '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
-            if (_userName?.isEmpty ?? true) _userName = 'User';
+            if (_userName?.isEmpty ?? true) _userName = AppLocalizations.of(context)!.user;
             _isLoading = false;
           });
           return;
@@ -178,8 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _errorMessage =
-                'No account found with this phone number. Please register first.';
+            _errorMessage = AppLocalizations.of(context)!.noAccountFoundRegisterFirst;
           });
         }
         return;
@@ -196,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _phoneNumber = phoneNumber;
           final fullName =
               '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
-          _userName = fullName.isEmpty ? 'User' : fullName;
+          _userName = fullName.isEmpty ? AppLocalizations.of(context)!.user : fullName;
           _isLoading = false;
         });
       }
@@ -204,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Error loading user data: ${e.toString()}';
+          _errorMessage = '${AppLocalizations.of(context)!.errorLoadingUserData}: ${e.toString()}';
         });
       }
     }
@@ -228,23 +231,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final pin = _pinController.text.trim();
 
-    if (pin.isEmpty) {
+      if (pin.isEmpty) {
       setState(() {
-        _errorMessage = 'Please enter your PIN';
+        _errorMessage = AppLocalizations.of(context)!.pleaseEnterPin;
+        _showForgotPin = false;
       });
       return;
     }
 
     if (!PinUtils.isValidPinFormat(pin)) {
       setState(() {
-        _errorMessage = 'PIN must be 4-6 digits';
+        _errorMessage = AppLocalizations.of(context)!.pinMustBeDigits;
+        _showForgotPin = false;
       });
       return;
     }
 
     if (_userData == null) {
       setState(() {
-        _errorMessage = 'User data not loaded. Please try again.';
+        _errorMessage = AppLocalizations.of(context)!.userDataNotLoaded;
+        _showForgotPin = false;
       });
       return;
     }
@@ -261,7 +267,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (storedPinHash == null || storedPinHash != pinHash) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Incorrect PIN. Please try again.';
+          _errorMessage = AppLocalizations.of(context)!.incorrectPinTryAgain;
+          _showForgotPin = true;
         });
         _pinController.clear();
         return;
@@ -280,6 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _userData!['profileImageUrl'] as String?;
       CurrentUserSession.workplace = _userData!['workplace'] as String?;
       CurrentUserSession.specialty = _userData!['specialty'] as String?;
+      CurrentUserSession.camp = _userData!['camp'] as String?;
       CurrentUserSession.email = _userData!['email'] as String?;
 
       // Save user data to device for future logins
@@ -291,11 +299,18 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
+      // Restore this user's saved language preference.
+      final sessionUid = CurrentUserSession.uid;
+      if (mounted && sessionUid != null && sessionUid.isNotEmpty) {
+        final localeNotifier =
+            Provider.of<LocaleNotifier>(context, listen: false);
+        await localeNotifier.loadAndApplyLocaleForUser(sessionUid);
+      }
+
       // Initialize FCM and save token to user document
       final fcmService = FCMNotificationService();
       fcmService.initialize();
-      // Start real-time notification listener for popup delivery
-      final sessionUid = CurrentUserSession.uid;
+      // Start real-time notification listener (badge/list updates)
       if (sessionUid != null && sessionUid.isNotEmpty) {
         fcmService.startNotificationListener(sessionUid);
       }
@@ -308,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Error: ${e.toString()}';
+        _errorMessage = AppLocalizations.of(context)!.errorGeneric(e.toString());
       });
     }
   }
@@ -356,6 +371,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SafeArea(
@@ -382,8 +398,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   Text(
                     (widget.forcePhoneInput || !_isRegisteredOnDevice)
-                        ? 'Login'
-                        : 'Welcome back!',
+                        ? l10n.login
+                        : l10n.welcomeBack,
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -413,8 +429,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _phoneController,
                       decoration: InputDecoration(
-                        labelText: 'Phone Number',
-                        hintText: '+256700000001',
+                        labelText: l10n.phoneNumber,
+                        hintText: l10n.phoneNumberHint,
                         labelStyle: const TextStyle(
                           color: AppColors.textSecondary,
                         ),
@@ -434,7 +450,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.phone,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your phone number';
+                          return l10n.pleaseEnterPhoneNumber;
                         }
                         return null;
                       },
@@ -446,7 +462,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _pinController,
                     decoration: InputDecoration(
-                      labelText: 'PIN',
+                      labelText: l10n.pin,
                       labelStyle: const TextStyle(
                         color: AppColors.textSecondary,
                       ),
@@ -550,8 +566,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : const Text(
-                                        'Login',
+                                    : Text(
+                                        l10n.login,
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,
@@ -571,12 +587,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   // If user is registered but PIN fails repeatedly, offer re-register
                   if (!_isCheckingRegistration &&
                       _isRegisteredOnDevice &&
-                      _errorMessage != null &&
-                      _errorMessage!.contains('Incorrect PIN')) ...[
+                      _showForgotPin) ...[
                     TextButton(
                       onPressed: _registerAgain,
-                      child: const Text(
-                        'Forgot PIN? Register again',
+                      child: Text(
+                        l10n.forgotPinRegisterAgain,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -597,9 +612,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
-                    child: const Text(
-                      'Register new account',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.registerNewAccount,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'clinic_assign_staff.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -12,13 +13,14 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Case Summary',
+        pageTitle: l10n.caseSummary,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -83,7 +85,7 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Case Summary',
+                    l10n.caseSummary,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
@@ -92,7 +94,7 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Review media, triage level, and next actions for this emergency.',
+                    l10n.reviewMediaTriageNextActions,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w500,
@@ -144,7 +146,7 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                   height: size.height * 0.22,
                                   child: const Center(
                                     child: Text(
-                                      'Photo / Voice Note Preview',
+                                      l10n.photoVoiceNotePreview,
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontFamily: 'Inter',
@@ -179,7 +181,7 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                 ),
                                 child: const Center(
                                   child: Text(
-                                    'Triage Level: High (Red)',
+                                    l10n.triageLevelHighRed,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontFamily: 'Inter',
@@ -219,8 +221,8 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           ),
                                           elevation: 6,
                                         ),
-                                        child: const Text(
-                                          'See Staff',
+                                        child: Text(
+                                          l10n.seeStaff,
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
@@ -254,8 +256,8 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           ),
                                           elevation: 0,
                                         ),
-                                        child: const Text(
-                                          'Request Additional Info',
+                                        child: Text(
+                                          l10n.requestAdditionalInfo,
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
@@ -291,15 +293,13 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Calling VHT (placeholder)...',
-                                              ),
+                                            SnackBar(
+                                              content: Text(l10n.callingVhtPlaceholder),
                                             ),
                                           );
                                         },
-                                        child: const Text(
-                                          'Call VHT',
+                                        child: Text(
+                                          l10n.callVht,
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
@@ -332,15 +332,13 @@ class ClinicCaseSummaryScreen extends StatelessWidget {
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Calling ambulance (placeholder)...',
-                                              ),
+                                            SnackBar(
+                                              content: Text(l10n.callingAmbulancePlaceholder),
                                             ),
                                           );
                                         },
-                                        child: const Text(
-                                          'Call Ambulance',
+                                        child: Text(
+                                          l10n.callAmbulanceDriver,
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Inter',

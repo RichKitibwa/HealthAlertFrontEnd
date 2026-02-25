@@ -1,7 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'ambulance_en_route_screen.dart';
 import 'ambulance_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -31,8 +31,9 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open dialer for $phone'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.couldNotOpenDialer(phone)), backgroundColor: Colors.red),
         );
       }
     }
@@ -65,8 +66,9 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error accepting dispatch: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.errorAcceptingDispatch), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -86,11 +88,12 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Dispatch Request',
+        pageTitle: l10n.dispatchRequest,
         showBackButton: true,
         onBack: () => Navigator.pop(context),
         onSignOut: () async {
@@ -127,7 +130,7 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
               return const Center(child: CircularProgressIndicator());
             }
             if (!snapshot.hasData || !snapshot.data!.exists) {
-              return const Center(child: Text('Case not found.'));
+              return Center(child: Text(l10n.caseNotFound));
             }
 
             final data = snapshot.data!.data() as Map<String, dynamic>;
@@ -154,10 +157,10 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Emergency Dispatch',
+                  Text(
+                    l10n.emergencyDispatch,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 20, color: AppColors.ambulanceAccent),
+                    style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 20, color: AppColors.ambulanceAccent),
                   ),
                   const SizedBox(height: 16),
                   Expanded(
@@ -191,9 +194,9 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('Incoming Dispatch', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w800, fontSize: 14)),
+                                      Text(l10n.incomingDispatch, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w800, fontSize: 14)),
                                       const SizedBox(height: 2),
-                                      Text('Review details, then accept to proceed.', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500, fontSize: 12, color: AppColors.textSecondary)),
+                                      Text(l10n.reviewDetailsAcceptProceed, style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500, fontSize: 12, color: AppColors.textSecondary)),
                                     ],
                                   ),
                                 ),
@@ -211,25 +214,27 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
                             Divider(color: AppColors.border.withAlpha(120)),
                             const SizedBox(height: 14),
 
-                            // Case details
-                            _InfoTile(icon: Icons.warning_amber_rounded, label: 'Emergency Type', value: emergencyType),
+                            // Case details — simple rows (no nested cards)
+                            _InlineInfoRow(icon: Icons.warning_amber_rounded, label: l10n.emergencyTypeLabel, value: emergencyType),
                             const SizedBox(height: 10),
-                            if (patientName.isNotEmpty)
-                              _InfoTile(icon: Icons.person_outline, label: 'Patient', value: '$patientName${patientDesc.isNotEmpty ? ' ($patientDesc)' : ''}'),
-                            if (patientName.isNotEmpty) const SizedBox(height: 10),
-                            _InfoTile(icon: Icons.place_outlined, label: 'Destination', value: clinicName.isNotEmpty ? clinicName : 'To be determined'),
+                            if (patientName.isNotEmpty) ...[
+                              _InlineInfoRow(icon: Icons.person_outline, label: l10n.patientLabel, value: '$patientName${patientDesc.isNotEmpty ? ' ($patientDesc)' : ''}'),
+                              const SizedBox(height: 10),
+                            ],
+                            _InlineInfoRow(icon: Icons.place_outlined, label: l10n.destination, value: clinicName.isNotEmpty ? clinicName : l10n.toBeDetermined),
                             const SizedBox(height: 10),
-                            if (vhtName.isNotEmpty)
-                              _InfoTile(icon: Icons.health_and_safety_outlined, label: 'Reporting VHT', value: vhtName),
+                            if (vhtName.isNotEmpty) ...[
+                              _InlineInfoRow(icon: Icons.health_and_safety_outlined, label: l10n.reportingVht, value: vhtName),
+                            ],
                             if (notes.isNotEmpty) ...[
                               const SizedBox(height: 10),
-                              _InfoTile(icon: Icons.notes_outlined, label: 'Notes', value: notes),
+                              _InlineInfoRow(icon: Icons.notes_outlined, label: l10n.notesLabel, value: notes),
                             ],
                             const SizedBox(height: 16),
 
                             // Contact buttons
                             if (vhtPhone.isNotEmpty || clinicianPhone.isNotEmpty) ...[
-                              Text('Quick Contact', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.ambulanceAccent)),
+                              Text(l10n.quickContact, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.ambulanceAccent)),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
@@ -238,7 +243,7 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
                                       child: OutlinedButton.icon(
                                         onPressed: () => _callPhone(vhtPhone),
                                         icon: Icon(Icons.phone, size: 16, color: Colors.green),
-                                        label: Text('Call VHT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                        label: Text(l10n.callVht, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                                         style: OutlinedButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(vertical: 10),
                                           side: BorderSide(color: Colors.green.withAlpha(60)),
@@ -252,7 +257,7 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
                                       child: OutlinedButton.icon(
                                         onPressed: () => _callPhone(clinicianPhone),
                                         icon: Icon(Icons.phone, size: 16, color: Colors.blue),
-                                        label: Text('Call Clinic', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                        label: Text(l10n.callClinic, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                                         style: OutlinedButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(vertical: 10),
                                           side: BorderSide(color: Colors.blue.withAlpha(60)),
@@ -282,7 +287,7 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
                       ),
                       child: _isAccepting
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
-                          : const Text('Accept Dispatch', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+                          : Text(l10n.acceptDispatch, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
                     ),
                   ),
                 ],
@@ -295,46 +300,40 @@ class _AmbulanceIncomingDispatchScreenState extends State<AmbulanceIncomingDispa
   }
 }
 
-class _InfoTile extends StatelessWidget {
+/// Flat info row — no nested card decoration (avoids card-in-card pattern).
+class _InlineInfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
 
-  const _InfoTile({required this.icon, required this.label, required this.value});
+  const _InlineInfoRow({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-        color: AppColors.surface,
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 36,
-            width: 36,
-            decoration: BoxDecoration(
-              color: AppColors.ambulanceAccent.withAlpha(16),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: AppColors.ambulanceAccent, size: 20),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 36,
+          width: 36,
+          decoration: BoxDecoration(
+            color: AppColors.ambulanceAccent.withAlpha(16),
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 11, color: AppColors.textSecondary)),
-                const SizedBox(height: 2),
-                Text(value, style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary), maxLines: 3, overflow: TextOverflow.ellipsis),
-              ],
-            ),
+          child: Icon(icon, color: AppColors.ambulanceAccent, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 11, color: AppColors.textSecondary)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary), maxLines: 3, overflow: TextOverflow.ellipsis),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

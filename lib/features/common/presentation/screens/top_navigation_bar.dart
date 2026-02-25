@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../auth/current_user_session.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Global top navigation bar used across all role-based dashboards (VHT,
 /// Ambulance, Clinic, Admin).
@@ -62,8 +63,9 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final Color backgroundColor = _backgroundColorForRole(role);
-    final String roleLabel = _roleDisplayName(role);
+    final String roleLabel = _roleDisplayName(l10n, role);
     final bool isAdmin = role.toLowerCase() == 'admin';
 
     return AppBar(
@@ -93,7 +95,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
           : null,
       titleSpacing: showBackButton ? 0 : 16,
       title: Text(
-        pageTitle ?? 'HealthAlert',
+        pageTitle ?? l10n.splashAppName,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           fontFamily: 'Inter',
@@ -110,7 +112,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
             onPressed: () {
               Scaffold.of(context).openEndDrawer();
             },
-            tooltip: 'Menu',
+            tooltip: l10n.menu,
           ),
         ),
       ],
@@ -148,27 +150,24 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Maps a loose role string to a display label.
-
-/// This lets you pass "vht", "VHT", "vHt", etc. and always get "VHT".
-String _roleDisplayName(String role) {
+/// Maps a loose role string to a localized display label.
+String _roleDisplayName(AppLocalizations l10n, String role) {
   final normalized = role.trim().toLowerCase();
   switch (normalized) {
     case 'vht':
     case 'village health team':
-      return 'VHT';
+      return l10n.vht;
     case 'ambulance':
     case 'driver':
-      return 'Ambulance';
+      return l10n.ambulance;
     case 'clinic':
     case 'clinician':
-      return 'Clinic';
+      return l10n.clinic;
     case 'admin':
     case 'administrator':
-      return 'Admin';
+      return l10n.admin;
     default:
-      // Fallback to capitalizing the raw role string.
-      if (role.isEmpty) return 'User';
+      if (role.isEmpty) return l10n.user;
       return role[0].toUpperCase() + role.substring(1);
   }
 }

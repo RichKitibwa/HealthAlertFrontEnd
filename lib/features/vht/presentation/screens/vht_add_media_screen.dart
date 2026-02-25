@@ -23,6 +23,8 @@ import '../../../../core/enums/urgency_level.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/constants/health_facility_constants.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AddMediaScreen extends StatefulWidget {
   final String emergencyType;
@@ -52,6 +54,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
   DateTime? _dateOfBirth;
   int? _age;
   bool _useAgeInstead = false;
+
+  // Facility selection (VHT chooses which clinic to send the case to)
+  String? _selectedFacility;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ClinicMatchingService _clinicMatchingService = ClinicMatchingService();
@@ -182,10 +187,11 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
 
   /// Validates required fields before submission
   bool _validateForm() {
+    final l10n = AppLocalizations.of(context)!;
     if (_selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select patient gender.'),
+        SnackBar(
+          content: Text(l10n.pleaseSelectPatientGender),
           backgroundColor: Colors.orange,
         ),
       );
@@ -193,8 +199,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
     }
     if (_dateOfBirth == null && _age == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter patient date of birth or age.'),
+        SnackBar(
+          content: Text(l10n.pleaseEnterDobOrAge),
           backgroundColor: Colors.orange,
         ),
       );
@@ -202,8 +208,17 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
     }
     if (_selectedUrgency == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a triage level.'),
+        SnackBar(
+          content: Text(l10n.pleaseSelectTriageLevel),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+    if (_selectedFacility == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.pleaseSelectHealthFacilityToNotify),
           backgroundColor: Colors.orange,
         ),
       );
@@ -217,26 +232,23 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
     final result = await LocationUtils.getCurrentLocationWithDetails();
 
     if (!result.success && result.permissionDeniedForever && mounted) {
-      // Show dialog to open settings
+      final l10n = AppLocalizations.of(context)!;
       final shouldOpenSettings = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Location Permission Required'),
-          content: const Text(
-            'HealthAlert needs location access to report emergencies and help ambulances find patients.\n\n'
-            'Please open Settings and enable location for this app.',
-          ),
+          title: Text(l10n.locationPermissionRequired),
+          content: Text(l10n.locationNeedsAccessMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.vhtAccent,
               ),
-              child: const Text('Open Settings', style: TextStyle(color: Colors.white)),
+              child: Text(l10n.openSettings, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -287,12 +299,13 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
     }
   }
 
-  /// Build the case data map for both local storage and Firestore
+  /// Build the case data map for both local storage and Firestore.
   Map<String, dynamic> _buildCaseData({
     required String caseId,
     required String vhtName,
     double? latitude,
     double? longitude,
+    String? selectedFacilityName,
     Map<String, dynamic>? clinicMatch,
     String? imageUrl,
     String? videoUrl,
@@ -312,12 +325,19 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       'vhtId': CurrentUserSession.uid,
       'vhtName': vhtName,
       'vhtPhoneNumber': CurrentUserSession.phoneNumber,
+      // Always record the VHT-selected facility name
+      if (selectedFacilityName != null) 'selectedFacilityName': selectedFacilityName,
+      // Clinician-specific assignment (online path only)
       if (clinicMatch != null) 'assignedClinicId': clinicMatch['clinicianId'],
-      if (clinicMatch != null) 'assignedClinicName': clinicMatch['clinicName'],
+      'assignedClinicName': clinicMatch != null
+          ? clinicMatch['clinicName']
+          : (selectedFacilityName ?? ''),
       if (clinicMatch != null) 'assignedClinicianName': clinicMatch['clinicianName'],
       if (clinicMatch != null) 'clinicianPhoneNumber': clinicMatch['phoneNumber'],
-      if (clinicMatch != null && clinicMatch['clinicLatitude'] != null) 'clinicLatitude': clinicMatch['clinicLatitude'],
-      if (clinicMatch != null && clinicMatch['clinicLongitude'] != null) 'clinicLongitude': clinicMatch['clinicLongitude'],
+      if (clinicMatch != null && clinicMatch['clinicLatitude'] != null)
+        'clinicLatitude': clinicMatch['clinicLatitude'],
+      if (clinicMatch != null && clinicMatch['clinicLongitude'] != null)
+        'clinicLongitude': clinicMatch['clinicLongitude'],
       'status': 'pending',
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
@@ -390,13 +410,14 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       final isOnline = await connectivityService.checkConnectivity();
 
       if (!isOnline) {
-        // Save locally and queue for sync
+        // Save locally with the selected facility name; clinician will be matched on sync
         final offlineCaseId = 'offline_${DateTime.now().millisecondsSinceEpoch}';
         final caseData = _buildCaseData(
           caseId: offlineCaseId,
           vhtName: vhtName,
           latitude: latitude,
           longitude: longitude,
+          selectedFacilityName: _selectedFacility,
         );
 
         await _saveCaseLocally(caseData, isSynced: false);
@@ -414,7 +435,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
               builder: (context) => VhtCaseSubmittedScreen(
                 caseId: offlineCaseId,
                 emergencyType: widget.emergencyType,
-                clinicName: 'Pending (offline)',
+                clinicName: _selectedFacility ?? AppLocalizations.of(context)!.pendingOffline,
                 clinicianName: '',
                 patientId: _patientId,
                 urgencyLevel: _selectedUrgency,
@@ -426,22 +447,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         return;
       }
 
-      // ONLINE PATH: Save locally first, then sync to Firestore
-      //  Find matching clinic (with or without location)
-      Map<String, dynamic>? clinicMatch;
-
-      if (latitude != null && longitude != null) {
-        // Location available — find nearest matching clinic
-        clinicMatch = await _clinicMatchingService.findNearestMatchingClinic(
-          vhtLatitude: latitude,
-          vhtLongitude: longitude,
-          emergencyType: widget.emergencyType,
-          patientAge: _age,
-        );
-      }
-
-      // Fallback: match by expertise only
-      clinicMatch ??= await _clinicMatchingService.findMatchingClinicianWithoutLocation(
+      // ONLINE PATH: Find the best available clinician at the VHT-selected facility
+      final clinicMatch = await _clinicMatchingService.findBestClinicianAtFacility(
+        facilityName: _selectedFacility!,
         emergencyType: widget.emergencyType,
         patientAge: _age,
       );
@@ -449,11 +457,10 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       if (clinicMatch == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'No available clinic staff found. Please try again later or contact your supervisor.',
-              ),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.noStaffAtFacility(_selectedFacility!)),
               backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
             ),
           );
         }
@@ -483,14 +490,15 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
 
         // Warn user if media was captured but upload failed
         if (hasMedia && mounted) {
+          final l10n = AppLocalizations.of(context)!;
           final failedUploads = <String>[];
-          if (_capturedImage != null && imageUrl == null) failedUploads.add('image');
-          if (_capturedVideo != null && videoUrl == null) failedUploads.add('video');
-          if (_audioFile != null && voiceNoteUrl == null) failedUploads.add('voice note');
+          if (_capturedImage != null && imageUrl == null) failedUploads.add(l10n.pickImage);
+          if (_capturedVideo != null && videoUrl == null) failedUploads.add(l10n.pickVideo);
+          if (_audioFile != null && voiceNoteUrl == null) failedUploads.add(l10n.voiceNote);
           if (failedUploads.isNotEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Warning: Failed to upload ${failedUploads.join(", ")}. Case will be submitted without media.'),
+                content: Text(l10n.warningFailedUploadMedia(failedUploads.join(', '))),
                 backgroundColor: Colors.orange,
                 duration: const Duration(seconds: 4),
               ),
@@ -502,7 +510,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         if (hasMedia && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Warning: Media upload failed ($e). Case will be submitted without media.'),
+              content: Text(AppLocalizations.of(context)!.warningMediaUploadFailed),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 4),
             ),
@@ -515,6 +523,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
         vhtName: vhtName,
         latitude: latitude,
         longitude: longitude,
+        selectedFacilityName: _selectedFacility,
         clinicMatch: clinicMatch,
         imageUrl: imageUrl,
         videoUrl: videoUrl,
@@ -576,7 +585,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error submitting case: $e'),
+            content: Text('${AppLocalizations.of(context)!.errorSubmittingCase}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -660,12 +669,13 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Report Emergency',
+        pageTitle: l10n.reportEmergency,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -749,9 +759,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'Patient Details',
-                          style: TextStyle(
+                        Text(
+                          l10n.patientInformation,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                             height: 19 / 16,
@@ -779,9 +789,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Patient ID',
-                                      style: TextStyle(
+                                    Text(
+                                      l10n.patientIdLabel,
+                                      style: const TextStyle(
                                         fontSize: 12,
                                         color: AppColors.textSecondary,
                                       ),
@@ -807,7 +817,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                           controller: _firstNameController,
                           textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
-                            labelText: 'First Name',
+                            labelText: l10n.firstName,
                             prefixIcon: const Icon(Icons.person_outline),
                             filled: true,
                             fillColor: AppColors.surface,
@@ -833,7 +843,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                           controller: _lastNameController,
                           textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
-                            labelText: 'Last Name',
+                            labelText: l10n.lastName,
                             prefixIcon: const Icon(Icons.person_outline),
                             filled: true,
                             fillColor: AppColors.surface,
@@ -857,7 +867,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                         // Gender Dropdown
                         DropdownButtonFormField<String>(
                           decoration: InputDecoration(
-                            labelText: 'Gender',
+                            labelText: l10n.gender,
                             prefixIcon: const Icon(Icons.person_outline),
                             filled: true,
                             fillColor: AppColors.surface,
@@ -900,19 +910,19 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                           borderRadius: BorderRadius.circular(12),
                           dropdownColor: Colors.white,
                           elevation: 8,
-                          items: const [
+                          items: [
                             DropdownMenuItem(
                               value: 'male',
                               child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 4),
-                                child: Text('Male'),
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Text(l10n.male),
                               ),
                             ),
                             DropdownMenuItem(
                               value: 'female',
                               child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 4),
-                                child: Text('Female'),
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Text(l10n.female),
                               ),
                             ),
                           ],
@@ -952,7 +962,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Date of Birth',
+                                        l10n.dateOfBirth,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
@@ -993,7 +1003,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Age',
+                                        l10n.age,
                                         maxLines: 1,
                                         style: TextStyle(
                                           fontSize: 13,
@@ -1040,8 +1050,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                       children: [
                                         Text(
                                           _dateOfBirth != null
-                                              ? 'Date of Birth: ${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}'
-                                              : 'Select Date of Birth',
+                                              ? '${l10n.dateOfBirth}: ${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}'
+                                              : l10n.selectDateOfBirth,
                                           style: TextStyle(
                                             fontSize: 14,
                                             color: _dateOfBirth != null
@@ -1055,7 +1065,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                         if (_dateOfBirth != null && _age != null) ...[
                                           const SizedBox(height: 2),
                                           Text(
-                                            'Age: $_age years',
+                                            '${l10n.age}: ${l10n.ageYears(_age!)}',
                                             style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
@@ -1078,9 +1088,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                           TextField(
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText: 'Age',
+                              labelText: l10n.age,
                               prefixIcon: const Icon(Icons.cake_outlined),
-                              hintText: 'Enter age in years',
+                              hintText: l10n.enterAgeInYears,
                               filled: true,
                               fillColor: AppColors.surface,
                               contentPadding: const EdgeInsets.symmetric(
@@ -1130,9 +1140,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Notes',
-                        style: TextStyle(
+                      Text(
+                        l10n.notesLabel,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           height: 19 / 16,
@@ -1144,7 +1154,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                         controller: _notesController,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          hintText: 'Type any important notes…',
+                          hintText: l10n.typeImportantNotes,
                           hintStyle: TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 14,
@@ -1168,9 +1178,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'These details will help clinic and ambulance staff prepare.',
-                        style: TextStyle(
+                      Text(
+                        l10n.patientDetailsHelp,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w400,
                           fontSize: 12,
                           height: 16 / 12,
@@ -1184,8 +1194,8 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Photo / Video (optional)',
+                      Text(
+                        l10n.photoVideoOptional,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
@@ -1357,9 +1367,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Triage level',
-                        style: TextStyle(
+                      Text(
+                        l10n.triageLevel,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           height: 19 / 16,
@@ -1369,7 +1379,7 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         decoration: InputDecoration(
-                          hintText: 'Select triage level',
+                          hintText: l10n.selectTriageLevel,
                           hintStyle: TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 14,
@@ -1419,33 +1429,33 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                         borderRadius: BorderRadius.circular(12),
                         dropdownColor: Colors.white,
                         elevation: 8,
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'critical',
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 4),
-                              child: Text('Critical'),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(l10n.critical),
                             ),
                           ),
                           DropdownMenuItem(
                             value: 'high',
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 4),
-                              child: Text('High'),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(l10n.high),
                             ),
                           ),
                           DropdownMenuItem(
                             value: 'medium',
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 4),
-                              child: Text('Moderate'),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(l10n.moderate),
                             ),
                           ),
                           DropdownMenuItem(
                             value: 'low',
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 4),
-                              child: Text('Low'),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(l10n.low),
                             ),
                           ),
                         ],
@@ -1455,6 +1465,129 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                           });
                         },
                         value: _selectedUrgency,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Select Health Facility Section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.selectHealthFacility,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          height: 19 / 16,
+                          color: AppColors.vhtAccent,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.chooseClinicForPatient,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<String>(
+                        value: _selectedFacility,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          hintText: l10n.selectFacility,
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary.withAlpha(
+                              (0.65 * 255).toInt(),
+                            ),
+                          ),
+                          prefixIcon: const Icon(Icons.local_hospital_outlined),
+                          filled: true,
+                          fillColor: AppColors.surface,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.border,
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.vhtAccent,
+                              width: 2,
+                            ),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.border,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w400,
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.textSecondary,
+                        ),
+                        iconSize: 24,
+                        borderRadius: BorderRadius.circular(12),
+                        dropdownColor: Colors.white,
+                        elevation: 8,
+                        items: [
+                          // Imvepi Camp group
+                          const DropdownMenuItem<String>(
+                            enabled: false,
+                            value: '__imvepi_header__',
+                            child: Text(
+                              'IMVEPI CAMP',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ),
+                          ...HealthFacilityConstants.imvepiFacilities.map(
+                            (f) => DropdownMenuItem<String>(
+                              value: f,
+                              child: Text(f),
+                            ),
+                          ),
+                          // Rhino Camp group
+                          const DropdownMenuItem<String>(
+                            enabled: false,
+                            value: '__rhino_header__',
+                            child: Text(
+                              'RHINO CAMP',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ),
+                          ...HealthFacilityConstants.rhinoFacilities.map(
+                            (f) => DropdownMenuItem<String>(
+                              value: f,
+                              child: Text(f),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => _selectedFacility = v),
                       ),
                     ],
                   ),
@@ -1484,9 +1617,9 @@ class _AddMediaScreenState extends State<AddMediaScreen> {
                                 ),
                               ),
                             )
-                          : const Text(
-                              'Notify Clinic',
-                              style: TextStyle(
+                          : Text(
+                              l10n.notifyClinic,
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 18,
                                 height: 22 / 18,

@@ -6,6 +6,7 @@ import '../../../../core/utils/pin_utils.dart';
 import '../../../../core/services/device_storage_service.dart';
 import '../../current_user_session.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 // Re-enable when Firebase phone verification is restored
 // import 'otp_verification_screen.dart';
 import 'login_screen.dart';
@@ -62,10 +63,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             setState(() => _isLoading = false);
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'User with this phone number already exists. Please login instead.',
-                  ),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context)!.userExistsPleaseLogin),
                   backgroundColor: AppColors.error,
                 ),
               );
@@ -182,7 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${e.toString()}'),
+              content: Text(AppLocalizations.of(context)!.errorGeneric(e.toString())),
               backgroundColor: AppColors.error,
               duration: const Duration(seconds: 5),
             ),
@@ -260,6 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -286,8 +286,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: AppColors.primary,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Register',
+                  Text(
+                    l10n.register,
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 34,
@@ -302,7 +302,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     controller: _phoneController,
                     decoration: InputDecoration(
-                      hintText: 'Phone Number',
+                      hintText: l10n.phoneNumber,
                       prefixIcon: const Icon(Icons.phone),
                       filled: true,
                       fillColor: Colors.white,
@@ -328,11 +328,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     keyboardType: TextInputType.phone,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your phone number';
+                        return l10n.pleaseEnterPhoneNumber;
                       }
                       final cleaned = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
                       if (cleaned.length < 9) {
-                        return 'Phone number must be at least 9 digits';
+                        return l10n.phoneNumberMinDigits;
                       }
                       return null;
                     },
@@ -342,14 +342,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // Role Selection (styled like login inputs)
                   DropdownButtonFormField<String>(
                     value: _selectedRole,
+                    isExpanded: true,
                     decoration: InputDecoration(
-                      hintText: 'I am a...',
+                      hintText: l10n.iAmA,
                       prefixIcon: const Icon(Icons.work_outline),
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 16,
+                        vertical: 14,
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -389,10 +390,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     items: _roles.map((String role) {
                       return DropdownMenuItem<String>(
                         value: role,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Text(role),
-                        ),
+                        child: Text(role),
                       );
                     }).toList(),
                     onChanged: (String? newValue) {
@@ -439,9 +437,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'Continue',
-                                style: TextStyle(
+                            : Text(
+                                l10n.continueButton,
+                                style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
@@ -462,8 +460,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       );
                     },
-                    child: const Text(
-                      'Already have an account? Login',
+                    child: Text(
+                      l10n.alreadyHaveAccountLogin,
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontWeight: FontWeight.w700,
@@ -956,6 +954,7 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
     required String phoneNumber,
     required String specialty,
     required String workplace,
+    required String camp,
   }) {
     Navigator.push(
       context,
@@ -968,6 +967,7 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
             'role': widget.role,
             'specialty': specialty,
             'workplace': workplace,
+            'camp': camp,
           },
           onPinConfirmed: (pin, _) => _completeRegistration(
             firstName: firstName,
@@ -977,6 +977,7 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
             pin: pin,
             specialty: specialty,
             workplace: workplace,
+            camp: camp,
           ),
         ),
       ),
@@ -991,6 +992,7 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
     required String pin,
     required String specialty,
     required String workplace,
+    required String camp,
   }) async {
     try {
       final pinHash = PinUtils.hashPin(pin);
@@ -1007,6 +1009,7 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
         'pinHash': pinHash,
         'specialty': specialty,
         'workplace': workplace,
+        'camp': camp,
         'createdAt': DateTime.now().toIso8601String(),
       });
 
@@ -1017,6 +1020,7 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
       CurrentUserSession.phoneNumber = phoneNumber;
       CurrentUserSession.workplace = workplace;
       CurrentUserSession.specialty = specialty;
+      CurrentUserSession.camp = camp;
 
       // Save user data to device for future sessions
       await DeviceStorageService.saveRegisteredUser(

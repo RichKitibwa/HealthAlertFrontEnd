@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'ambulance_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
@@ -37,18 +36,21 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
     'completed',
   ];
 
-  static const Map<String, String> _statusLabels = {
-    'pending': 'Pending',
-    'dispatched': 'Dispatched',
-    'enRoute': 'En Route',
-    'arrived': 'Arrived at VHT',
-    'inTransit': 'Patient In Transit',
-    'delivered': 'Delivered to Clinic',
-    'inTreatment': 'In Treatment',
-    'admitted': 'Admitted',
-    'discharged': 'Discharged',
-    'completed': 'Completed',
-  };
+  String _getStatusLabel(String status, AppLocalizations l10n) {
+    switch (status) {
+      case 'pending': return l10n.pendingReview;
+      case 'dispatched': return l10n.dispatched;
+      case 'enRoute': return l10n.enRoute;
+      case 'arrived': return l10n.arrivedAtVht;
+      case 'inTransit': return l10n.patientInTransit;
+      case 'delivered': return l10n.deliveredToClinic;
+      case 'inTreatment': return l10n.patientInTreatment;
+      case 'admitted': return l10n.admitted;
+      case 'discharged': return l10n.discharged;
+      case 'completed': return l10n.caseCompleted;
+      default: return status;
+    }
+  }
 
   static const Map<String, IconData> _statusIcons = {
     'dispatched': Icons.local_shipping_outlined,
@@ -128,10 +130,10 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
       // No notifications for arrived, inTransit — just status updates
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Status updated to ${_statusLabels[newStatus] ?? newStatus}'),
+            content: Text(l10n.statusUpdatedTo(_getStatusLabel(newStatus, l10n))),
             backgroundColor: AppColors.ambulanceAccent,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -141,9 +143,10 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update status: $e'),
+            content: Text(l10n.failedToUpdateStatus(e.toString())),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -164,9 +167,10 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
       await launchUrl(uri);
     } else {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not launch dialer for $phoneNumber'),
+            content: Text(l10n.couldNotLaunchDialer(phoneNumber)),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -191,11 +195,12 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'En Route',
+        pageTitle: l10n.enRoute,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -253,33 +258,24 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             }
 
             if (snapshot.hasError) {
+              final l10n = AppLocalizations.of(context)!;
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 48, color: AppColors.error),
+                      Icon(Icons.error_outline, size: 48, color: AppColors.error),
                       const SizedBox(height: 12),
                       Text(
-                        'Error loading case data',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: AppColors.textPrimary,
-                        ),
+                        l10n.errorLoadingCaseData,
+                        style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -288,23 +284,18 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             }
 
             if (!snapshot.hasData || !snapshot.data!.exists) {
+              final l10n = AppLocalizations.of(context)!;
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.search_off,
-                          size: 48, color: AppColors.textSecondary),
+                      Icon(Icons.search_off, size: 48, color: AppColors.textSecondary),
                       const SizedBox(height: 12),
                       Text(
-                        'Case not found',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: AppColors.textPrimary,
-                        ),
+                        l10n.caseNotFound,
+                        style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
                       ),
                     ],
                   ),
@@ -352,7 +343,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            _statusLabels[currentStatus] ?? 'En Route',
+                            _getStatusLabel(currentStatus, l10n),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontFamily: 'Inter',
@@ -369,6 +360,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                     const SizedBox(height: 20),
 
                     _buildCaseInfoCard(
+                      l10n: l10n,
                       emergencyType: emergencyType,
                       patientName: patientName,
                       patientId: patientId,
@@ -377,7 +369,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                     const SizedBox(height: 20),
 
                     // Progress Timeline
-                    _buildProgressTimeline(currentStatusIndex),
+                    _buildProgressTimeline(l10n, currentStatusIndex),
                     const SizedBox(height: 20),
 
                     // Contact Buttons
@@ -385,7 +377,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                     const SizedBox(height: 20),
 
                     // Status Action Buttons (contextual)
-                    _buildStatusActions(currentStatus, vhtId: vhtId, patientName: patientName),
+                    _buildStatusActions(l10n, currentStatus, vhtId: vhtId, patientName: patientName),
                   ],
                 ),
               ),
@@ -397,6 +389,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
   }
 
   Widget _buildCaseInfoCard({
+    required AppLocalizations l10n,
     required String emergencyType,
     required String patientName,
     required String patientId,
@@ -428,89 +421,90 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
         ],
       ),
       padding: const EdgeInsets.all(16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border.withAlpha(120)),
-              color: Colors.white.withAlpha(180),
-            ),
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header row with nav icon + status badge
-                Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                height: 40,
+                width: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.ambulanceAccent.withAlpha(18),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.ambulanceAccent.withAlpha(30),
+                  ),
+                ),
+                child: Icon(
+                  _statusIcons[currentStatus] ?? Icons.navigation_outlined,
+                  color: AppColors.ambulanceAccent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      height: 40,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.ambulanceAccent.withAlpha(18),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.ambulanceAccent.withAlpha(30),
-                        ),
-                      ),
-                      child: Icon(
-                        _statusIcons[currentStatus] ??
-                            Icons.navigation_outlined,
-                        color: AppColors.ambulanceAccent,
+                    Text(
+                      patientName,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            patientName,
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            patientId.isNotEmpty
-                                ? 'ID: $patientId'
-                                : 'Case: ${widget.caseId.length > 8 ? widget.caseId.substring(0, 8) : widget.caseId}...',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 2),
+                    Text(
+                      patientId.isNotEmpty
+                          ? 'ID: $patientId'
+                          : 'Case: ${widget.caseId.length > 8 ? widget.caseId.substring(0, 8) : widget.caseId}...',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    _buildStatusBadge(currentStatus),
                   ],
                 ),
-                const SizedBox(height: 14),
-                Container(height: 1, color: AppColors.border.withAlpha(120)),
-                const SizedBox(height: 14),
-
-                // Emergency type only (detailed patient info removed for simplified en route view)
-                _CaseInfoTile(
-                  icon: Icons.warning_amber_rounded,
-                  label: 'Emergency',
-                  value: emergencyType,
-                ),
-              ],
-            ),
+              ),
+              _buildStatusBadge(l10n, currentStatus),
+            ],
           ),
-        ),
+          const SizedBox(height: 14),
+          Container(height: 1, color: AppColors.border.withAlpha(120)),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Container(
+                height: 36,
+                width: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.ambulanceAccent.withAlpha(16),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.warning_amber_rounded, color: AppColors.ambulanceAccent, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.emergencyLabel, style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 11, color: AppColors.textSecondary)),
+                    const SizedBox(height: 2),
+                    Text(emergencyType, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatusBadge(String status) {
+  Widget _buildStatusBadge(AppLocalizations l10n, String status) {
     final Color bgColor;
     final Color textColor;
     switch (status) {
@@ -552,7 +546,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
         border: Border.all(color: textColor.withAlpha(30)),
       ),
       child: Text(
-        (_statusLabels[status] ?? status).toUpperCase(),
+        _getStatusLabel(status, l10n).toUpperCase(),
         style: TextStyle(
           fontFamily: 'Inter',
           fontWeight: FontWeight.w900,
@@ -564,7 +558,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
     );
   }
 
-  Widget _buildProgressTimeline(int currentStatusIndex) {
+  Widget _buildProgressTimeline(AppLocalizations l10n, int currentStatusIndex) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
@@ -582,9 +576,9 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Case Progress',
-            style: TextStyle(
+          Text(
+            l10n.caseProgress,
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: 14,
@@ -599,7 +593,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             final isLast = index == _statusOrder.length - 1;
 
             return _TimelineStep(
-              label: _statusLabels[status] ?? status,
+              label: _getStatusLabel(status, l10n),
               icon: _statusIcons[status] ?? Icons.circle,
               isCompleted: isCompleted,
               isCurrent: isCurrent,
@@ -623,6 +617,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
     double? clinicLat,
     double? clinicLng,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
@@ -640,9 +635,9 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Quick Contact',
-            style: TextStyle(
+          Text(
+            l10n.quickContact,
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: 14,
@@ -659,12 +654,12 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                 final goingToVht = currentStatus == 'dispatched' || currentStatus == 'enRoute';
                 final destLat = goingToVht ? vhtLat : clinicLat;
                 final destLng = goingToVht ? vhtLng : clinicLng;
-                final destLabel = goingToVht ? (vhtName ?? 'VHT Location') : (clinicName ?? 'Clinic');
+                final destLabel = goingToVht ? (vhtName ?? l10n.vht) : (clinicName ?? l10n.clinicLabel);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => MapScreen(
-                      title: goingToVht ? 'Navigate to VHT' : 'Navigate to Clinic',
+                      title: goingToVht ? l10n.navigationMap : l10n.navigationMap,
                       destinationLabel: destLabel,
                       destinationType: goingToVht ? 'vht' : 'clinic',
                       destinationLat: destLat,
@@ -674,7 +669,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                 );
               },
               icon: const Icon(Icons.navigation_rounded, size: 18),
-              label: const Text('Open Navigation Map', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              label: Text(l10n.openNavigationMap, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
@@ -689,7 +684,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
               // Call VHT button
               Expanded(
                 child: _ContactButton(
-                  label: 'Call VHT',
+                  label: l10n.callVht,
                   icon: Icons.phone,
                   color: AppColors.vhtAccent,
                   onTap: vhtId != null
@@ -700,10 +695,10 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                             await _makePhoneCall(phone);
                           } else {
                             if (mounted) {
+                              final innerL10n = AppLocalizations.of(context)!;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text(
-                                      'VHT phone number not available'),
+                                  content: Text(innerL10n.vhtPhoneNotAvailable),
                                   backgroundColor: AppColors.warning,
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
@@ -720,7 +715,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
               // Call Clinician button
               Expanded(
                 child: _ContactButton(
-                  label: 'Call Clinic',
+                  label: l10n.callClinic,
                   icon: Icons.phone,
                   color: AppColors.clinicAccent,
                   onTap: (clinicianId != null || clinicId != null)
@@ -732,10 +727,10 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                             await _makePhoneCall(phone);
                           } else {
                             if (mounted) {
+                              final innerL10n = AppLocalizations.of(context)!;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text(
-                                      'Clinician phone number not available'),
+                                  content: Text(innerL10n.clinicianPhoneNotAvailable),
                                   backgroundColor: AppColors.warning,
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
@@ -755,7 +750,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
     );
   }
 
-  Widget _buildStatusActions(String currentStatus, {String? vhtId, String? patientName}) {
+  Widget _buildStatusActions(AppLocalizations l10n, String currentStatus, {String? vhtId, String? patientName}) {
     // Determine which action buttons to show based on current status
     final List<_StatusAction> actions = [];
 
@@ -763,7 +758,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
       case 'dispatched':
       case 'enRoute':
         actions.add(_StatusAction(
-          label: 'Arrived at VHT',
+          label: l10n.arrivedAtVht,
           icon: Icons.flag_outlined,
           targetStatus: 'arrived',
           color: AppColors.statusInProgress,
@@ -771,7 +766,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
         break;
       case 'arrived':
         actions.add(_StatusAction(
-          label: 'Patient Picked Up',
+          label: l10n.patientPickedUp,
           icon: Icons.transfer_within_a_station,
           targetStatus: 'inTransit',
           color: AppColors.ambulanceAccent,
@@ -779,7 +774,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
         break;
       case 'inTransit':
         actions.add(_StatusAction(
-          label: 'Delivered to Clinic',
+          label: l10n.deliveredToClinic,
           icon: Icons.local_hospital_outlined,
           targetStatus: 'delivered',
           color: AppColors.successDark,
@@ -804,16 +799,16 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                   Icon(Icons.check_circle, color: AppColors.successDark, size: 48),
                   const SizedBox(height: 12),
                   Text(
-                    currentStatus == 'completed' ? 'Case Completed' 
-                        : currentStatus == 'inTreatment' ? 'Patient In Treatment'
-                        : currentStatus == 'admitted' ? 'Patient Admitted'
-                        : 'Patient Delivered Successfully',
+                    currentStatus == 'completed' ? l10n.caseCompleted
+                        : currentStatus == 'inTreatment' ? l10n.patientInTreatment
+                        : currentStatus == 'admitted' ? l10n.patientAdmitted
+                        : l10n.patientDeliveredSuccessfully,
                     style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.successDark),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Your delivery is complete. The clinic will handle the patient from here.',
+                    l10n.deliveryCompleteClinicHandles,
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     textAlign: TextAlign.center,
                   ),
@@ -829,7 +824,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                   Navigator.pushNamedAndRemoveUntil(context, '/ambulance-dashboard', (r) => false);
                 },
                 icon: const Icon(Icons.home_rounded),
-                label: const Text('Back to Dashboard', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                label: Text(AppLocalizations.of(context)!.backToDashboard, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF0F766E),
                   foregroundColor: Colors.white,

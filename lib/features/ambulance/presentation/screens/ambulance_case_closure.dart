@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'ambulance_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
@@ -22,11 +23,12 @@ class AmbulanceCaseClosureScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Case Closure',
+        pageTitle: l10n.caseClosure,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -80,8 +82,8 @@ class AmbulanceCaseClosureScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Case Closure',
+                  Text(
+                    l10n.caseClosure,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Inter',

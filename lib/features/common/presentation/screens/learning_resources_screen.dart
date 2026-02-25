@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/widgets/back_handling_pop_scope.dart';
 import '../../../vht/presentation/screens/vht_navigation_bar.dart';
@@ -23,16 +24,18 @@ class _LearningResource {
 class LearningResourcesScreen extends StatelessWidget {
   const LearningResourcesScreen({super.key});
 
-  static const List<_LearningResource> _resources = [
-    _LearningResource(
-      title: 'Uganda Clinical Guidelines 2023',
-      description: 'National clinical guidelines for health workers in Uganda',
-      assetPath: 'assets/documents/Uganda_Clinical_Guidelines_2023.pdf',
-    ),
-  ];
+  static const String _guidelinesAssetPath = 'assets/documents/Uganda_Clinical_Guidelines_2023.pdf';
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final resources = [
+      _LearningResource(
+        title: l10n.ugandaClinicalGuidelines2023,
+        description: l10n.ugandaClinicalGuidelinesDescription,
+        assetPath: _guidelinesAssetPath,
+      ),
+    ];
     Widget? bottomNav;
 
     switch (CurrentUserSession.role) {
@@ -65,7 +68,7 @@ class LearningResourcesScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('Learning Resources'),
+          title: Text(l10n.learningResources),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -90,9 +93,9 @@ class LearningResourcesScreen extends StatelessWidget {
       bottomNavigationBar: bottomNav,
       body: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        itemCount: _resources.length,
+        itemCount: resources.length,
         itemBuilder: (context, index) {
-          final resource = _resources[index];
+          final resource = resources[index];
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             elevation: 0,

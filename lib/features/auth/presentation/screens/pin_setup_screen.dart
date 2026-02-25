@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/pin_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'pin_confirmation_screen.dart';
 
 class PinSetupScreen extends StatefulWidget {
@@ -40,14 +41,14 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     // Validate PIN
     if (pin.isEmpty) {
       setState(() {
-        _errorMessage = 'Please enter a PIN';
+        _errorMessage = AppLocalizations.of(context)!.pleaseEnterAPin;
       });
       return;
     }
 
     if (!PinUtils.isValidPinFormat(pin)) {
       setState(() {
-        _errorMessage = 'PIN must be 4-6 digits';
+        _errorMessage = AppLocalizations.of(context)!.pinMustBeDigits;
       });
       return;
     }
@@ -70,10 +71,11 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text('Set Up PIN'),
+        title: Text(l10n.setUpPin),
         backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
@@ -91,18 +93,18 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
               children: [
                 const Icon(Icons.lock, size: 80, color: AppColors.primary),
                 const SizedBox(height: 32),
-                const Text(
-                  'Set Your PIN',
-                  style: TextStyle(
+                Text(
+                  l10n.setYourPin,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Enter a PIN between 4 to 6 digits',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                Text(
+                  l10n.enterPinBetween4And6,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
@@ -111,7 +113,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                 TextFormField(
                   controller: _pinController,
                   decoration: InputDecoration(
-                    labelText: 'Enter PIN',
+                    labelText: l10n.enterPin,
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePin ? Icons.visibility : Icons.visibility_off),
@@ -122,7 +124,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                       },
                     ),
                     border: const OutlineInputBorder(),
-                    helperText: '4-6 digits',
+                    helperText: l10n.pinHelperText,
                     errorText: _errorMessage,
                   ),
                   keyboardType: TextInputType.number,
@@ -158,9 +160,9 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Enter',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.enterButton,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),

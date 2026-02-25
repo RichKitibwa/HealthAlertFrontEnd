@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/widgets/back_handling_pop_scope.dart';
 
 import '../../../vht/presentation/screens/vht_navigation_bar.dart';
+import '../../../vht/presentation/screens/vht_case_detail_screen.dart';
 import '../../../ambulance/presentation/screens/ambulance_navigation_bar.dart';
+import '../../../ambulance/presentation/screens/ambulance_incoming_dispatch_screen.dart';
+import '../../../ambulance/presentation/screens/ambulance_en_route_screen.dart';
 import '../../../clinic/presentation/screens/clinic_navigation_bar.dart';
+import '../../../clinic/presentation/screens/clinic_case_detail_screen.dart';
 import '../../../admin/presentation/screens/admin_navigation_bar.dart';
+import '../../../admin/presentation/screens/admin_case_timeline.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -25,9 +31,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           .update({'read': true});
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to mark as read: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${AppLocalizations.of(context)!.failedToMarkAsRead}: $e')),
+        );
       }
     }
   }
@@ -51,13 +57,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('All notifications marked as read')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.allNotificationsMarkedAsRead)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to mark all as read: $e')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.failedToMarkAllAsRead}: $e')),
         );
       }
     }
@@ -65,20 +71,103 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   IconData _getIconForType(String? type) {
     switch (type) {
-      case 'case_update':
-        return Icons.medical_services;
+      case 'new_case':
+        return Icons.medical_services_rounded;
+      case 'case_submitted':
+        return Icons.check_circle_rounded;
+      case 'vht_follow_up':
+        return Icons.update_rounded;
+      case 'clinician_advice':
+        return Icons.tips_and_updates_rounded;
+      case 'dispatch_request':
+        return Icons.local_shipping_outlined;
+      case 'ambulance_request_standby':
+        return Icons.notification_important_rounded;
+      case 'ambulance_dispatched':
+      case 'dispatch_assigned':
+        return Icons.local_shipping_rounded;
+      case 'patient_delivered':
+      case 'patient_arriving':
+        return Icons.local_hospital_rounded;
+      case 'patient_discharged':
+      case 'case_completed':
+        return Icons.verified_rounded;
+      case 'case_closed':
+        return Icons.check_circle_outline_rounded;
       case 'dispatch':
-        return Icons.local_shipping;
-      case 'message':
-        return Icons.message;
-      case 'alert':
-        return Icons.warning_amber;
+        return Icons.local_shipping_rounded;
+      case 'case_update':
+        return Icons.refresh_rounded;
       default:
-        return Icons.notifications;
+        return Icons.notifications_rounded;
     }
   }
 
-  String _formatTimeAgo(dynamic createdAt) {
+  Color _getColorForType(String? type) {
+    switch (type) {
+      case 'new_case':
+      case 'dispatch_request':
+      case 'ambulance_request_standby':
+        return Colors.red;
+      case 'clinician_advice':
+      case 'vht_follow_up':
+        return Colors.blue;
+      case 'ambulance_dispatched':
+      case 'dispatch_assigned':
+        return AppColors.ambulanceAccent;
+      case 'patient_delivered':
+      case 'patient_arriving':
+        return Colors.teal;
+      case 'patient_discharged':
+      case 'case_completed':
+      case 'case_closed':
+      case 'case_submitted':
+        return Colors.green;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  /// Navigate to the relevant screen based on notification type and user role.
+  void _handleNotificationTap(BuildContext context, String docId, Map<String, dynamic> data) {
+    // Mark as read first
+    _markAsRead(docId);
+
+    final caseId = data['caseId'] as String?;
+    final type = data['type'] as String?;
+    final role = CurrentUserSession.role ?? '';
+
+    if (caseId == null || caseId.isEmpty) return;
+
+    // Route based on role
+    if (role == 'VHT') {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => VhtCaseDetailScreen(caseId: caseId),
+      ));
+    } else if (role == 'Ambulance Driver' || role == 'Ambulance') {
+      // For dispatch assignment / standby → show incoming dispatch screen
+      // For already en route cases → show en route screen
+      if (type == 'dispatch_assigned' || type == 'ambulance_request_standby') {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => AmbulanceIncomingDispatchScreen(caseId: caseId),
+        ));
+      } else {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => AmbulanceEnRouteScreen(caseId: caseId),
+        ));
+      }
+    } else if (role == 'Clinic' || role == 'Clinic Staff' || role == 'Clinician') {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => ClinicCaseDetailScreen(caseId: caseId),
+      ));
+    } else if (role == 'Admin') {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => AdminCaseTimelineScreen(caseId: caseId),
+      ));
+    }
+  }
+
+  String _formatTimeAgo(BuildContext context, dynamic createdAt) {
     if (createdAt == null) return '';
     DateTime dt;
     if (createdAt is Timestamp) {
@@ -89,13 +178,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return '';
     }
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inSeconds < 60) return AppLocalizations.of(context)!.justNow;
+    if (diff.inMinutes < 60) return AppLocalizations.of(context)!.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return AppLocalizations.of(context)!.hrAgo(diff.inHours);
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
-  Widget _buildBody(String uid) {
+  Widget _buildBody(BuildContext context, String uid) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('notifications')
@@ -105,7 +195,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (snapshot.hasError) {
           return Center(
             child: Text(
-              'Error: ${snapshot.error}',
+              l10n.errorGeneric(snapshot.error.toString()),
               style: const TextStyle(color: AppColors.error),
             ),
           );
@@ -157,7 +247,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No notifications yet',
+                  l10n.noNotificationsYet,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -166,7 +256,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Notifications will appear here',
+                  l10n.notificationsWillAppearHere,
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textTertiary,
@@ -182,27 +272,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           itemBuilder: (context, index) {
             final doc = sortedDocs[index];
             final data = doc.data() as Map<String, dynamic>;
-            final title = data['title'] as String? ?? 'Notification';
+            final title = data['title'] as String? ?? l10n.notificationFallbackTitle;
             final message = data['message'] as String? ?? '';
             final type = data['type'] as String?;
             final read = data['read'] as bool? ?? false;
             final createdAt = data['createdAt'];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              elevation: 0,
-              color: AppColors.surface,
-              shape: RoundedRectangleBorder(
+            final caseId = data['caseId'] as String?;
+            final hasAction = caseId != null && caseId.isNotEmpty;
+            final iconColor = _getColorForType(type);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: read ? AppColors.surface : iconColor.withAlpha(8),
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: AppColors.border),
+                border: Border.all(
+                  color: read ? AppColors.border : iconColor.withAlpha(40),
+                ),
               ),
               child: InkWell(
-                onTap: () => _markAsRead(doc.id),
+                onTap: () => _handleNotificationTap(context, doc.id, data),
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: iconColor.withAlpha(18),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(_getIconForType(type), color: iconColor, size: 22),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,10 +317,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   child: Text(
                                     title,
                                     style: TextStyle(
-                                      fontWeight: read
-                                          ? FontWeight.w500
-                                          : FontWeight.w700,
-                                      fontSize: 16,
+                                      fontWeight: read ? FontWeight.w500 : FontWeight.w700,
+                                      fontSize: 14,
                                       color: AppColors.textPrimary,
                                     ),
                                   ),
@@ -225,34 +327,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   Container(
                                     width: 8,
                                     height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.primary,
+                                    decoration: BoxDecoration(
+                                      color: iconColor,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
                               ],
                             ),
                             if (message.isNotEmpty) ...[
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
                               Text(
                                 message,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
+                                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
-                            const SizedBox(height: 6),
-                            Text(
-                              _formatTimeAgo(createdAt),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textTertiary,
-                              ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Text(
+                                  _formatTimeAgo(context, createdAt),
+                                  style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                                ),
+                                if (hasAction) ...[
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    l10n.tapToViewCase,
+                                    style: TextStyle(fontSize: 11, color: iconColor, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
                         ),
                       ),
+                      if (hasAction) ...[
+                        const SizedBox(width: 8),
+                        Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 18),
+                      ],
                     ],
                   ),
                 ),
@@ -272,7 +385,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
-            title: const Text('Notifications'),
+            title: Text(AppLocalizations.of(context)!.notifications),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
@@ -292,7 +405,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             backgroundColor: AppColors.surface,
             foregroundColor: AppColors.textPrimary,
           ),
-          body: const Center(child: Text('Please sign in to view notifications')),
+          body: Center(child: Text(AppLocalizations.of(context)!.pleaseSignInToViewNotifications)),
         ),
       );
     }
@@ -334,7 +447,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(AppLocalizations.of(context)!.notifications),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -358,7 +471,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           TextButton(
             onPressed: _markAllAsRead,
             child: Text(
-              'Mark All Read',
+              AppLocalizations.of(context)!.markAllRead,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: AppColors.primary,
@@ -368,7 +481,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
       bottomNavigationBar: bottomNav,
-      body: _buildBody(uid),
+      body: _buildBody(context, uid),
     ),
     );
   }

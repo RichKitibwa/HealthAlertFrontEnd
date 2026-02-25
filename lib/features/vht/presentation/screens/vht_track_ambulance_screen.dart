@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
@@ -11,11 +12,12 @@ class TrackAmbulanceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Track Ambulance',
+        pageTitle: l10n.trackAmbulance,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -53,8 +55,8 @@ class TrackAmbulanceScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       const Center(
                         child: Text(
-                          'Track Ambulance',
-                          style: TextStyle(
+                          l10n.trackAmbulance,
+                          style: const TextStyle(
                             fontFamily: 'Inter',
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w700,
@@ -76,8 +78,8 @@ class TrackAmbulanceScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(16),
                           child: const Center(
                             child: Text(
-                              'Map Placeholder',
-                              style: TextStyle(
+                              l10n.mapPlaceholder,
+                              style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontWeight: FontWeight.w400,
                                 fontSize: 16,
@@ -96,10 +98,8 @@ class TrackAmbulanceScreen extends StatelessWidget {
                           onPressed: () {
                             // TODO: integrate real clinic notification (or call)
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Clinic notified that patient is onboard.',
-                                ),
+                              SnackBar(
+                                content: Text(l10n.clinicNotifiedPatientOnboard),
                               ),
                             );
                           },
@@ -107,9 +107,9 @@ class TrackAmbulanceScreen extends StatelessWidget {
                             Icons.notifications_active_rounded,
                             color: Color(0xFF0077CC),
                           ),
-                          label: const Text(
-                            'Notify clinic patient is onboard',
-                            style: TextStyle(
+                          label: Text(
+                            l10n.notifyClinicPatientOnboard,
+                            style: const TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
@@ -138,15 +138,15 @@ class TrackAmbulanceScreen extends StatelessWidget {
                           onPressed: () {
                             // TODO: you can later navigate back to dashboard or cases list
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Case closed.')),
+                              SnackBar(content: Text(l10n.caseClosed)),
                             );
                             Navigator.pop(
                               context,
                             ); // back to confirmation screen
                           },
-                          child: const Text(
-                            'Case Closed',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.caseClosedButton,
+                            style: const TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w400,
                               fontSize: 20,

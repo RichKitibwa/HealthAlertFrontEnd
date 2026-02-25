@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'ambulance_en_route_screen.dart';
 import 'ambulance_navigation_bar.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -115,38 +116,39 @@ class _AmbulanceActiveCasesScreenState
     }
   }
 
-  String _getStatusLabel(String? s) {
+  String _getStatusLabel(String? s, AppLocalizations l10n) {
     switch (s?.toLowerCase()) {
       case 'dispatched':
-        return 'Dispatched';
+        return l10n.dispatched;
       case 'enroute':
-        return 'En Route';
+        return l10n.enRoute;
       case 'arrived':
-        return 'Arrived';
+        return l10n.arrived;
       case 'intransit':
-        return 'In Transit';
+        return l10n.patientInTransit;
       default:
-        return s ?? 'Unknown';
+        return s ?? l10n.unknown;
     }
   }
 
-  String _formatTimeAgo(Timestamp? ts) {
+  String _formatTimeAgo(Timestamp? ts, AppLocalizations l10n) {
     if (ts == null) return '';
     final diff = DateTime.now().difference(ts.toDate());
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
     final dt = ts.toDate();
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'Active Cases',
+        title: Text(
+          l10n.activeCasesTitle,
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -175,7 +177,7 @@ class _AmbulanceActiveCasesScreenState
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search by patient name or emergency type...',
+                  hintText: l10n.searchByPatientNameOrType,
                   hintStyle: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary.withAlpha(150),
@@ -239,9 +241,9 @@ class _AmbulanceActiveCasesScreenState
                               color: AppColors.error.withAlpha(150),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
-                              'Error loading cases',
-                              style: TextStyle(
+                            Text(
+                              l10n.errorLoadingCases,
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
                                 color: AppColors.textPrimary,
@@ -294,7 +296,7 @@ class _AmbulanceActiveCasesScreenState
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No active cases',
+                            l10n.noActiveCases,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -303,7 +305,7 @@ class _AmbulanceActiveCasesScreenState
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Cases you accept will appear here.',
+                            l10n.casesAssignedToYouAppearHere,
                             style: TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
@@ -319,7 +321,7 @@ class _AmbulanceActiveCasesScreenState
                     itemCount: filteredDocs.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      return _buildCaseCard(context, filteredDocs[index]);
+                      return _buildCaseCard(context, filteredDocs[index], l10n);
                     },
                   );
                 },
@@ -331,7 +333,7 @@ class _AmbulanceActiveCasesScreenState
     );
   }
 
-  Widget _buildCaseCard(BuildContext context, DocumentSnapshot doc) {
+  Widget _buildCaseCard(BuildContext context, DocumentSnapshot doc, AppLocalizations l10n) {
     final data = doc.data() as Map<String, dynamic>;
     final caseId = doc.id;
     final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
@@ -403,7 +405,7 @@ class _AmbulanceActiveCasesScreenState
                     ),
                   ),
                   child: Text(
-                    _getStatusLabel(status),
+                    _getStatusLabel(status, l10n),
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
@@ -458,7 +460,7 @@ class _AmbulanceActiveCasesScreenState
             // Clinic name
             if (clinicName.isNotEmpty)
               Text(
-                'Clinic: $clinicName',
+                '${l10n.clinicLabel}: $clinicName',
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -466,7 +468,7 @@ class _AmbulanceActiveCasesScreenState
 
             // Time ago
             Text(
-              _formatTimeAgo(createdAt),
+              _formatTimeAgo(createdAt, l10n),
               style: TextStyle(
                 fontSize: 11,
                 color: AppColors.textSecondary.withAlpha(150),
