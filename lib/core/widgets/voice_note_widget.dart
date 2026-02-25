@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:record/record.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -100,9 +101,10 @@ class _VoiceNoteWidgetState extends State<VoiceNoteWidget> with SingleTickerProv
   Future<void> _startRecording() async {
     if (!await _checkPermissions()) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Microphone permission is required to record voice notes'),
+          SnackBar(
+            content: Text(l10n.microphonePermissionRequired),
             backgroundColor: Colors.red,
           ),
         );
@@ -240,12 +242,13 @@ class _VoiceNoteWidgetState extends State<VoiceNoteWidget> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Voice Note (optional)',
-          style: TextStyle(
+        Text(
+          l10n.voiceNoteOptional,
+          style: const TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.w600,
             fontSize: 16,
@@ -292,7 +295,7 @@ class _VoiceNoteWidgetState extends State<VoiceNoteWidget> with SingleTickerProv
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Recording: ${_formatDuration(_recordingDuration)}',
+                          l10n.recordingWithDuration(_formatDuration(_recordingDuration)),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -414,16 +417,16 @@ class _VoiceNoteWidgetState extends State<VoiceNoteWidget> with SingleTickerProv
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(
+                      children: [
+                        const Icon(
                           Icons.mic,
                           size: 28,
                           color: Color(0xFF0077CC),
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Tap to record voice note',
-                          style: TextStyle(
+                          l10n.tapToRecordVoiceNote,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF667085),
                           ),

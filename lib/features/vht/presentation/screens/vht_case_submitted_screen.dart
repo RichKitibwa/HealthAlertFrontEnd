@@ -8,6 +8,7 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// VHT Case Submitted Screen
 ///
@@ -98,32 +99,21 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
     }
   }
 
-  String _getStatusLabel(String status) {
+  String _getStatusLabel(BuildContext context, String status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status.toLowerCase()) {
-      case 'pending':
-        return 'Pending Review';
-      case 'dispatched':
-        return 'Ambulance Dispatched';
-      case 'enroute':
-        return 'Ambulance En Route';
-      case 'arrived':
-        return 'Ambulance Arrived';
-      case 'intransit':
-        return 'Patient In Transit';
-      case 'delivered':
-        return 'Patient Delivered';
-      case 'intreatment':
-        return 'In Treatment';
-      case 'admitted':
-        return 'Admitted';
-      case 'discharged':
-        return 'Discharged';
-      case 'completed':
-        return 'Case Completed';
-      case 'cancelled':
-        return 'Case Cancelled';
-      default:
-        return status;
+      case 'pending': return l10n.pendingReview;
+      case 'dispatched': return l10n.ambulanceDispatched;
+      case 'enroute': return l10n.ambulanceEnRoute;
+      case 'arrived': return l10n.ambulanceArrived;
+      case 'intransit': return l10n.patientInTransit;
+      case 'delivered': return l10n.patientDelivered;
+      case 'intreatment': return l10n.inTreatment;
+      case 'admitted': return l10n.admitted;
+      case 'discharged': return l10n.discharged;
+      case 'completed': return l10n.caseCompleted;
+      case 'cancelled': return l10n.caseCancelled;
+      default: return status;
     }
   }
 
@@ -156,32 +146,21 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
     }
   }
 
-  String _getStatusMessage(String status) {
+  String _getStatusMessage(BuildContext context, String status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status.toLowerCase()) {
-      case 'pending':
-        return 'The clinician is reviewing your case. You will be updated when a decision is made.';
-      case 'dispatched':
-        return 'An ambulance has been dispatched to your location. Stay with the patient.';
-      case 'enroute':
-        return 'The ambulance is on its way. Prepare the patient for transport.';
-      case 'arrived':
-        return 'The ambulance has arrived. Hand over the patient to the ambulance crew.';
-      case 'intransit':
-        return 'The patient is being transported to the clinic.';
-      case 'delivered':
-        return 'The patient has been delivered to the clinic.';
-      case 'intreatment':
-        return 'Your patient is currently being treated at the clinic.';
-      case 'admitted':
-        return 'Patient has been admitted to the clinic';
-      case 'discharged':
-        return 'Patient has been discharged';
-      case 'completed':
-        return 'This case has been completed. The patient has been treated.';
-      case 'cancelled':
-        return 'This case has been cancelled.';
-      default:
-        return 'Awaiting status update.';
+      case 'pending': return l10n.statusMsgPendingSubmitted;
+      case 'dispatched': return l10n.statusMsgDispatchedStay;
+      case 'enroute': return l10n.statusMsgEnRoutePrepare;
+      case 'arrived': return l10n.statusMsgArrivedHandOver;
+      case 'intransit': return l10n.statusMsgInTransit;
+      case 'delivered': return l10n.statusMsgDelivered;
+      case 'intreatment': return l10n.statusMsgInTreatment;
+      case 'admitted': return l10n.statusMsgAdmitted;
+      case 'discharged': return l10n.statusMsgDischarged;
+      case 'completed': return l10n.statusMsgCompletedTreated;
+      case 'cancelled': return l10n.statusMsgCancelled;
+      default: return l10n.awaitingStatusUpdate;
     }
   }
 
@@ -202,12 +181,13 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Case Tracking',
+        pageTitle: l10n.caseTracking,
         showBackButton: false,
         onSignOut: () async {
           await LogoutUtils.logout();
@@ -273,7 +253,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
 
               // Title
               Text(
-                'Case Submitted',
+                l10n.caseSubmitted,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
@@ -282,7 +262,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                'The clinic has been notified of the emergency.',
+                l10n.clinicNotifiedOfEmergency,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
@@ -358,7 +338,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                     if (widget.patientId != null) ...[
                       _InfoRow(
                         icon: Icons.badge_outlined,
-                        label: 'Patient ID',
+                        label: l10n.patientIdLabel,
                         value: widget.patientId!,
                       ),
                       const SizedBox(height: 10),
@@ -367,7 +347,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                     // Assigned Clinic
                     _InfoRow(
                       icon: Icons.local_hospital_outlined,
-                      label: 'Assigned Clinic',
+                      label: l10n.assignedFacility,
                       value: widget.clinicName,
                     ),
                     const SizedBox(height: 10),
@@ -375,10 +355,10 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                     // Assigned Clinician
                     _InfoRow(
                       icon: Icons.person_outlined,
-                      label: 'Clinician',
+                      label: l10n.clinicianLabel,
                       value: widget.clinicianName.isNotEmpty
                           ? widget.clinicianName
-                          : 'Assigned clinician',
+                          : l10n.assignedClinician,
                     ),
                   ],
                 ),
@@ -401,19 +381,19 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              'Saved Offline',
-                              style: TextStyle(
+                              l10n.savedOffline,
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,
                                 color: Colors.orange,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Case data has been saved locally and will be sent to the clinic when you are back online.',
-                              style: TextStyle(
+                              l10n.caseSavedOfflineMessage,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF667085),
                                 height: 1.4,
@@ -474,8 +454,8 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Current Status',
+                                  Text(
+                                    l10n.currentStatus,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
@@ -484,7 +464,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    _getStatusLabel(status),
+                                    _getStatusLabel(context, status),
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
@@ -516,7 +496,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
 
                         // Status message
                         Text(
-                          _getStatusMessage(status),
+                          _getStatusMessage(context, status),
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
@@ -538,9 +518,9 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Clinician Notes',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.clinicianNotes,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary,
@@ -564,7 +544,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                         if (updatedAt != null) ...[
                           const SizedBox(height: 8),
                           Text(
-                            'Last updated: ${_formatTimestamp(updatedAt)}',
+                            '${l10n.lastUpdated}: ${_formatTimestamp(updatedAt)}',
                             style: TextStyle(
                               fontSize: 11,
                               color: AppColors.textSecondary.withAlpha(150),
@@ -580,7 +560,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                 const SizedBox(height: 16),
 
                 // Status Timeline
-                _buildStatusTimeline(),
+                _buildStatusTimeline(context),
               ],
               const SizedBox(height: 24),
 
@@ -601,8 +581,8 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                       (route) => false,
                     );
                   },
-                  child: const Text(
-                    'Return to Dashboard',
+                  child: Text(
+                    l10n.returnToDashboard,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
@@ -631,7 +611,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                     );
                   },
                   child: Text(
-                    'Report Another Emergency',
+                    l10n.reportAnotherEmergency,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -659,7 +639,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
     return '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
-  Widget _buildStatusTimeline() {
+  Widget _buildStatusTimeline(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('emergencyCases')
@@ -763,7 +743,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                         child: Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
-                            _getStatusLabel(status),
+                            _getStatusLabel(context, status),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: isCurrent

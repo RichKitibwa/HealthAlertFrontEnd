@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../current_user_session.dart';
 import '../../../../core/utils/pin_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../vht/presentation/screens/vht_dashboard_screen.dart';
 import '../../../ambulance/presentation/screens/ambulance_dashboard_screen.dart';
 import '../../../clinic/presentation/screens/clinic_dashboard_screen.dart';
@@ -34,23 +35,21 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
     super.dispose();
   }
 
-  String _getWelcomeMessage() {
+  String _getWelcomeMessage(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final role = widget.userData['role'] ?? '';
     final firstName = widget.userData['firstName'] ?? '';
     final lastName = widget.userData['lastName'] ?? '';
     final fullName = '$firstName $lastName'.trim();
+    if (fullName.isEmpty) return l10n.welcomeBack;
 
     if (role == 'Clinic Staff' || role.toLowerCase().contains('clinic')) {
       final specialty = widget.userData['specialty'] ?? '';
       if (specialty.isNotEmpty) {
-        return 'Welcome back, Dr. $fullName';
+        return l10n.welcomeBackDr(fullName);
       }
-      return 'Welcome back, $fullName';
-    } else if (role == 'Admin') {
-      return 'Welcome back, $fullName';
-    } else {
-      return 'Welcome back, $fullName';
     }
+    return l10n.welcomeBackName(fullName);
   }
 
   Future<void> _verifyPin() async {
@@ -58,14 +57,14 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
 
     if (pin.isEmpty) {
       setState(() {
-        _errorMessage = 'Please enter your PIN';
+        _errorMessage = AppLocalizations.of(context)!.pleaseEnterPin;
       });
       return;
     }
 
     if (!PinUtils.isValidPinFormat(pin)) {
       setState(() {
-        _errorMessage = 'PIN must be 4-6 digits';
+        _errorMessage = AppLocalizations.of(context)!.pinMustBeDigits;
       });
       return;
     }
@@ -82,7 +81,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
       if (storedPinHash == null || storedPinHash != pinHash) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Incorrect PIN. Please try again.';
+          _errorMessage = AppLocalizations.of(context)!.incorrectPinTryAgain;
         });
         _pinController.clear();
         return;
@@ -99,14 +98,15 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
       CurrentUserSession.profileImageUrl = widget.userData['profileImageUrl'] as String?;
       CurrentUserSession.workplace = widget.userData['workplace'] as String?;
       CurrentUserSession.specialty = widget.userData['specialty'] as String?;
+      CurrentUserSession.camp = widget.userData['camp'] as String?;
       CurrentUserSession.email = widget.userData['email'] as String?;
 
       setState(() => _isLoading = false);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login successful!'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.loginSuccessful),
             backgroundColor: Colors.green,
           ),
         );
@@ -117,7 +117,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Error: ${e.toString()}';
+        _errorMessage = AppLocalizations.of(context)!.errorGeneric(e.toString());
       });
     }
   }
@@ -182,9 +182,10 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Enter PIN'),
+        title: Text(l10n.enterPin),
         backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
@@ -198,7 +199,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                 const Icon(Icons.lock, size: 80, color: AppColors.primary),
                 const SizedBox(height: 32),
                 Text(
-                  _getWelcomeMessage(),
+                  _getWelcomeMessage(context),
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -206,9 +207,9 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Enter your PIN to continue',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                Text(
+                  l10n.enterYourPinToContinue,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
@@ -217,7 +218,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                 TextFormField(
                   controller: _pinController,
                   decoration: InputDecoration(
-                    labelText: 'PIN',
+                    labelText: l10n.pin,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePin ? Icons.visibility : Icons.visibility_off),
@@ -257,9 +258,9 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                     ),
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Verify PIN',
-                            style: TextStyle(
+                        : Text(
+                            l10n.verifyPinButton,
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
@@ -273,7 +274,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('Go back'),
+                  child: Text(l10n.goBack),
                 ),
               ],
             ),

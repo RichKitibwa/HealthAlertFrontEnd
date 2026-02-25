@@ -1,5 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -15,18 +15,19 @@ class AmbulanceArrivalScreen extends StatelessWidget {
 
   const AmbulanceArrivalScreen({
     Key? key,
-    this.emergencyType = '🚑 Trauma',
+    this.emergencyType = 'Trauma',
     this.patientInfo =
         'Details provided by VHT (e.g., Adult male, breathing, bleeding at leg)',
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Ambulance',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Arrival',
+        pageTitle: l10n.arrival,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -80,8 +81,8 @@ class AmbulanceArrivalScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Arrived at Scene',
+                  Text(
+                    l10n.arrivedAtScene,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Inter',
@@ -177,13 +178,13 @@ class AmbulanceArrivalScreen extends StatelessWidget {
                                 const SizedBox(height: 14),
                                 _ArrivalInfoTile(
                                   icon: Icons.warning_amber_rounded,
-                                  label: 'Emergency',
+                                  label: l10n.emergencyLabel,
                                   value: emergencyType,
                                 ),
                                 const SizedBox(height: 10),
                                 _ArrivalInfoTile(
                                   icon: Icons.person_outline,
-                                  label: 'Patient info',
+                                  label: l10n.patientInfo,
                                   value: patientInfo,
                                 ),
                               ],
@@ -198,11 +199,11 @@ class AmbulanceArrivalScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _SecondaryActionButton(
-                          label: 'Notify Clinic',
+                          label: l10n.notifyClinic,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Clinic notified about arrival.'),
+                              SnackBar(
+                                content: Text(l10n.clinicNotifiedAboutArrival),
                               ),
                             );
                           },
@@ -211,11 +212,11 @@ class AmbulanceArrivalScreen extends StatelessWidget {
                       const SizedBox(width: 14),
                       Expanded(
                         child: _SecondaryActionButton(
-                          label: 'Notify VHT',
+                          label: l10n.callVht,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('VHT notified about arrival.'),
+                              SnackBar(
+                                content: Text(l10n.vhtNotifiedAboutArrival),
                               ),
                             );
                           },
@@ -263,10 +264,10 @@ class AmbulanceArrivalScreen extends StatelessWidget {
                               ),
                             );
                           },
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'Patient onboard',
-                              style: TextStyle(
+                              l10n.patientOnboard,
+                              style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontWeight: FontWeight.w800,
                                 fontSize: 16,

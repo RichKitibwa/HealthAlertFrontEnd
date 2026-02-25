@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/constants/health_facility_constants.dart';
 
 class ClinicianRegistrationForm extends StatefulWidget {
-  final String phoneNumber; // Pre-filled from OTP verification
+  final String phoneNumber;
   final Function({
     required String firstName,
     required String lastName,
     required String phoneNumber,
     required String specialty,
     required String workplace,
+    required String camp,
   }) onSubmit;
 
   const ClinicianRegistrationForm({
@@ -26,42 +28,81 @@ class _ClinicianRegistrationFormState extends State<ClinicianRegistrationForm> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   late final _phoneController = TextEditingController(text: widget.phoneNumber);
-  final _specialtyController = TextEditingController();
-  final _workplaceController = TextEditingController();
-  String? _selectedSpecialty;
 
-  final List<String> _commonSpecialties = [
-    'General Medicine',
-    'Pediatrics',
-    'Obstetrics & Gynecology',
-    'Surgery',
-    'Clinical Officer',
-    'Nurse',
-  ];
+  String? _selectedSpecialty;
+  String? _selectedCamp;
+  String? _selectedFacility;
+
+  List<String> get _facilitiesForCamp =>
+      _selectedCamp != null
+          ? HealthFacilityConstants.facilitiesByCamp[_selectedCamp!] ?? []
+          : [];
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
-    _specialtyController.dispose();
-    _workplaceController.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      final specialty = _selectedSpecialty ?? _specialtyController.text.trim();
-      
       widget.onSubmit(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
-        specialty: specialty,
-        workplace: _workplaceController.text.trim(),
+        specialty: _selectedSpecialty!,
+        workplace: _selectedFacility!,
+        camp: _selectedCamp!,
       );
     }
   }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE3E8EF), width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF0077CC), width: 2),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE3E8EF), width: 1),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red, width: 1),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red, width: 2),
+      ),
+    );
+  }
+
+  static const _dropdownStyle = TextStyle(
+    fontFamily: 'Inter',
+    fontWeight: FontWeight.w400,
+    fontSize: 14,
+    color: Color(0xFF1A1A1A),
+  );
+
+  static const _dropdownIcon = Icon(
+    Icons.keyboard_arrow_down_rounded,
+    color: Color(0xFF667085),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -70,196 +111,111 @@ class _ClinicianRegistrationFormState extends State<ClinicianRegistrationForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-                // First Name
-                TextFormField(
-                  controller: _firstNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'First Name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your first name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+          // First Name
+          TextFormField(
+            controller: _firstNameController,
+            decoration: _inputDecoration(label: 'First Name', icon: Icons.person),
+            validator: (v) => (v == null || v.isEmpty) ? 'Please enter your first name' : null,
+          ),
+          const SizedBox(height: 16),
 
-                // Last Name
-                TextFormField(
-                  controller: _lastNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Last Name',
-                    prefixIcon: Icon(Icons.person_outline),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your last name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+          // Last Name
+          TextFormField(
+            controller: _lastNameController,
+            decoration: _inputDecoration(label: 'Last Name', icon: Icons.person_outline),
+            validator: (v) => (v == null || v.isEmpty) ? 'Please enter your last name' : null,
+          ),
+          const SizedBox(height: 16),
 
-                // Profession/Specialty
-                DropdownButtonFormField<String>(
-                  value: _selectedSpecialty,
-                  decoration: InputDecoration(
-                    labelText: 'Profession',
-                    prefixIcon: const Icon(Icons.medical_services),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE3E8EF),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF0077CC),
-                        width: 2,
-                      ),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE3E8EF),
-                        width: 1,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 1,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 14,
-                    color: Color(0xFF1A1A1A),
-                  ),
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Color(0xFF667085),
-                  ),
-                  iconSize: 24,
-                  borderRadius: BorderRadius.circular(12),
-                  dropdownColor: Colors.white,
-                  elevation: 8,
-                  items: [
-                    ..._commonSpecialties.map((String specialty) {
-                      return DropdownMenuItem<String>(
-                        value: specialty,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Text(specialty),
-                        ),
-                      );
-                    }),
-                    const DropdownMenuItem<String>(
-                      value: null,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 4),
-                        child: Text('Other (type below)'),
-                      ),
-                    ),
-                  ],
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedSpecialty = newValue;
-                      if (newValue != null) {
-                        _specialtyController.clear();
-                      }
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null && _specialtyController.text.trim().isEmpty) {
-                      return 'Please select or enter your profession';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+          // Profession / Specialty
+          DropdownButtonFormField<String>(
+            value: _selectedSpecialty,
+            isExpanded: true,
+            decoration: _inputDecoration(label: 'Profession', icon: Icons.medical_services),
+            style: _dropdownStyle,
+            icon: _dropdownIcon,
+            iconSize: 24,
+            borderRadius: BorderRadius.circular(12),
+            dropdownColor: Colors.white,
+            elevation: 8,
+            items: HealthFacilityConstants.clinicianSpecialties.map((s) {
+              return DropdownMenuItem<String>(value: s, child: Text(s));
+            }).toList(),
+            onChanged: (v) => setState(() => _selectedSpecialty = v),
+            validator: (v) => (v == null) ? 'Please select your profession' : null,
+          ),
+          const SizedBox(height: 16),
 
-                // Custom Profession Input (shown when "Other" is selected)
-                if (_selectedSpecialty == null)
-                  TextFormField(
-                    controller: _specialtyController,
-                    decoration: const InputDecoration(
-                      labelText: 'Enter Your Profession',
-                      prefixIcon: Icon(Icons.edit),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (_selectedSpecialty == null && (value == null || value.isEmpty)) {
-                        return 'Please enter your profession';
-                      }
-                      return null;
-                    },
-                  ),
-                if (_selectedSpecialty == null) const SizedBox(height: 16),
+          // Camp Selection
+          DropdownButtonFormField<String>(
+            value: _selectedCamp,
+            isExpanded: true,
+            decoration: _inputDecoration(label: 'Settlement / Camp', icon: Icons.location_city),
+            style: _dropdownStyle,
+            icon: _dropdownIcon,
+            iconSize: 24,
+            borderRadius: BorderRadius.circular(12),
+            dropdownColor: Colors.white,
+            elevation: 8,
+            items: HealthFacilityConstants.camps.map((c) {
+              return DropdownMenuItem<String>(value: c, child: Text(c));
+            }).toList(),
+            onChanged: (v) {
+              setState(() {
+                _selectedCamp = v;
+                _selectedFacility = null; // reset facility when camp changes
+              });
+            },
+            validator: (v) => (v == null) ? 'Please select your settlement / camp' : null,
+          ),
+          const SizedBox(height: 16),
 
-                // Clinic
-                TextFormField(
-                  controller: _workplaceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Clinic',
-                    prefixIcon: Icon(Icons.local_hospital),
-                    border: OutlineInputBorder(),
-                    helperText: 'Enter the name of the clinic you are attached to',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your clinic';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
-
-                // Set PIN Button
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Set PIN',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          // Facility / Clinic Selection (depends on camp)
+          DropdownButtonFormField<String>(
+            value: _selectedFacility,
+            isExpanded: true,
+            decoration: _inputDecoration(
+              label: 'Health Facility / Clinic',
+              icon: Icons.local_hospital,
             ),
-          );
+            style: _dropdownStyle,
+            icon: _dropdownIcon,
+            iconSize: 24,
+            borderRadius: BorderRadius.circular(12),
+            dropdownColor: Colors.white,
+            elevation: 8,
+            hint: Text(
+              _selectedCamp == null ? 'Select a camp first' : 'Select your facility',
+              style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+            ),
+            items: _facilitiesForCamp.map((f) {
+              return DropdownMenuItem<String>(value: f, child: Text(f));
+            }).toList(),
+            onChanged: _selectedCamp == null ? null : (v) => setState(() => _selectedFacility = v),
+            validator: (v) => (v == null) ? 'Please select your health facility' : null,
+          ),
+          const SizedBox(height: 32),
+
+          // Set PIN Button
+          SizedBox(
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Set PIN',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -11,6 +11,7 @@ import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 // VHT Dashboard Screen
 // Main dashboard for Village Health Team members with emergency reporting
@@ -53,23 +54,25 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
     }
   }
 
-  String _getStatusLabel(String? s) {
+  String _getStatusLabel(BuildContext context, String? s) {
+    final l10n = AppLocalizations.of(context)!;
     switch (s?.toLowerCase()) {
-      case 'pending': return 'Pending';
-      case 'advised': return 'Advised';
-      case 'ambulancerequested': return 'Amb. Requested';
-      case 'dispatched': return 'Dispatched';
-      case 'enroute': return 'En Route';
-      case 'arrived': return 'Arrived';
-      case 'intransit': return 'In Transit';
-      default: return s ?? 'Unknown';
+      case 'pending': return l10n.pendingReview;
+      case 'advised': return l10n.clinicianAdvised;
+      case 'ambulancerequested': return l10n.ambulanceRequested;
+      case 'dispatched': return l10n.ambulanceDispatched;
+      case 'enroute': return l10n.ambulanceEnRoute;
+      case 'arrived': return l10n.ambulanceArrived;
+      case 'intransit': return l10n.patientInTransit;
+      default: return s ?? '';
     }
   }
 
-  String _formatTimeAgo(Timestamp? ts) {
+  String _formatTimeAgo(BuildContext context, Timestamp? ts) {
     if (ts == null) return '';
+    final l10n = AppLocalizations.of(context)!;
     final diff = DateTime.now().difference(ts.toDate());
-    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 1) return l10n.justNow;
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     final dt = ts.toDate();
@@ -91,12 +94,13 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Dashboard',
+        pageTitle: l10n.dashboard,
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -138,7 +142,7 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Welcome, ${CurrentUserSession.firstName ?? 'User'}',
+                  l10n.welcomeName(CurrentUserSession.firstName ?? l10n.user),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -176,9 +180,9 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                             children: [
                               Icon(Icons.emergency, color: Colors.white, size: 24),
                               const SizedBox(width: 10),
-                              const Text(
-                                'Report Emergency',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 0.2, color: Colors.white),
+                              Text(
+                                l10n.reportEmergency,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 0.2, color: Colors.white),
                               ),
                             ],
                           ),
@@ -191,9 +195,9 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                       const SizedBox(height: 20),
 
                       // Quick Actions header
-                      const Text(
-                        'Quick Actions',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                      Text(
+                        l10n.quickActions,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: 12),
 
@@ -201,7 +205,7 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                       _buildActionCard(
                         icon: Icons.description_outlined,
                         iconColor: AppColors.clinicAccent,
-                        title: 'View Case History',
+                        title: l10n.viewCaseHistory,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -259,15 +263,16 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
 
   /// Active cases section showing up to 2 cases + "View All" button
   Widget _buildActiveCasesSection() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Active Cases',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                l10n.activeCases,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
               ),
             ),
             TextButton(
@@ -280,7 +285,7 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                 );
               },
               child: Text(
-                'View All',
+                l10n.viewAll,
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.vhtAccent),
               ),
             ),
@@ -422,7 +427,7 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                                 if (createdAt != null) ...[
                                   const SizedBox(height: 2),
                                   Text(
-                                    _formatTimeAgo(createdAt),
+                                    _formatTimeAgo(context, createdAt),
                                     style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(150)),
                                   ),
                                 ],
@@ -438,7 +443,7 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
                               border: Border.all(color: _getStatusColor(status).withAlpha(40)),
                             ),
                             child: Text(
-                              _getStatusLabel(status),
+                              _getStatusLabel(context, status),
                               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _getStatusColor(status)),
                             ),
                           ),

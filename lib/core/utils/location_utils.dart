@@ -1,18 +1,33 @@
 // Location utilities
 // GPS location capture and management with proper permission handling
 
+import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+/// Error codes for location failures. Use with [LocationUtils.localizedErrorMessage]
+/// to show a localized message in the UI.
+class LocationErrorCode {
+  LocationErrorCode._();
+  static const String locationServicesDisabled = 'location_services_disabled';
+  static const String locationPermissionDenied = 'location_permission_denied';
+  static const String locationPermissionDeniedForever = 'location_permission_denied_forever';
+  static const String locationTimeout = 'location_timeout';
+  static const String locationUnknown = 'location_unknown';
+}
 
 /// Result object for location requests that includes error context
 class LocationResult {
   final Position? position;
   final String? error;
+  /// Optional code for UI to map to localized message via [LocationUtils.localizedErrorMessage].
+  final String? errorCode;
   final bool permissionDeniedForever;
 
   LocationResult({
     this.position,
     this.error,
+    this.errorCode,
     this.permissionDeniedForever = false,
   });
 
@@ -58,6 +73,7 @@ class LocationUtils {
       if (!serviceEnabled) {
         return LocationResult(
           error: 'Location services are disabled. Please enable GPS in your device settings.',
+          errorCode: LocationErrorCode.locationServicesDisabled,
         );
       }
 
@@ -71,12 +87,14 @@ class LocationUtils {
       if (permStatus.isDenied) {
         return LocationResult(
           error: 'Location permission was denied. Please grant location access to report emergencies.',
+          errorCode: LocationErrorCode.locationPermissionDenied,
         );
       }
 
       if (permStatus.isPermanentlyDenied) {
         return LocationResult(
           error: 'Location permission is permanently denied. Please open Settings and enable location for this app.',
+          errorCode: LocationErrorCode.locationPermissionDeniedForever,
           permissionDeniedForever: true,
         );
       }
@@ -91,8 +109,10 @@ class LocationUtils {
 
       return LocationResult(position: position);
     } catch (e) {
+      final isTimeout = e is TimeoutException || e.toString().toLowerCase().contains('timed out');
       return LocationResult(
         error: 'Could not get location: ${e.toString()}',
+        errorCode: isTimeout ? LocationErrorCode.locationTimeout : LocationErrorCode.locationUnknown,
       );
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../common/presentation/widgets/notification_bell_with_badge.dart';
 import '../../../common/presentation/screens/notifications_screen.dart';
 import 'admin_case_analytics.dart';
@@ -54,6 +55,7 @@ class AdminNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -68,25 +70,25 @@ class AdminNavigationBar extends StatelessWidget {
         unselectedItemColor: const Color(0xFF667085),
         showUnselectedLabels: true,
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: l10n.homeLabel,
           ),
           BottomNavigationBarItem(
             icon: NotificationBellWithBadge(isSelected: currentIndex == 1),
             activeIcon: NotificationBellWithBadge(isSelected: true),
-            label: 'Notifications',
+            label: l10n.notifications,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Analytics',
+            icon: const Icon(Icons.bar_chart_outlined),
+            activeIcon: const Icon(Icons.bar_chart),
+            label: l10n.analytics,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            activeIcon: Icon(Icons.people),
-            label: 'Users',
+            icon: const Icon(Icons.people_outline),
+            activeIcon: const Icon(Icons.people),
+            label: l10n.manageUsers,
           ),
         ],
       ),

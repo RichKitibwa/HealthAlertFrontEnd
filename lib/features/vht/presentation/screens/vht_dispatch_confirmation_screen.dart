@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'vht_track_ambulance_screen.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -78,11 +79,12 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
       }
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(createdCase.isOffline
-                ? 'Emergency case saved offline. Will sync when online.'
-                : 'Emergency case created successfully!'),
+                ? l10n.caseSavedOfflineSyncWhenOnline
+                : l10n.emergencyCaseCreatedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -98,9 +100,10 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error creating emergency case: $e'),
+            content: Text(l10n.errorCreatingEmergencyCaseWithError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -116,6 +119,7 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Placeholder values for now
     const String clinicName = 'Central Health'; // TODO: fill dynamically
     const String etaText = '12 min'; // TODO: compute ETA
@@ -124,7 +128,7 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Dispatch Confirmation',
+        pageTitle: l10n.dispatchConfirmation,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -153,8 +157,8 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Dispatch Confirmation',
+                  Text(
+                    l10n.dispatchConfirmation,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Inter',
@@ -184,7 +188,7 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Clinic assigned: $clinicName',
+                              l10n.clinicAssignedWithName(clinicName),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontFamily: 'Inter',
@@ -196,7 +200,7 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Estimated arrival: $etaText',
+                              l10n.estimatedArrivalValue(etaText),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontFamily: 'Inter',
@@ -212,8 +216,8 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
                               color: Color(0xFFE3E8EF),
                             ),
                             const SizedBox(height: 16),
-                            const Text(
-                              'Automatically assigning nearest ambulance…',
+                            Text(
+                              l10n.assigningNearestAmbulance,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',
@@ -224,8 +228,8 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'The system will choose the closest available ambulance and update this screen in real time.',
+                            Text(
+                              l10n.systemWillChooseClosestAmbulance,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',
@@ -237,7 +241,7 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Emergency type: ${widget.emergencyType}',
+                              '${l10n.emergencyTypeLabel}: ${widget.emergencyType}',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontFamily: 'Inter',
@@ -251,7 +255,7 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
                               Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
-                                  'Location: ${widget.latitude!.toStringAsFixed(6)}, ${widget.longitude!.toStringAsFixed(6)}',
+                                  l10n.locationCoordinates(widget.latitude!.toStringAsFixed(6), widget.longitude!.toStringAsFixed(6)),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontFamily: 'Inter',
@@ -291,9 +295,9 @@ class _DispatchConfirmationScreenState extends State<DispatchConfirmationScreen>
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text(
-                              'Confirm & Dispatch',
-                        style: TextStyle(
+                          : Text(
+                              l10n.confirmAndDispatch,
+                        style: const TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w400,
                           fontSize: 20,

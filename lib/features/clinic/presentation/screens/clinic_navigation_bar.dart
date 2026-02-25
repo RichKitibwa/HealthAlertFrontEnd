@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../common/presentation/widgets/notification_bell_with_badge.dart';
 import '../../../common/presentation/screens/notifications_screen.dart';
 import '../../../common/presentation/screens/learning_resources_screen.dart';
@@ -49,6 +50,7 @@ class ClinicNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -63,25 +65,25 @@ class ClinicNavigationBar extends StatelessWidget {
         unselectedItemColor: const Color(0xFF667085),
         showUnselectedLabels: true,
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: l10n.homeLabel,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.inbox_outlined),
-            activeIcon: Icon(Icons.inbox),
-            label: 'Incoming',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.inbox_outlined),
+            activeIcon: const Icon(Icons.inbox),
+            label: l10n.incomingLabel,
           ),
           BottomNavigationBarItem(
             icon: NotificationBellWithBadge(isSelected: currentIndex == 2),
             activeIcon: NotificationBellWithBadge(isSelected: true),
-            label: 'Notifications',
+            label: l10n.notifications,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined),
-            activeIcon: Icon(Icons.menu_book),
-            label: 'Learn',
+            icon: const Icon(Icons.menu_book_outlined),
+            activeIcon: const Icon(Icons.menu_book),
+            label: l10n.learnLabel,
           ),
         ],
       ),

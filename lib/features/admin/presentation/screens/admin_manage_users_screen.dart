@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_navigation_bar.dart';
 import 'admin_user_detail_screen.dart';
@@ -64,13 +65,14 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return BackHandlingPopScope(
       dashboardRoute: '/admin-dashboard',
       child: Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Admin',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Manage Users',
+        pageTitle: l10n.manageUsers,
         showBackButton: true,
         onBack: () {
           if (Navigator.of(context).canPop()) {
@@ -108,9 +110,9 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Manage Users', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  Text(l10n.manageUsers, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                   const SizedBox(height: 6),
-                  Text('View and manage system users by role.', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  Text(l10n.viewAndManageSystemUsers, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -122,7 +124,7 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search users...',
+                  hintText: l10n.searchUsers,
                   hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondary.withAlpha(150)),
                   prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -148,13 +150,13 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _buildRoleChip('All', 'all'),
+                    _buildRoleChip(l10n.allFilter, 'all'),
                     const SizedBox(width: 6),
-                    _buildRoleChip('VHT', 'VHT'),
+                    _buildRoleChip(l10n.vht, 'VHT'),
                     const SizedBox(width: 6),
-                    _buildRoleChip('Ambulance', 'Ambulance Driver'),
+                    _buildRoleChip(l10n.ambulance, 'Ambulance Driver'),
                     const SizedBox(width: 6),
-                    _buildRoleChip('Clinician', 'Clinician'),
+                    _buildRoleChip(l10n.clinicianLabel, 'Clinician'),
                   ],
                 ),
               ),
@@ -171,7 +173,7 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
                   }
 
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
+                    return Center(child: Text(l10n.errorGeneric('${snapshot.error}')));
                   }
 
                   final allDocs = snapshot.data?.docs ?? [];
@@ -194,7 +196,7 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
                         children: [
                           Icon(Icons.people_outline, size: 56, color: AppColors.textSecondary.withAlpha(80)),
                           const SizedBox(height: 12),
-                          Text('No users found', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary)),
+                          Text(l10n.noUsersFound, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary)),
                         ],
                       ),
                     );
@@ -255,7 +257,7 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(name.isNotEmpty ? name : 'Unknown User', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary)),
+                                  Text(name.isNotEmpty ? name : l10n.unknownUser, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary)),
                                   const SizedBox(height: 2),
                                   Row(
                                     children: [

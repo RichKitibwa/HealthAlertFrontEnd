@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../l10n/app_localizations.dart';
 
 class InlineVoiceNotePlayer extends StatefulWidget {
   final String voiceNoteUrl;
@@ -53,9 +54,10 @@ class _InlineVoiceNotePlayerState extends State<InlineVoiceNotePlayer> {
       if (mounted) setState(() {});
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not play voice note: $e'),
+            content: Text(l10n.couldNotPlayVoiceNote),
             backgroundColor: Colors.red,
           ),
         );
@@ -71,6 +73,7 @@ class _InlineVoiceNotePlayerState extends State<InlineVoiceNotePlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isPlaying = _player.playing;
 
     return Container(
@@ -103,7 +106,7 @@ class _InlineVoiceNotePlayerState extends State<InlineVoiceNotePlayer> {
               children: [
                 const _StaticWaveBars(),
                 const SizedBox(height: 4),
-                Text('Tap to play', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                Text(l10n.tapToPlay, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
                 const SizedBox(height: 6),
                 StreamBuilder<Duration>(
                   stream: _player.positionStream,

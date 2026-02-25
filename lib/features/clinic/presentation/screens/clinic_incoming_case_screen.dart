@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'clinic_case_detail_screen.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
@@ -107,19 +108,19 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
     }
   }
 
-  String _getStatusLabel(String? status) {
+  String _getStatusLabel(String? status, AppLocalizations l10n) {
     switch (status?.toLowerCase()) {
-      case 'pending': return 'Pending Review';
-      case 'advised': return 'Advice Sent';
-      case 'ambulancerequested': return 'Ambulance Requested';
-      case 'dispatched': return 'Dispatched';
-      case 'enroute': return 'En Route';
-      case 'arrived': return 'Arrived';
-      case 'intransit': return 'In Transit';
-      case 'delivered': return 'Delivered';
-      case 'completed': return 'Completed';
-      case 'cancelled': return 'Cancelled';
-      default: return status ?? 'Unknown';
+      case 'pending': return l10n.pendingReview;
+      case 'advised': return l10n.adviceSent;
+      case 'ambulancerequested': return l10n.ambulanceRequested;
+      case 'dispatched': return l10n.dispatched;
+      case 'enroute': return l10n.enRoute;
+      case 'arrived': return l10n.arrived;
+      case 'intransit': return l10n.patientInTransit;
+      case 'delivered': return l10n.patientDelivered;
+      case 'completed': return l10n.caseCompleted;
+      case 'cancelled': return l10n.caseCancelled;
+      default: return status ?? l10n.unknown;
     }
   }
 
@@ -141,25 +142,26 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
     }
   }
 
-  String _formatTimeAgo(Timestamp? timestamp) {
+  String _formatTimeAgo(Timestamp? timestamp, AppLocalizations l10n) {
     if (timestamp == null) return '';
     final dt = timestamp.toDate();
     final now = DateTime.now();
     final diff = now.difference(dt);
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) return '${diff.inHours} hr ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Incoming Cases',
+        pageTitle: l10n.incomingCases,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -206,7 +208,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Incoming Cases',
+                    l10n.incomingCases,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
@@ -215,7 +217,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Review emergencies submitted by VHTs.',
+                    l10n.reviewEmergenciesSubmittedByVhts,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w500,
@@ -233,7 +235,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search by patient name or ID...',
+                  hintText: l10n.searchByPatientNameOrId,
                   hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondary.withAlpha(150)),
                   prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -263,19 +265,19 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
               child: Row(
                 children: [
                   _FilterChip(
-                    label: 'Active',
+                    label: l10n.activeFilter,
                     isSelected: _selectedFilter == 'active',
                     onTap: () => setState(() => _selectedFilter = 'active'),
                   ),
                   const SizedBox(width: 8),
                   _FilterChip(
-                    label: 'All',
+                    label: l10n.allFilter,
                     isSelected: _selectedFilter == 'all',
                     onTap: () => setState(() => _selectedFilter = 'all'),
                   ),
                   const SizedBox(width: 8),
                   _FilterChip(
-                    label: 'Completed',
+                    label: l10n.completedFilter,
                     isSelected: _selectedFilter == 'completed',
                     onTap: () => setState(() => _selectedFilter = 'completed'),
                   ),
@@ -307,7 +309,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Error loading cases',
+                            l10n.errorLoadingCases,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
@@ -346,10 +348,10 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                           const SizedBox(height: 16),
                           Text(
                             _selectedFilter == 'active'
-                                ? 'No active cases'
+                                ? l10n.noActiveCases
                                 : _selectedFilter == 'completed'
-                                    ? 'No completed cases'
-                                    : 'No cases found',
+                                    ? l10n.noCompletedCases
+                                    : l10n.noCasesFound,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -358,7 +360,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Emergency cases assigned to your clinic will appear here.',
+                            l10n.emergencyCasesAssignedToYourClinic,
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary,
@@ -404,7 +406,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                           patientDesc += patientDesc.isNotEmpty ? ', $patientAge yrs' : '$patientAge yrs';
                         }
                         if (patientDesc.isEmpty) {
-                          patientDesc = 'Patient $patientId';
+                          patientDesc = '${l10n.patientLabel} $patientId';
                         }
 
                         return InkWell(
@@ -484,7 +486,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                                         ),
                                       ),
                                       child: Text(
-                                        _getStatusLabel(status),
+                                        _getStatusLabel(status, l10n),
                                         style: TextStyle(
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w700,
@@ -563,7 +565,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                                 // Time
                                 const SizedBox(height: 6),
                                 Text(
-                                  _formatTimeAgo(createdAt),
+                                  _formatTimeAgo(createdAt, l10n),
                                   style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 11,

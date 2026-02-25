@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'clinic_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/screens/settings_screen.dart';
@@ -69,23 +70,23 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     }
   }
 
-  String _getStatusLabel(String? status) {
+  String _getStatusLabel(String? status, AppLocalizations l10n) {
     switch (status?.toLowerCase()) {
-      case 'pending': return 'Pending Review';
-      case 'advised': return 'Advice Sent';
-      case 'ambulancerequested': return 'Ambulance Requested';
-      case 'dispatched': return 'Ambulance Dispatched';
-      case 'enroute': return 'En Route';
-      case 'arrived': return 'Arrived';
-      case 'intransit': return 'In Transit';
-      case 'delivered': return 'Delivered';
-      case 'intreatment': return 'In Treatment';
-      case 'admitted': return 'Admitted';
-      case 'discharged': return 'Discharged';
-      case 'received': return 'Patient Received';
-      case 'completed': return 'Completed';
-      case 'cancelled': return 'Cancelled';
-      default: return status ?? 'Unknown';
+      case 'pending': return l10n.pendingReview;
+      case 'advised': return l10n.adviceSent;
+      case 'ambulancerequested': return l10n.ambulanceRequested;
+      case 'dispatched': return l10n.ambulanceDispatched;
+      case 'enroute': return l10n.enRoute;
+      case 'arrived': return l10n.arrived;
+      case 'intransit': return l10n.patientInTransit;
+      case 'delivered': return l10n.patientDelivered;
+      case 'intreatment': return l10n.patientInTreatment;
+      case 'admitted': return l10n.admitted;
+      case 'discharged': return l10n.discharged;
+      case 'received': return l10n.patientReceived;
+      case 'completed': return l10n.caseCompleted;
+      case 'cancelled': return l10n.caseCancelled;
+      default: return status ?? l10n.unknown;
     }
   }
 
@@ -109,19 +110,20 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     }
   }
 
-  String _formatTimestamp(Timestamp? timestamp) {
+  String _formatTimestamp(Timestamp? timestamp, AppLocalizations l10n) {
     if (timestamp == null) return '';
     final dt = timestamp.toDate();
     final now = DateTime.now();
     final diff = now.difference(dt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) return '${diff.inHours} hr ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
     return '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   /// Request ambulance dispatch (sets status to ambulanceRequested for admin)
   Future<void> _requestAmbulanceDispatch(Map<String, dynamic> caseData) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -130,19 +132,19 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
           children: [
             Icon(Icons.local_shipping_rounded, color: AppColors.clinicAccent, size: 22),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Request Ambulance Dispatch',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                l10n.requestAmbulanceDispatch,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        content: const Text(
-          'This will forward the case to dispatch to assign an ambulance. Do you want to proceed?',
-          style: TextStyle(fontSize: 14),
+        content: Text(
+          l10n.requestAmbulanceDispatchConfirm,
+          style: const TextStyle(fontSize: 14),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -159,7 +161,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     ),
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
+                      child: Text(l10n.cancel, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
                     ),
                   ),
                 ),
@@ -177,7 +179,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     ),
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: const Text('Dispatch', style: TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
+                      child: Text(l10n.dispatch, style: const TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
                     ),
                   ),
                 ),
@@ -230,14 +232,16 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       }
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ambulance dispatch requested.'), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.ambulanceDispatchRequested), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -248,8 +252,9 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
   /// Advise VHT (sets status to advised)
   Future<void> _adviseVHT(Map<String, dynamic> caseData) async {
     if (_notesController.text.trim().isEmpty) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add advice for the VHT first.'), backgroundColor: Colors.orange),
+        SnackBar(content: Text(l10n.pleaseAddAdviceForVhtFirst), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -288,14 +293,16 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       }
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Advice sent to VHT successfully.'), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.adviceSentToVhtSuccessfully), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -305,70 +312,74 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
   /// Close / complete the case
   Future<void> _closeCase(Map<String, dynamic> caseData) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: Colors.green, size: 22),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                'Close Case',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        content: const Text(
-          'Are you sure the patient is OK and this case can be closed?',
-          style: TextStyle(fontSize: 14),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          Row(
+      builder: (ctx) {
+        final dialogL10n = AppLocalizations.of(ctx)!;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
             children: [
+              Icon(Icons.check_circle_rounded, color: Colors.green, size: 22),
+              const SizedBox(width: 10),
               Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: const Text('Close Case', style: TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
-                    ),
-                  ),
+                child: Text(
+                  dialogL10n.closeCaseConfirmTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-        ],
-      ),
+          content: Text(
+            dialogL10n.areYouSureCloseCasePatientOk,
+            style: const TextStyle(fontSize: 14),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(dialogL10n.cancel, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(dialogL10n.closeCase, style: const TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
 
     if (confirm != true) return;
@@ -408,13 +419,13 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Case closed successfully.'), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.caseClosedSuccessfully), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -436,14 +447,16 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       // Note: Cloud Function handles notifications for inTreatment status
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Patient received. You can now add treatment notes.'), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.patientReceivedAddTreatmentNotes), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -464,14 +477,16 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       });
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Patient admitted. Add treatment notes when ready to discharge.'), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.patientAdmittedAddNotesWhenReady), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -481,65 +496,69 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
   /// Discharge patient and complete treatment
   Future<void> _dischargePatient(Map<String, dynamic> data) async {
+    final l10n = AppLocalizations.of(context)!;
     final treatmentNotes = _treatmentController.text.trim();
     if (treatmentNotes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter treatment notes before discharging'), backgroundColor: Colors.orange),
+        SnackBar(content: Text(l10n.pleaseEnterTreatmentNotesBeforeDischarging), backgroundColor: Colors.orange),
       );
       return;
     }
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.exit_to_app_rounded, color: Colors.green, size: 22),
-            const SizedBox(width: 10),
-            const Text('Discharge Patient', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-          ],
-        ),
-        content: const Text(
-          'This will mark the patient as discharged and close this case. Are you sure?',
-          style: TextStyle(fontSize: 14),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          Row(
+      builder: (ctx) {
+        final dialogL10n = AppLocalizations.of(ctx)!;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
             children: [
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text('Discharge', style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
-                ),
-              ),
+              Icon(Icons.exit_to_app_rounded, color: Colors.green, size: 22),
+              const SizedBox(width: 10),
+              Text(dialogL10n.dischargePatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             ],
           ),
-        ],
-      ),
+          content: Text(
+            dialogL10n.dischargePatientConfirmMsg,
+            style: const TextStyle(fontSize: 14),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(dialogL10n.cancel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(dialogL10n.discharge, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
 
     if (confirm != true) return;
@@ -597,13 +616,13 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       if (mounted) {
         _treatmentController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Patient discharged. Case completed.'), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.patientDischargedCaseCompleted), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -633,8 +652,9 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open dialer for $phone'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.couldNotOpenDialer(phone)), backgroundColor: Colors.red),
         );
       }
     }
@@ -642,12 +662,13 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Case Details',
+        pageTitle: l10n.caseDetails,
         showBackButton: true,
         onBack: () => Navigator.pop(context),
         onSignOut: () async {
@@ -684,7 +705,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (!snapshot.hasData || !snapshot.data!.exists) {
-              return const Center(child: Text('Case not found.'));
+              return Center(child: Text(l10n.caseNotFound));
             }
 
             final data = snapshot.data!.data() as Map<String, dynamic>;
@@ -747,7 +768,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Urgency: ${urgency.toUpperCase()}',
+                                l10n.urgencyWithLevel(urgency.toUpperCase()),
                                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: _getUrgencyColor(urgency)),
                               ),
                             ],
@@ -761,7 +782,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                             border: Border.all(color: statusColor.withAlpha(60)),
                           ),
                           child: Text(
-                            _getStatusLabel(status),
+                            _getStatusLabel(status, l10n),
                             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: statusColor),
                           ),
                         ),
@@ -771,23 +792,23 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   const SizedBox(height: 16),
 
                   // Patient Details Card
-                  _DetailCard(title: 'Patient Information', children: [
-                    if (patientDisplayName.isNotEmpty) _DetailRow('Name', patientDisplayName),
-                    if (patientId.isNotEmpty) _DetailRow('Patient ID', patientId),
-                    _DetailRow('Gender', patientGender.isNotEmpty ? patientGender[0].toUpperCase() + patientGender.substring(1) : 'Not specified'),
-                    _DetailRow('Age', patientAge != null ? '$patientAge years' : 'Not specified'),
+                  _DetailCard(title: l10n.patientInformation, children: [
+                    if (patientDisplayName.isNotEmpty) _DetailRow(l10n.name, patientDisplayName),
+                    if (patientId.isNotEmpty) _DetailRow(l10n.patientIdLabel, patientId),
+                    _DetailRow(l10n.gender, patientGender.isNotEmpty ? (patientGender.toLowerCase() == 'male' ? l10n.male : (patientGender.toLowerCase() == 'female' ? l10n.female : patientGender)) : l10n.notSpecified),
+                    _DetailRow(l10n.age, patientAge != null ? l10n.ageYears(patientAge) : l10n.notSpecified),
                   ]),
                   const SizedBox(height: 12),
 
                   // VHT Info + Contact
-                  _DetailCard(title: 'Reporting VHT', children: [
-                    _DetailRow('Name', vhtName),
+                  _DetailCard(title: l10n.reportingVht, children: [
+                    _DetailRow(l10n.name, vhtName),
                     if (vhtPhone.isNotEmpty)
                       Row(
                         children: [
                           SizedBox(
                             width: 100,
-                            child: Text('Phone', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary)),
+                            child: Text(l10n.phone, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary)),
                           ),
                           Expanded(
                             child: Text(vhtPhone, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
@@ -795,7 +816,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                           IconButton(
                             icon: Icon(Icons.phone, color: Colors.green, size: 20),
                             onPressed: () => _callPhone(vhtPhone),
-                            tooltip: 'Call VHT',
+                            tooltip: l10n.callVht,
                             constraints: const BoxConstraints(),
                             padding: EdgeInsets.zero,
                           ),
@@ -818,14 +839,14 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
                         if (driverName.isEmpty && driverPhone.isEmpty) return const SizedBox.shrink();
 
-                        return _DetailCard(title: 'Ambulance Driver', children: [
-                          _DetailRow('Name', driverName.isNotEmpty ? driverName : 'Unknown'),
+                        return _DetailCard(title: l10n.ambulanceDriver, children: [
+                          _DetailRow(l10n.name, driverName.isNotEmpty ? driverName : l10n.unknownUser),
                           if (driverPhone.isNotEmpty)
                             Row(
                               children: [
                                 SizedBox(
                                   width: 100,
-                                  child: Text('Phone', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary)),
+                                  child: Text(l10n.phone, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary)),
                                 ),
                                 Expanded(
                                   child: Text(driverPhone, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
@@ -833,7 +854,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                                 IconButton(
                                   icon: Icon(Icons.phone, color: Colors.green, size: 20),
                                   onPressed: () => _callPhone(driverPhone),
-                                  tooltip: 'Call Driver',
+                                  tooltip: l10n.callDriver,
                                   constraints: const BoxConstraints(),
                                   padding: EdgeInsets.zero,
                                 ),
@@ -847,7 +868,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
                   // VHT Notes
                   if (notes.isNotEmpty) ...[
-                    _DetailCard(title: 'VHT Notes', children: [
+                    _DetailCard(title: l10n.vhtNotes, children: [
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Text(notes, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5)),
@@ -857,11 +878,11 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   ],
 
                   // Media Attachments Section - always show
-                  _DetailCard(title: 'Media from VHT', children: [
+                  _DetailCard(title: l10n.mediaFromVht, children: [
                     if (imageUrl.isEmpty && videoUrl.isEmpty && voiceNoteUrl.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text('No media attached by VHT', style: TextStyle(fontSize: 13, color: Colors.grey[500], fontStyle: FontStyle.italic)),
+                        child: Text(l10n.noMediaAttachedByVht, style: TextStyle(fontSize: 13, color: Colors.grey[500], fontStyle: FontStyle.italic)),
                       ),
                       if (imageUrl.isNotEmpty) ...[
                         const SizedBox(height: 4),
@@ -898,7 +919,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                                   children: [
                                     Icon(Icons.broken_image, color: AppColors.textSecondary),
                                     const SizedBox(height: 4),
-                                    Text('Could not load image', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                    Text(l10n.couldNotLoadImage, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                                   ],
                                 ),
                               ),
@@ -906,7 +927,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text('Tap image to view full screen', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        Text(l10n.tapImageToViewFullScreen, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                       ],
                       if (videoUrl.isNotEmpty) ...[
                         const SizedBox(height: 8),
@@ -917,7 +938,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                               await launchUrl(uri, mode: LaunchMode.externalApplication);
                             } catch (e) {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open video'), backgroundColor: Colors.red));
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.couldNotOpenVideo), backgroundColor: Colors.red));
                               }
                             }
                           },
@@ -937,8 +958,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('Video Attached', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.blue)),
-                                      Text('Tap to play video', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                      Text(l10n.videoAttached, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.blue)),
+                                      Text(l10n.tapToPlayVideo, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                                     ],
                                   ),
                                 ),
@@ -960,7 +981,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     final attachmentUrls = (data['attachmentUrls'] as List<dynamic>?)?.cast<String>() ?? [];
                     if (attachmentUrls.isNotEmpty && imageUrl.isEmpty && videoUrl.isEmpty && voiceNoteUrl.isEmpty) {
                       return <Widget>[
-                        _DetailCard(title: 'Attachments', children: [
+                        _DetailCard(title: l10n.attachments, children: [
                           ...attachmentUrls.map((url) => Padding(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: InkWell(
@@ -972,7 +993,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                                 children: [
                                   Icon(Icons.attachment, color: AppColors.clinicAccent, size: 20),
                                   const SizedBox(width: 8),
-                                  Expanded(child: Text('View attachment', style: TextStyle(fontSize: 13, color: AppColors.clinicAccent, decoration: TextDecoration.underline))),
+                                  Expanded(child: Text(l10n.viewAttachment, style: TextStyle(fontSize: 13, color: AppColors.clinicAccent, decoration: TextDecoration.underline))),
                                 ],
                               ),
                             ),
@@ -1001,7 +1022,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                               Icon(Icons.medical_information_outlined, size: 18, color: AppColors.clinicAccent),
                               const SizedBox(width: 8),
                               Text(
-                                isAmbulancePath ? 'Your Notes' : 'Your Advice to VHT',
+                                isAmbulancePath ? l10n.yourNotes : l10n.yourAdviceToVht,
                                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.clinicAccent),
                               ),
                             ],
@@ -1016,7 +1037,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
                   // Progress Timeline
                   if (!isPending) ...[
-                    _buildProgressTimeline(status, clinicianDecision),
+                    _buildProgressTimeline(l10n, status, clinicianDecision),
                     const SizedBox(height: 16),
                   ],
 
@@ -1025,7 +1046,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Text(
-                        'Reported: ${_formatTimestamp(createdAt)}',
+                        '${l10n.reportedAt(_formatTimestamp(createdAt, l10n))}',
                         style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(150)),
                         textAlign: TextAlign.center,
                       ),
@@ -1037,16 +1058,16 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   if (isPending) ...[
                     const Divider(),
                     const SizedBox(height: 12),
-                    Text('Take Action', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    Text(l10n.takeAction, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('Add notes and decide whether to dispatch an ambulance or advise the VHT.',
+                    Text(l10n.addNotesAndDecide,
                         style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _notesController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'Add your notes or advice for the VHT...',
+                        hintText: l10n.addNotesAdviceForVhtHint,
                         hintStyle: TextStyle(color: AppColors.textSecondary.withAlpha(150)),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.border)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.clinicAccent, width: 1.5)),
@@ -1059,7 +1080,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _isUpdating ? null : () => _requestAmbulanceDispatch(data),
                         icon: const Icon(Icons.local_shipping_rounded),
-                        label: const Text('Request Ambulance Dispatch', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        label: Text(l10n.requestAmbulanceDispatch, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.clinicAccent,
                           foregroundColor: Colors.white,
@@ -1073,7 +1094,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _isUpdating ? null : () => _adviseVHT(data),
                         icon: Icon(Icons.message_outlined, color: AppColors.clinicAccent),
-                        label: Text('Send Advice to VHT', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.clinicAccent)),
+                        label: Text(l10n.sendAdviceToVht, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.clinicAccent)),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: AppColors.clinicAccent),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1092,7 +1113,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _isUpdating ? null : () => _requestAmbulanceDispatch(data),
                         icon: const Icon(Icons.local_shipping_rounded),
-                        label: const Text('Request Ambulance Dispatch', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        label: Text(l10n.requestAmbulanceDispatch, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.clinicAccent,
                           foregroundColor: Colors.white,
@@ -1108,7 +1129,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     const Divider(),
                     const SizedBox(height: 12),
                     Text(
-                      'You advised the VHT. When the patient is OK, close the case.',
+                      l10n.youAdvisedVhtCloseCase,
                       style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 12),
@@ -1117,7 +1138,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _isUpdating ? null : () => _closeCase(data),
                         icon: const Icon(Icons.check_circle_outline),
-                        label: const Text('Close Case (Patient OK)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        label: Text(l10n.closeCasePatientOk, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -1133,7 +1154,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     const Divider(),
                     const SizedBox(height: 12),
                     Text(
-                      'Patient has been delivered to the clinic. Receive the patient to begin treatment.',
+                      l10n.patientDeliveredReceiveNow,
                       style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 12),
@@ -1143,7 +1164,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _isUpdating ? null : () => _receivePatient(data),
                         icon: const Icon(Icons.check_circle_rounded),
-                        label: const Text('Receive Patient', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                        label: Text(l10n.receivePatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -1158,9 +1179,9 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   if (status == 'inTreatment') ...[
                     const Divider(),
                     const SizedBox(height: 12),
-                    Text('Patient In Treatment', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    Text(l10n.patientInTreatment, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('Admit the patient for inpatient care, or add treatment notes and discharge.',
+                    Text(l10n.admitPatientInpatientOrDischarge,
                         style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     const SizedBox(height: 12),
                     // Admit Patient button
@@ -1170,7 +1191,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _isUpdating ? null : () => _admitPatient(data),
                         icon: const Icon(Icons.local_hotel_rounded),
-                        label: const Text('Admit Patient', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                        label: Text(l10n.admitPatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepOrange,
                           foregroundColor: Colors.white,
@@ -1180,17 +1201,17 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                     // Treatment notes + Discharge
-                    _DetailCard(title: 'Treatment Notes & Discharge', children: [
+                    _DetailCard(title: l10n.treatmentNotesDischarge, children: [
                       TextField(
                         controller: _treatmentController,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          hintText: 'Enter diagnosis, treatment given, medications...',
+                          hintText: l10n.treatmentNotesHint,
                           hintStyle: TextStyle(color: AppColors.textSecondary.withAlpha(150)),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.green, width: 1.5),
+                            borderSide: const BorderSide(color: Colors.green, width: 1.5),
                           ),
                           filled: true,
                           fillColor: Colors.grey[50],
@@ -1204,7 +1225,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _isUpdating ? null : () => _dischargePatient(data),
                           icon: const Icon(Icons.exit_to_app_rounded),
-                          label: const Text('Treat & Discharge', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                          label: Text(l10n.treatAndDischarge, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
@@ -1235,8 +1256,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Patient Admitted', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.deepOrange)),
-                                Text('Add treatment notes and discharge when ready.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                Text(l10n.patientAdmitted, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.deepOrange)),
+                                Text(l10n.addTreatmentNotesAndDischarge, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                               ],
                             ),
                           ),
@@ -1244,17 +1265,17 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _DetailCard(title: 'Treatment Notes & Discharge', children: [
+                    _DetailCard(title: l10n.treatmentNotesDischarge, children: [
                       TextField(
                         controller: _treatmentController,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          hintText: 'Enter diagnosis, treatment given, medications...',
+                          hintText: l10n.treatmentNotesHint,
                           hintStyle: TextStyle(color: AppColors.textSecondary.withAlpha(150)),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.green, width: 1.5),
+                            borderSide: const BorderSide(color: Colors.green, width: 1.5),
                           ),
                           filled: true,
                           fillColor: Colors.grey[50],
@@ -1268,7 +1289,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _isUpdating ? null : () => _dischargePatient(data),
                           icon: const Icon(Icons.exit_to_app_rounded),
-                          label: const Text('Discharge Patient', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                          label: Text(l10n.dischargePatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
@@ -1308,7 +1329,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     );
   }
 
-  Widget _buildProgressTimeline(String currentStatus, String clinicianDecision) {
+  Widget _buildProgressTimeline(AppLocalizations l10n, String currentStatus, String clinicianDecision) {
     // Determine which workflow path to show
     final isAdvicePath = clinicianDecision == 'advise_vht' || currentStatus == 'advised';
 
@@ -1332,7 +1353,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isAdvicePath ? 'Advice Progress' : 'Ambulance Progress',
+            isAdvicePath ? l10n.adviceProgress : l10n.caseProgress,
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
@@ -1367,7 +1388,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      _getStatusLabel(s),
+                      _getStatusLabel(s, l10n),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
@@ -1404,7 +1425,7 @@ class _DetailCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.clinicAccent)),
+          if (title.isNotEmpty) Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.clinicAccent)),
           const SizedBox(height: 8),
           ...children,
         ],

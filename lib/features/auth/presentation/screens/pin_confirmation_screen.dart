@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class PinConfirmationScreen extends StatefulWidget {
   final String pin;
@@ -38,14 +39,14 @@ class _PinConfirmationScreenState extends State<PinConfirmationScreen> {
     // Validate PIN
     if (confirmPin.isEmpty) {
       setState(() {
-        _errorMessage = 'Please confirm your PIN';
+        _errorMessage = AppLocalizations.of(context)!.pleaseConfirmYourPin;
       });
       return;
     }
 
     if (confirmPin != widget.pin) {
       setState(() {
-        _errorMessage = 'PINs do not match. Please try again.';
+        _errorMessage = AppLocalizations.of(context)!.pinsDoNotMatch;
       });
       _confirmPinController.clear();
       return;
@@ -59,9 +60,10 @@ class _PinConfirmationScreenState extends State<PinConfirmationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Confirm PIN'),
+        title: Text(l10n.confirmPin),
         backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
@@ -74,18 +76,18 @@ class _PinConfirmationScreenState extends State<PinConfirmationScreen> {
               children: [
                 const Icon(Icons.lock_outline, size: 80, color: AppColors.primary),
                 const SizedBox(height: 32),
-                const Text(
-                  'Confirm Your PIN',
-                  style: TextStyle(
+                Text(
+                  l10n.confirmYourPin,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Please re-enter your PIN to confirm',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                Text(
+                  l10n.pleaseReenterPinToConfirm,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
@@ -94,7 +96,7 @@ class _PinConfirmationScreenState extends State<PinConfirmationScreen> {
                 TextFormField(
                   controller: _confirmPinController,
                   decoration: InputDecoration(
-                    labelText: 'Re-enter PIN',
+                    labelText: l10n.reenterPin,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePin ? Icons.visibility : Icons.visibility_off),
@@ -142,9 +144,9 @@ class _PinConfirmationScreenState extends State<PinConfirmationScreen> {
                     ),
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Confirm',
-                            style: TextStyle(
+                        : Text(
+                            l10n.confirm,
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),

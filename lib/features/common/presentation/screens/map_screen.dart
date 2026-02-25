@@ -10,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../../core/widgets/back_handling_pop_scope.dart';
 import '../../../vht/presentation/screens/vht_navigation_bar.dart';
@@ -40,11 +41,14 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _currentLocation;
   bool _loadingLocation = true;
   String? _locationError;
+  String? _locationErrorDetail;
   bool _hasFittedBounds = false;
+  bool _autoFollowUser = true;
+  bool _mapReady = false;
   StreamSubscription<Position>? _positionSubscription;
 
   static const LatLng _defaultCenter = LatLng(0.3476, 32.5825);
-  static const double _defaultZoom = 14.0;
+  static const double _defaultZoom = 15.0;
   static const double _avgSpeedKmh = 40.0;
 
   final Distance _distanceCalculator = const DistanceHaversine();
@@ -61,6 +65,45 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _applyLastKnownPositionImmediately();
+  }
+
+  /// Immediately center the map on the device's last known position so the
+  /// user sees their approximate area while high-accuracy GPS is acquired.
+  Future<void> _applyLastKnownPositionImmediately() async {
+    try {
+      final last = await Geolocator.getLastKnownPosition();
+      if (last != null && mounted && _currentLocation == null) {
+        final latlng = LatLng(last.latitude, last.longitude);
+        setState(() => _currentLocation = latlng);
+        // Center immediately if map is already ready, otherwise onMapReady handles it
+        if (_mapReady) {
+          _mapController.move(latlng, _defaultZoom);
+        }
+      }
+    } catch (_) {
+      // Last known position is not critical — GPS will follow.
+    }
+  }
+
+  /// Move map to user's current location (or best available) immediately.
+  void _centerOnCurrentLocationNow() {
+    if (!_mapReady) return;
+    final loc = _currentLocation;
+    if (loc == null) return;
+    final dest = _destinationPoint;
+    if (dest != null) {
+      _mapController.fitCamera(
+        CameraFit.coordinates(
+          coordinates: [loc, dest],
+          padding: const EdgeInsets.all(48),
+          maxZoom: 16,
+        ),
+      );
+    } else {
+      _mapController.move(loc, _defaultZoom);
+    }
+    _hasFittedBounds = true;
   }
 
   @override
@@ -76,7 +119,7 @@ class _MapScreenState extends State<MapScreen> {
         if (mounted) {
           setState(() {
             _loadingLocation = false;
-            _locationError = 'Location services are disabled.';
+            _locationError = 'disabled';
           });
         }
         return;
@@ -89,7 +132,7 @@ class _MapScreenState extends State<MapScreen> {
           if (mounted) {
             setState(() {
               _loadingLocation = false;
-              _locationError = 'Location permissions denied.';
+              _locationError = 'denied';
             });
           }
           return;
@@ -100,7 +143,7 @@ class _MapScreenState extends State<MapScreen> {
         if (mounted) {
           setState(() {
             _loadingLocation = false;
-            _locationError = 'Location permissions permanently denied.';
+            _locationError = 'deniedForever';
           });
         }
         return;
@@ -108,7 +151,7 @@ class _MapScreenState extends State<MapScreen> {
 
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
+          accuracy: LocationAccuracy.best,
         ),
       );
 
@@ -116,60 +159,74 @@ class _MapScreenState extends State<MapScreen> {
         setState(() {
           _currentLocation = LatLng(position.latitude, position.longitude);
           _loadingLocation = false;
+          // Allow re-fit with the precise location even if last-known was used.
+          _hasFittedBounds = false;
         });
+        // Center on accurate GPS immediately
+        _centerOnCurrentLocationNow();
         _fitBoundsWhenReady();
-        _centerMapOnUserIfNoDestination();
         _startLocationStream();
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _loadingLocation = false;
-          _locationError = 'Could not get location: $e';
+          _locationError = 'couldNotGet';
+          _locationErrorDetail = e.toString();
         });
       }
     }
   }
 
   void _fitBoundsWhenReady() {
+    if (!_mapReady) return;
     final dest = _destinationPoint;
-    if (_currentLocation != null && dest != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _hasFittedBounds) return;
-        final points = [_currentLocation!, dest];
-        _mapController.fitCamera(
-          CameraFit.coordinates(
-            coordinates: points,
-            padding: const EdgeInsets.all(48),
-            maxZoom: 16,
-          ),
-        );
-        _hasFittedBounds = true;
-      });
+    if (_currentLocation != null && dest != null && !_hasFittedBounds) {
+      _mapController.fitCamera(
+        CameraFit.coordinates(
+          coordinates: [_currentLocation!, dest],
+          padding: const EdgeInsets.all(48),
+          maxZoom: 16,
+        ),
+      );
+      _hasFittedBounds = true;
     }
   }
 
   void _centerMapOnUserIfNoDestination() {
+    if (!_mapReady) return;
     if (_currentLocation == null || _destinationPoint != null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _hasFittedBounds) return;
-      _mapController.move(_currentLocation!, 15.0);
-      _hasFittedBounds = true;
-    });
+    _mapController.move(_currentLocation!, _defaultZoom);
+    _hasFittedBounds = true;
   }
 
   void _startLocationStream() {
     _positionSubscription?.cancel();
     _positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.medium,
-        distanceFilter: 20,
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5,
       ),
     ).listen((Position position) {
-      if (mounted) {
-        setState(() {
-          _currentLocation = LatLng(position.latitude, position.longitude);
-        });
+      if (!mounted) return;
+      setState(() {
+        _currentLocation = LatLng(position.latitude, position.longitude);
+      });
+      if (_autoFollowUser) {
+        final dest = _destinationPoint;
+        if (dest != null) {
+          // Keep both user and destination in view during navigation.
+          _mapController.fitCamera(
+            CameraFit.coordinates(
+              coordinates: [_currentLocation!, dest],
+              padding: const EdgeInsets.fromLTRB(48, 80, 48, 160),
+              maxZoom: 16,
+            ),
+          );
+        } else {
+          // No destination — simply follow the user.
+          _mapController.move(_currentLocation!, _mapController.camera.zoom);
+        }
       }
     });
   }
@@ -337,9 +394,10 @@ class _MapScreenState extends State<MapScreen> {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not open Google Maps: $e'),
+            content: Text(l10n.couldNotOpenGoogleMaps),
             backgroundColor: Colors.red,
           ),
         );
@@ -348,8 +406,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _centerOnUser() {
+    setState(() => _autoFollowUser = true);
     if (_currentLocation != null) {
-      _mapController.move(_currentLocation!, 15.0);
+      _mapController.move(_currentLocation!, _defaultZoom);
     } else {
       _getCurrentLocation();
     }
@@ -402,6 +461,22 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  String _getLocationErrorMessage(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (_locationError) {
+      case 'disabled':
+        return l10n.locationServicesDisabled;
+      case 'denied':
+        return l10n.locationPermissionDenied;
+      case 'deniedForever':
+        return l10n.locationPermissionPermanentlyDenied;
+      case 'couldNotGet':
+        return '${l10n.couldNotGetLocation} ${_locationErrorDetail ?? ''}';
+      default:
+        return _locationError ?? '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BackHandlingPopScope(
@@ -422,7 +497,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
             Text(
-              'Live map • Tiles cached for offline use',
+              AppLocalizations.of(context)!.liveMapCachedOffline,
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.white.withAlpha(200),
@@ -449,13 +524,25 @@ class _MapScreenState extends State<MapScreen> {
               : null;
           return Stack(
             children: [
-              FlutterMap(
+                FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
                   initialCenter: _defaultCenter,
                   initialZoom: _defaultZoom,
                   onMapReady: () {
+                    setState(() => _mapReady = true);
+                
+                    if (_currentLocation != null) {
+                      _hasFittedBounds = false;
+                      _centerOnCurrentLocationNow();
+                    }
                     _fitBoundsWhenReady();
+                  },
+                  // Disable auto-follow when user manually pans the map
+                  onPositionChanged: (camera, hasGesture) {
+                    if (hasGesture && _autoFollowUser) {
+                      setState(() => _autoFollowUser = false);
+                    }
                   },
                 ),
                 children: [
@@ -494,13 +581,10 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text(
-                          'Getting your location...',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
+                                Text(
+                                  AppLocalizations.of(context)!.gettingYourLocation,
+                                  style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                                ),
                       ],
                     ),
                   ),
@@ -527,7 +611,7 @@ class _MapScreenState extends State<MapScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _locationError!,
+                          _getLocationErrorMessage(context),
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.black87,
@@ -552,10 +636,11 @@ class _MapScreenState extends State<MapScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _centerOnUser,
-        backgroundColor: Colors.white,
+        backgroundColor: _autoFollowUser ? Colors.blue : Colors.white,
+        tooltip: _autoFollowUser ? 'Following your location' : 'Center on my location',
         child: Icon(
-          Icons.my_location,
-          color: _currentLocation != null ? Colors.blue : Colors.grey,
+          _autoFollowUser ? Icons.my_location : Icons.location_searching,
+          color: _autoFollowUser ? Colors.white : (_currentLocation != null ? Colors.blue : Colors.grey),
         ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
@@ -564,6 +649,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildBottomInfoCard() {
+    final l10n = AppLocalizations.of(context)!;
     final dest = _destinationPoint;
     final distanceKm = _distanceKm;
     final etaMinutes = _etaMinutes;
@@ -595,9 +681,9 @@ class _MapScreenState extends State<MapScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Destination',
-                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                        Text(
+                          l10n.destination,
+                          style: const TextStyle(fontSize: 11, color: Colors.grey),
                         ),
                         Text(
                           widget.destinationLabel!,
@@ -619,7 +705,7 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   _InfoChip(
                     icon: Icons.straighten,
-                    label: 'Distance',
+                    label: l10n.estimatedArrival.split(' ').first, // "Estimated"
                     value: distanceKm < 1
                         ? '${(distanceKm * 1000).round()} m'
                         : '${distanceKm.toStringAsFixed(1)} km',
@@ -641,7 +727,7 @@ class _MapScreenState extends State<MapScreen> {
                 child: FilledButton.icon(
                   onPressed: _openGoogleMaps,
                   icon: const Icon(Icons.navigation, size: 20),
-                  label: const Text('Navigate with Google Maps'),
+                  label: Text(l10n.navigateWithGoogleMaps),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     foregroundColor: Colors.white,

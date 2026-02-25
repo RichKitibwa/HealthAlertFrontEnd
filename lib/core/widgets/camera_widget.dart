@@ -4,6 +4,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import '../../l10n/app_localizations.dart';
 import '../utils/file_utils.dart';
 import 'full_screen_camera.dart';
 import 'full_screen_media_viewer.dart';
@@ -144,6 +145,7 @@ class _CameraWidgetState extends State<CameraWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // If media captured, show preview
     if (_capturedImage != null || _capturedVideo != null) {
       return Column(
@@ -263,9 +265,9 @@ class _CameraWidgetState extends State<CameraWidget> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Tap to open camera',
-                  style: TextStyle(
+                Text(
+                  l10n.tapToOpenCamera,
+                  style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF667085),
                     fontWeight: FontWeight.w500,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../core/utils/location_utils.dart';
+import '../../../../core/utils/location_error_localization.dart';
 import 'vht_dispatch_confirmation_screen.dart';
 import 'vht_navigation_bar.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../auth/current_user_session.dart';
-import '../../../../core/utils/location_utils.dart';
-import 'package:geolocator/geolocator.dart';
 
 class CaptureLocationScreen extends StatefulWidget {
   final String emergencyType;
@@ -17,7 +19,8 @@ class CaptureLocationScreen extends StatefulWidget {
 }
 
 class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
-  Position? _currentPosition;
+  double? _latitude;
+  double? _longitude;
   bool _isCapturing = false;
 
   @override
@@ -31,35 +34,60 @@ class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
       _isCapturing = true;
     });
 
-    try {
-      final position = await LocationUtils.getCurrentLocation();
-      if (mounted) {
-        setState(() {
-          _currentPosition = position;
-          _isCapturing = false;
-        });
+    final result = await LocationUtils.getCurrentLocationWithDetails();
+
+    if (!mounted) return;
+
+    if (result.permissionDeniedForever) {
+      final l10n = AppLocalizations.of(context)!;
+      final shouldOpenSettings = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.locationPermissionRequired),
+          content: Text(l10n.locationNeedsAccessMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.openSettings),
+            ),
+          ],
+        ),
+      );
+      if (shouldOpenSettings == true) {
+        await openAppSettings();
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isCapturing = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to capture location. Please try again.'),
-          ),
-        );
-      }
+    }
+
+    if (result.success && result.position != null) {
+      setState(() {
+        _latitude = result.position!.latitude;
+        _longitude = result.position!.longitude;
+        _isCapturing = false;
+      });
+    } else {
+      setState(() {
+        _isCapturing = false;
+      });
+      final l10n = AppLocalizations.of(context)!;
+      final message = localizedLocationErrorMessage(result, l10n);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'VHT',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: 'Set Location',
+        pageTitle: l10n.setLocation,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -103,17 +131,17 @@ class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
                       child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.my_location,
                               size: 48,
                               color: Color(0xFF0077CC),
                             ),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Text(
-                              'Automatically capturing location…',
+                              l10n.automaticallyCapturingLocation,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontWeight: FontWeight.w600,
                                 fontSize: 18,
@@ -121,11 +149,11 @@ class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
                                 color: Color(0xFF0077CC),
                               ),
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
-                              'This will help responders find you faster.\nNo need to move the map or pin your position.',
+                              l10n.locationCaptureHelp,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Inter',
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
@@ -133,13 +161,13 @@ class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
                                 color: Color(0xFF667085),
                               ),
                             ),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             if (_isCapturing)
                               const CircularProgressIndicator()
-                            else if (_currentPosition != null)
+                            else if (_latitude != null && _longitude != null)
                               Text(
-                                'Latitude: ${_currentPosition!.latitude.toStringAsFixed(6)}\n'
-                                'Longitude: ${_currentPosition!.longitude.toStringAsFixed(6)}',
+                                'Latitude: ${_latitude!.toStringAsFixed(6)}\n'
+                                'Longitude: ${_longitude!.toStringAsFixed(6)}',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
@@ -151,7 +179,7 @@ class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
                             else
                               ElevatedButton(
                                 onPressed: _captureLocation,
-                                child: const Text('Retry Location Capture'),
+                                child: Text(l10n.retryLocationCapture),
                               ),
                           ],
                         ),
@@ -168,23 +196,23 @@ class _CaptureLocationScreenState extends State<CaptureLocationScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: _currentPosition != null
+                      onPressed: _latitude != null && _longitude != null
                           ? () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => DispatchConfirmationScreen(
                                     emergencyType: widget.emergencyType,
-                                    latitude: _currentPosition!.latitude,
-                                    longitude: _currentPosition!.longitude,
+                                    latitude: _latitude!,
+                                    longitude: _longitude!,
                                   ),
                                 ),
                               );
                             }
                           : null,
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.continueButton,
+                        style: const TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w400,
                           fontSize: 20,

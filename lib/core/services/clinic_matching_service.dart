@@ -1,5 +1,6 @@
 // Clinic matching service
-// Finds the nearest clinic and matches emergency type to clinician specialty.
+// Finds the best available clinician for an emergency, either at a VHT-selected
+// facility (primary path) or by location proximity .
 
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,14 +20,14 @@ class ClinicMatchingService {
   }
 
   Map<String, List<String>> _adultMap() => {
-        'Birth': ['Obstetrics & Gynecology', 'Clinical Officer', 'Nurse', 'General Medicine'],
+        'Birth': ['Obstetrics & Gynecology', 'Midwife', 'Clinical Officer', 'Nurse', 'General Medicine'],
         'Trauma': ['Surgery', 'General Medicine', 'Clinical Officer', 'Nurse'],
         'Infection': ['General Medicine', 'Clinical Officer', 'Nurse'],
         'Other': ['General Medicine', 'Clinical Officer', 'Nurse'],
       };
 
   Map<String, List<String>> _pediatricMap() => {
-        'Birth': ['Pediatrics', 'Obstetrics & Gynecology', 'Clinical Officer', 'Nurse', 'General Medicine'],
+        'Birth': ['Pediatrics', 'Obstetrics & Gynecology', 'Midwife', 'Clinical Officer', 'Nurse', 'General Medicine'],
         'Trauma': ['Pediatrics', 'Surgery', 'General Medicine', 'Clinical Officer', 'Nurse'],
         'Infection': ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse'],
         'Other': ['Pediatrics', 'General Medicine', 'Clinical Officer', 'Nurse'],
@@ -175,6 +176,59 @@ class ClinicMatchingService {
       return available.first;
     } catch (e) {
       debugPrint('Error finding clinician without location: $e');
+      return null;
+    }
+  }
+
+  /// Find the best available clinician registered at [facilityName].
+  ///
+  /// 1. Clinician with a preferred specialty for the emergency type.
+  /// 2. Clinician with a general fallback specialty (General Medicine / Clinical Officer / Nurse).
+  /// 3. Any available clinician at the facility.
+  ///
+  /// Returns null if no clinicians are registered at the facility.
+  Future<Map<String, dynamic>?> findBestClinicianAtFacility({
+    required String facilityName,
+    required String emergencyType,
+    int? patientAge,
+  }) async {
+    try {
+      final preferred = _preferredSpecialties(emergencyType, patientAge);
+
+      final snapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'Clinic Staff')
+          .where('workplace', isEqualTo: facilityName)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+
+      final available = <Map<String, dynamic>>[];
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final isAvailable = data['isAvailable'] as bool? ?? true;
+        if (!isAvailable) continue;
+        available.add(_buildClinicianInfo(doc, 0));
+      }
+
+      if (available.isEmpty) return null;
+
+      // Pass 1: preferred specialty for this emergency type
+      for (final c in available) {
+        if (preferred.contains(c['specialty'] as String)) return c;
+      }
+
+      // Pass 2: general fallback specialty
+      for (final c in available) {
+        if (_generalFallbackSpecialties.contains(c['specialty'] as String)) {
+          return c;
+        }
+      }
+
+      // Pass 3: any available clinician at the facility
+      return available.first;
+    } catch (e) {
+      debugPrint('Error finding clinician at facility: $e');
       return null;
     }
   }

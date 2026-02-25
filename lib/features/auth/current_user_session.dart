@@ -45,6 +45,8 @@ class CurrentUserSession {
   /// Specialty (for Clinic Staff).
   static String? specialty;
 
+  static String? camp;
+
   /// Email address (for Admin users).
   static String? email;
 
@@ -74,6 +76,7 @@ class CurrentUserSession {
     profileImageUrl = null;
     workplace = null;
     specialty = null;
+    camp = null;
     email = null;
   }
 }

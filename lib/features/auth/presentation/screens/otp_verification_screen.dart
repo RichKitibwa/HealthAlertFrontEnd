@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import '../../current_user_session.dart';
+import '../../../../core/services/fcm_notification_service.dart';
+import '../../../../core/services/locale_notifier.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'register_screen.dart';
 import '../../../vht/presentation/screens/vht_dashboard_screen.dart';
 import '../../../ambulance/presentation/screens/ambulance_dashboard_screen.dart';
@@ -44,8 +48,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   Future<void> _verifyOTP() async {
     if (_otpController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the verification code'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.pleaseEnterVerificationCode),
           backgroundColor: AppColors.error,
         ),
       );
@@ -95,7 +99,20 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           CurrentUserSession.profileImageUrl = data?['profileImageUrl'];
           CurrentUserSession.workplace = data?['workplace'];
           CurrentUserSession.specialty = data?['specialty'];
+          CurrentUserSession.camp = data?['camp'];
           CurrentUserSession.email = data?['email'];
+
+          // Restore this user's saved language preference.
+          if (mounted) {
+            final localeNotifier =
+                Provider.of<LocaleNotifier>(context, listen: false);
+            await localeNotifier.loadAndApplyLocaleForUser(uid);
+          }
+
+          // Initialize FCM and notification listener.
+          final fcmService = FCMNotificationService();
+          fcmService.initialize();
+          fcmService.startNotificationListener(uid);
 
           _navigateToRoleDashboard(role);
         }
@@ -125,7 +142,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(AppLocalizations.of(context)!.errorGeneric(e.toString())),
             backgroundColor: AppColors.error,
           ),
         );
@@ -220,9 +237,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verify Phone Number'),
+        title: Text(l10n.verifyPhoneNumber),
         backgroundColor: AppColors.primary,
       ),
       body: SafeArea(
@@ -235,21 +253,21 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               children: [
                 const Icon(Icons.message, size: 80, color: AppColors.primary),
                 const SizedBox(height: 32),
-                const Text(
-                  'Enter Verification Code',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.enterVerificationCode,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'We sent a code to ${widget.phoneNumber}',
+                  l10n.weSentCodeTo(widget.phoneNumber),
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'For test numbers, enter: 123456',
-                  style: TextStyle(
+                Text(
+                  l10n.forTestNumbersEnter,
+                  style: const TextStyle(
                     fontSize: 14,
                     color: Colors.blue,
                     fontWeight: FontWeight.bold,
@@ -261,11 +279,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 // OTP Input
                 TextField(
                   controller: _otpController,
-                  decoration: const InputDecoration(
-                    labelText: 'Verification Code',
-                    prefixIcon: Icon(Icons.lock),
-                    border: OutlineInputBorder(),
-                    hintText: '123456',
+                  decoration: InputDecoration(
+                    labelText: l10n.verificationCode,
+                    prefixIcon: const Icon(Icons.lock),
+                    border: const OutlineInputBorder(),
+                    hintText: l10n.verificationCodeHint,
                   ),
                   keyboardType: TextInputType.number,
                   maxLength: 6,
@@ -292,9 +310,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     ),
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Verify',
-                            style: TextStyle(
+                        : Text(
+                            l10n.verifyButton,
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
@@ -308,7 +326,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('Go back and try again'),
+                  child: Text(l10n.goBackAndTryAgain),
                 ),
               ],
             ),

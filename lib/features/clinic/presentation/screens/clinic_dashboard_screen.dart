@@ -11,6 +11,7 @@ import '../../../../core/services/user_location_update_service.dart';
 import '../../../common/presentation/screens/notifications_screen.dart';
 import '../../../common/presentation/screens/settings_screen.dart';
 import '../../../common/presentation/screens/learning_resources_screen.dart';
+import '../../../../l10n/app_localizations.dart';
 
 
 class ClinicDashboardScreen extends StatefulWidget {
@@ -71,34 +72,53 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     }
   }
 
-  String _formatTimeAgo(Timestamp? ts) {
+  String _formatTimeAgo(BuildContext context, Timestamp? ts) {
     if (ts == null) return '';
+    final l10n = AppLocalizations.of(context)!;
     final diff = DateTime.now().difference(ts.toDate());
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
     final dt = ts.toDate();
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
-  String _getWelcomeMessage() {
+  String _getUrgencyLabel(String? u, AppLocalizations l10n) {
+    switch (u?.toLowerCase()) {
+      case 'critical': return l10n.critical;
+      case 'high': return l10n.high;
+      case 'medium': return l10n.moderate;
+      case 'low': return l10n.low;
+      default: return l10n.unknown;
+    }
+  }
+
+  String _getEmergencyTypeLabel(String? type, AppLocalizations l10n) {
+    if (type == null || type.isEmpty) return l10n.unknown;
+    switch (type.toLowerCase()) {
+      case 'birth': return l10n.birth;
+      case 'trauma': return l10n.trauma;
+      case 'infection': return l10n.infection;
+      case 'other': return l10n.other;
+      default: return type;
+    }
+  }
+
+  String _getWelcomeMessage(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final firstName = CurrentUserSession.firstName ?? 'Doctor';
     final specialty = CurrentUserSession.specialty?.toLowerCase() ?? '';
-    
-    final shouldAddDrPrefix = specialty.contains('doctor') || 
-                               specialty.contains('clinic officer') || 
-                               specialty.contains('medical officer');
-    
-    if (shouldAddDrPrefix) {
-      return 'Welcome, Dr. $firstName';
-    }
-    
-    return 'Welcome, $firstName';
+    final shouldAddDrPrefix = specialty.contains('doctor') ||
+        specialty.contains('clinic officer') ||
+        specialty.contains('medical officer');
+    if (shouldAddDrPrefix) return l10n.welcomeBackDr(firstName);
+    return l10n.welcomeBackName(firstName);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -106,7 +126,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
         showBackButton: false,
-        pageTitle: 'Dashboard',
+        pageTitle: l10n.dashboard,
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
@@ -150,7 +170,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _getWelcomeMessage(),
+                _getWelcomeMessage(context),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
@@ -174,7 +194,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildStatCard(
-                          label: 'Pending Review',
+                          label: l10n.pendingReview,
                           count: pendingCount,
                           color: Colors.orange,
                           icon: Icons.hourglass_top_rounded,
@@ -183,7 +203,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: _buildStatCard(
-                          label: 'Active Cases',
+                          label: l10n.activeCases,
                           count: activeCount,
                           color: AppColors.clinicAccent,
                           icon: Icons.pending_actions_rounded,
@@ -192,7 +212,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: _buildStatCard(
-                          label: 'Critical',
+                          label: l10n.critical,
                           count: criticalCount,
                           color: Colors.red,
                           icon: Icons.warning_rounded,
@@ -208,11 +228,11 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.assignment_turned_in_outlined),
-                  label: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
+                  label: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Text(
-                      'View All Incoming Cases',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      l10n.viewAllIncomingCases,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -231,15 +251,15 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
               // Pending cases needing review - show up to 3
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Needs Your Review',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                      l10n.needsYourReview,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
                     ),
                   ),
                   TextButton(
                     onPressed: () => Navigator.pushNamed(context, '/clinic-incoming-case'),
-                    child: Text('View All', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.clinicAccent)),
+                    child: Text(l10n.viewAll, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.clinicAccent)),
                   ),
                 ],
               ),
@@ -272,15 +292,15 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
-                                  'All caught up!',
-                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary),
+                                  l10n.allCaughtUp,
+                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary),
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
-                                  'No cases pending your review right now.',
-                                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                  l10n.noCasesPendingReview,
+                                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                                 ),
                               ],
                             ),
@@ -296,8 +316,10 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                     children: displayDocs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
                       final caseId = doc.id;
-                      final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
-                      final urgency = data['urgencyLevel'] as String? ?? 'medium';
+                      final rawType = data['emergencyType'] as String?;
+                      final emergencyType = _getEmergencyTypeLabel(rawType, l10n);
+                      final urgencyRaw = data['urgencyLevel'] as String? ?? 'medium';
+                      final urgency = _getUrgencyLabel(urgencyRaw, l10n);
                       final patientId = data['patientId'] as String? ?? '';
                       final patientGender = data['patientGender'] as String? ?? '';
                       final patientAge = data['patientAge'] as int?;
@@ -307,10 +329,10 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
 
                       String patientDesc = '';
                       if (patientGender.isNotEmpty) {
-                        patientDesc += patientGender[0].toUpperCase() + patientGender.substring(1);
+                        patientDesc += patientGender.toLowerCase() == 'male' ? l10n.male : (patientGender.toLowerCase() == 'female' ? l10n.female : patientGender);
                       }
                       if (patientAge != null) {
-                        patientDesc += patientDesc.isNotEmpty ? ', $patientAge yrs' : '$patientAge yrs';
+                        patientDesc += patientDesc.isNotEmpty ? ', ${l10n.yearsShort(patientAge)}' : l10n.yearsShort(patientAge);
                       }
 
                       return Padding(
@@ -328,7 +350,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: _getUrgencyColor(urgency).withAlpha(50)),
+                              border: Border.all(color: _getUrgencyColor(urgencyRaw).withAlpha(50)),
                               boxShadow: [
                                 BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 8, offset: const Offset(0, 4)),
                               ],
@@ -348,12 +370,12 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: _getUrgencyColor(urgency).withAlpha(20),
+                                        color: _getUrgencyColor(urgencyRaw).withAlpha(20),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        urgency.toUpperCase(),
-                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _getUrgencyColor(urgency)),
+                                        urgency,
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _getUrgencyColor(urgencyRaw)),
                                       ),
                                     ),
                                   ],
@@ -369,13 +391,13 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                                     if (patientDesc.isNotEmpty)
                                       Text(patientDesc, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                                     const Spacer(),
-                                    Text(_formatTimeAgo(createdAt), style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(150))),
+                                    Text(_formatTimeAgo(context, createdAt), style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(150))),
                                   ],
                                 ),
                                 // VHT name
                                 if (vhtName.isNotEmpty) ...[
                                   const SizedBox(height: 4),
-                                  Text('Reported by: $vhtName', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                  Text(l10n.reportedBy(vhtName), style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                                 ],
                                 // Notes preview
                                 if (notes.isNotEmpty) ...[
@@ -392,7 +414,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    Text('Tap to review', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.clinicAccent)),
+                                    Text(l10n.tapToReview, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.clinicAccent)),
                                     const SizedBox(width: 4),
                                     Icon(Icons.chevron_right, size: 16, color: AppColors.clinicAccent),
                                   ],
@@ -411,9 +433,9 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
               // Arrived Patients section
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Arrived Patients',
+                      l10n.arrivedPatients,
                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
                     ),
                   ),
@@ -453,14 +475,14 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
-                                  'No patients arrived yet',
+                                  l10n.noPatientsArrivedYet,
                                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary),
                                 ),
                                 SizedBox(height: 2),
                                 Text(
-                                  'Patients will appear here once delivered by ambulance.',
+                                  l10n.patientsWillAppearHereOnceDelivered,
                                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                                 ),
                               ],
@@ -475,8 +497,9 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                     children: docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
                       final caseId = doc.id;
-                      final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
-                      final urgency = data['urgencyLevel'] as String? ?? 'medium';
+                      final emergencyType = _getEmergencyTypeLabel(data['emergencyType'] as String?, l10n);
+                      final urgencyLabel = _getUrgencyLabel(data['urgencyLevel'] as String?, l10n);
+                      final urgencyRaw = data['urgencyLevel'] as String? ?? 'medium';
                       final patientId = data['patientId'] as String? ?? '';
                       final patientFirstName = data['patientFirstName'] as String? ?? '';
                       final patientLastName = data['patientLastName'] as String? ?? '';
@@ -502,7 +525,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: _getUrgencyColor(urgency).withAlpha(50)),
+                              border: Border.all(color: _getUrgencyColor(urgencyRaw).withAlpha(50)),
                               boxShadow: [
                                 BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 8, offset: const Offset(0, 4)),
                               ],
@@ -521,12 +544,12 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: _getUrgencyColor(urgency).withAlpha(20),
+                                        color: _getUrgencyColor(urgencyRaw).withAlpha(20),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        urgency.toUpperCase(),
-                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _getUrgencyColor(urgency)),
+                                        urgencyLabel,
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _getUrgencyColor(urgencyRaw)),
                                       ),
                                     ),
                                     const SizedBox(width: 6),
@@ -539,7 +562,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        status == 'inTreatment' ? 'IN TREATMENT' : 'DELIVERED',
+                                        status == 'inTreatment' ? l10n.inTreatmentStatus : l10n.deliveredStatus,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w700, 
                                           fontSize: 11, 
@@ -558,13 +581,13 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                                       const SizedBox(width: 8),
                                     ],
                                     if (patientId.isNotEmpty)
-                                      Text('ID: $patientId', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.clinicAccent)),
+                                      Text('${l10n.idLabel}: $patientId', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.clinicAccent)),
                                   ],
                                 ),
                                 // VHT name
                                 if (vhtName.isNotEmpty) ...[
                                   const SizedBox(height: 4),
-                                  Text('Reported by: $vhtName', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                  Text(l10n.reportedBy(vhtName), style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                                 ],
                                 // Notes preview
                                 if (notes.isNotEmpty) ...[
@@ -605,7 +628,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                                           children: [
                                             Icon(Icons.mic, size: 16, color: AppColors.clinicAccent),
                                             const SizedBox(width: 4),
-                                            Text('Voice note', style: TextStyle(fontSize: 11, color: AppColors.clinicAccent)),
+                                            Text(l10n.voiceNote, style: TextStyle(fontSize: 11, color: AppColors.clinicAccent)),
                                           ],
                                         ),
                                     ],
@@ -623,7 +646,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                                       );
                                     },
                                     icon: const Icon(Icons.medical_services_outlined, size: 18),
-                                    label: const Text('Review Patient', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                                    label: Text(l10n.reviewPatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.clinicAccent,
                                       foregroundColor: Colors.white,

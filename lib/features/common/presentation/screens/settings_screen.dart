@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/locale_notifier.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/current_user_session.dart';
 
+/// Supported locale codes: en (English), sw (Kiswahili - Tanzania), ar (Arabic - Northern Uganda).
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -11,59 +15,94 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const String _preferredLanguageKey = 'preferred_language';
+  static const List<String> _localeCodes = ['en', 'sw', 'ar'];
 
-  late String _selectedLanguage;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedLanguage = 'English';
-    _loadLanguagePreference();
-  }
-
-  Future<void> _loadLanguagePreference() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getString(_preferredLanguageKey);
-      if (saved != null && mounted) {
-        setState(() => _selectedLanguage = saved);
-      }
-    } catch (_) {
-      // Keep default
+  static String _languageLabel(AppLocalizations l10n, String code) {
+    switch (code) {
+      case 'en':
+        return l10n.languageEnglish;
+      case 'sw':
+        return l10n.languageSwahili;
+      case 'ar':
+        return l10n.languageArabic;
+      default:
+        return code;
     }
   }
 
-  Future<void> _saveLanguagePreference(String lang) async {
+  void _showLanguageChangeConfirmation(String localeCode, String languageLabel) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.changeLanguageConfirmTitle),
+        content: Text(l10n.changeLanguageConfirmMessage(languageLabel)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _saveLanguagePreference(localeCode);
+            },
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveLanguagePreference(String localeCode) async {
+    final notifier = Provider.of<LocaleNotifier>(context, listen: false);
+    final languageLabel = _languageLabel(AppLocalizations.of(context)!, localeCode);
+    final uid = CurrentUserSession.uid;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_preferredLanguageKey, lang);
+      // Save locale against the currently logged-in user so other accounts
+      // on the same device keep their own language setting.
+      await notifier.setLocaleForUser(uid, localeCode);
+      if (uid != null && uid.isNotEmpty) {
+        try {
+          await FirebaseFirestore.instance.collection('users').doc(uid).update({'preferredLocale': localeCode});
+        } catch (_) {
+          // Non-fatal: locale still saved locally
+        }
+      }
       if (mounted) {
-        setState(() => _selectedLanguage = lang);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final l10n = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.languageChangedSuccess(languageLabel))),
+          );
+        });
       }
     } catch (_) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save language preference')),
+          SnackBar(content: Text(l10n.failedToSaveLanguage)),
         );
       }
     }
   }
 
   void _showAboutDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('About'),
+        title: Text(l10n.about),
         content: Text(
-          'HealthAlert\n\nVersion 1.0.0\n\nEmergency communication for front line health response.',
+          l10n.aboutMessage,
           style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'OK',
+              l10n.ok,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: AppColors.primary,
@@ -77,10 +116,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final localeNotifier = Provider.of<LocaleNotifier>(context);
+    final selectedCode = localeNotifier.locale?.languageCode ?? 'en';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(l10n.settings),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -108,7 +151,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionHeader('Account'),
+              _buildSectionHeader(l10n.account),
               Card(
                 elevation: 0,
                 color: AppColors.surface,
@@ -120,35 +163,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     _buildListTile(
                       icon: Icons.person,
-                      title: 'Name',
+                      title: l10n.name,
                       subtitle: CurrentUserSession.fullName,
                     ),
                     Divider(height: 1, color: AppColors.divider),
                     _buildListTile(
                       icon: Icons.badge,
-                      title: 'Role',
+                      title: l10n.role,
                       subtitle: CurrentUserSession.role ?? '—',
                     ),
                     Divider(height: 1, color: AppColors.divider),
                     _buildListTile(
                       icon: Icons.phone,
-                      title: 'Phone',
+                      title: l10n.phone,
                       subtitle: CurrentUserSession.phoneNumber ?? '—',
                     ),
                     if (CurrentUserSession.email != null) ...[
                       Divider(height: 1, color: AppColors.divider),
                       _buildListTile(
                         icon: Icons.email,
-                        title: 'Email',
+                        title: l10n.email,
                         subtitle: CurrentUserSession.email ?? '—',
                       ),
+                    ],
+                    if ((CurrentUserSession.role ?? '').toLowerCase().contains('clinic')) ...[
+                      if (CurrentUserSession.specialty != null) ...[
+                        Divider(height: 1, color: AppColors.divider),
+                        _buildListTile(
+                          icon: Icons.medical_services_outlined,
+                          title: l10n.specialtyProfession,
+                          subtitle: CurrentUserSession.specialty!,
+                        ),
+                      ],
+                      if (CurrentUserSession.workplace != null) ...[
+                        Divider(height: 1, color: AppColors.divider),
+                        _buildListTile(
+                          icon: Icons.local_hospital_outlined,
+                          title: l10n.assignedFacility,
+                          subtitle: CurrentUserSession.workplace!,
+                        ),
+                      ],
+                      if (CurrentUserSession.camp != null) ...[
+                        Divider(height: 1, color: AppColors.divider),
+                        _buildListTile(
+                          icon: Icons.location_city_outlined,
+                          title: l10n.settlementCamp,
+                          subtitle: CurrentUserSession.camp!,
+                        ),
+                      ],
                     ],
                   ],
                 ),
               ),
               const SizedBox(height: 24),
 
-              _buildSectionHeader('Preferences'),
+              _buildSectionHeader(l10n.preferences),
               Card(
                 elevation: 0,
                 color: AppColors.surface,
@@ -164,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(
-                          'Language',
+                          l10n.language,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -172,16 +241,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                       ),
-                      _buildLanguageOption('English'),
-                      _buildLanguageOption('Swahili'),
-                      _buildLanguageOption('Luganda'),
+                      for (final code in _localeCodes)
+                        _buildLanguageOption(
+                          localeCode: code,
+                          label: _languageLabel(l10n, code),
+                          isSelected: selectedCode == code,
+                        ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
 
-              _buildSectionHeader('App'),
+              _buildSectionHeader(l10n.app),
               Card(
                 elevation: 0,
                 color: AppColors.surface,
@@ -194,7 +266,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListTile(
                       leading: Icon(Icons.info_outline, color: AppColors.primary),
                       title: Text(
-                        'About',
+                        l10n.about,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -207,7 +279,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListTile(
                       leading: Icon(Icons.help_outline, color: AppColors.primary),
                       title: Text(
-                        'Help & Support',
+                        l10n.helpSupport,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -216,9 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Help & Support coming soon'),
-                          ),
+                          SnackBar(content: Text(l10n.helpSupportComingSoon)),
                         );
                       },
                     ),
@@ -272,10 +342,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildLanguageOption(String language) {
-    final isSelected = _selectedLanguage == language;
+  Widget _buildLanguageOption({
+    required String localeCode,
+    required String label,
+    required bool isSelected,
+  }) {
     return InkWell(
-      onTap: () => _saveLanguagePreference(language),
+      onTap: () => _showLanguageChangeConfirmation(localeCode, label),
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -288,7 +361,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              language,
+              label,
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 fontSize: 16,

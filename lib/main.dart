@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/fcm_notification_service.dart';
 import 'core/services/local_storage_service.dart';
 import 'core/services/connectivity_service.dart';
+import 'core/services/current_app_locale.dart';
+import 'core/services/locale_notifier.dart';
+import 'l10n/app_localizations.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
@@ -47,20 +51,34 @@ void main() async {
     debugPrint('Error initializing connectivity service: $e');
   }
 
-  runApp(const HealthCommApp());
+  // At cold-start we don't yet know which user will log in, so load the
+  // global fallback locale. Per-user locale is applied after login.
+  final savedLocaleCode = await LocaleNotifier.loadSavedLocaleCode();
+  runApp(HealthCommApp(initialLocaleCode: savedLocaleCode));
 }
 
 class HealthCommApp extends StatelessWidget {
-  const HealthCommApp({Key? key}) : super(key: key);
+  const HealthCommApp({Key? key, this.initialLocaleCode}) : super(key: key);
+  final String? initialLocaleCode;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Emergency Health System',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      initialRoute: '/',
-      routes: {
+    return ChangeNotifierProvider<LocaleNotifier>(
+      create: (_) => LocaleNotifier(initialLocaleCode: initialLocaleCode),
+      child: Consumer<LocaleNotifier>(
+        builder: (context, localeNotifier, _) {
+          final locale = localeNotifier.locale ?? const Locale('en');
+          CurrentAppLocale.current = locale;
+          final l10n = lookupAppLocalizations(locale);
+          return MaterialApp(
+            title: l10n.appTitle,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            locale: localeNotifier.locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            initialRoute: '/',
+            routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
@@ -95,6 +113,9 @@ class HealthCommApp extends StatelessWidget {
           );
         },
       },
+            );
+        },
+      ),
     );
   }
 }

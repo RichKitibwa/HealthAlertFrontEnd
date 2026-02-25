@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../common/presentation/widgets/notification_bell_with_badge.dart';
 import '../../../common/presentation/screens/notifications_screen.dart';
 import '../../../common/presentation/screens/learning_resources_screen.dart';
@@ -42,7 +43,7 @@ class VhtNavigationBar extends StatelessWidget {
       case 3:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const MapScreen(title: 'Area Map')),
+          MaterialPageRoute(builder: (_) => MapScreen(title: AppLocalizations.of(context)!.areaMap)),
         );
         break;
     }
@@ -50,6 +51,7 @@ class VhtNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -64,25 +66,25 @@ class VhtNavigationBar extends StatelessWidget {
         unselectedItemColor: const Color(0xFF667085),
         showUnselectedLabels: true,
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: l10n.homeLabel,
           ),
           BottomNavigationBarItem(
             icon: NotificationBellWithBadge(isSelected: currentIndex == 1),
             activeIcon: NotificationBellWithBadge(isSelected: true),
-            label: 'Notifications',
+            label: l10n.notifications,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined),
-            activeIcon: Icon(Icons.menu_book),
-            label: 'Learn',
+            icon: const Icon(Icons.menu_book_outlined),
+            activeIcon: const Icon(Icons.menu_book),
+            label: l10n.learnLabel,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            activeIcon: Icon(Icons.map),
-            label: 'Map',
+            icon: const Icon(Icons.map_outlined),
+            activeIcon: const Icon(Icons.map),
+            label: l10n.mapLabel,
           ),
         ],
       ),
