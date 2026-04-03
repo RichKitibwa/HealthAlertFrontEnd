@@ -78,8 +78,6 @@ class ClinicMatchingService {
     int? patientAge,
   }) async {
     try {
-      final preferred = _preferredSpecialties(emergencyType, patientAge);
-
       final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'Clinic Staff')
@@ -113,19 +111,8 @@ class ClinicMatchingService {
       all.sort(
           (a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
 
-      // Pass 1: nearest clinician with a preferred specialty match
-      for (final c in all) {
-        if (preferred.contains(c['specialty'] as String)) return c;
-      }
-
-      // Pass 2: nearest clinician with a general fallback specialty
-      for (final c in all) {
-        if (_generalFallbackSpecialties.contains(c['specialty'] as String)) {
-          return c;
-        }
-      }
-
-      // Pass 3: absolute nearest available clinician
+      // Case categorization requirement: do NOT gate assignment by specialty.
+      // Choose the nearest available clinician, regardless of specialty.
       return all.first;
     } catch (e) {
       debugPrint('Error finding nearest clinic: $e');
@@ -141,8 +128,6 @@ class ClinicMatchingService {
     int? patientAge,
   }) async {
     try {
-      final preferred = _preferredSpecialties(emergencyType, patientAge);
-
       final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'Clinic Staff')
@@ -160,19 +145,8 @@ class ClinicMatchingService {
 
       if (available.isEmpty) return null;
 
-      // Pass 1: preferred specialty
-      for (final c in available) {
-        if (preferred.contains(c['specialty'] as String)) return c;
-      }
-
-      // Pass 2: general fallback
-      for (final c in available) {
-        if (_generalFallbackSpecialties.contains(c['specialty'] as String)) {
-          return c;
-        }
-      }
-
-      // Pass 3: any available clinician
+      // Case categorization requirement: do NOT gate assignment by specialty.
+      // Pick any available clinician.
       return available.first;
     } catch (e) {
       debugPrint('Error finding clinician without location: $e');
@@ -193,8 +167,6 @@ class ClinicMatchingService {
     int? patientAge,
   }) async {
     try {
-      final preferred = _preferredSpecialties(emergencyType, patientAge);
-
       final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'Clinic Staff')
@@ -213,19 +185,8 @@ class ClinicMatchingService {
 
       if (available.isEmpty) return null;
 
-      // Pass 1: preferred specialty for this emergency type
-      for (final c in available) {
-        if (preferred.contains(c['specialty'] as String)) return c;
-      }
-
-      // Pass 2: general fallback specialty
-      for (final c in available) {
-        if (_generalFallbackSpecialties.contains(c['specialty'] as String)) {
-          return c;
-        }
-      }
-
-      // Pass 3: any available clinician at the facility
+      // Case categorization requirement: do NOT gate assignment by specialty.
+      // Pick any available clinician at the facility so the case stays actionable.
       return available.first;
     } catch (e) {
       debugPrint('Error finding clinician at facility: $e');

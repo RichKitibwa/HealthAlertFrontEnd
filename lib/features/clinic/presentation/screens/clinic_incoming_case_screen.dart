@@ -30,11 +30,42 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
   String _selectedFilter = 'active'; // 'active', 'all', 'completed'
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  String? _resolvedFacilityName;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFacilityContext();
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initializeFacilityContext() async {
+    final role = (CurrentUserSession.role ?? '').toLowerCase();
+    if (!role.contains('clinic')) return;
+
+    final sessionFacility = (CurrentUserSession.workplace ?? '').trim();
+    if (sessionFacility.isNotEmpty) {
+      if (mounted) setState(() => _resolvedFacilityName = sessionFacility);
+      return;
+    }
+
+    final uid = CurrentUserSession.uid;
+    if (uid == null || uid.isEmpty) return;
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final workplace = (userDoc.data()?['workplace'] as String? ?? '').trim();
+      if (workplace.isNotEmpty && mounted) {
+        CurrentUserSession.workplace = workplace;
+        setState(() => _resolvedFacilityName = workplace);
+      }
+    } catch (_) {
+      // No-op; empty stream until context is available.
+    }
   }
 
   /// Client-side filter by patient name or ID
@@ -48,14 +79,16 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
   }
 
   Stream<QuerySnapshot> _getCasesStream() {
-    final currentUserId = CurrentUserSession.uid;
-    if (currentUserId == null || currentUserId.isEmpty) {
-      return const Stream.empty();
+    final isClinic = (CurrentUserSession.role ?? '').toLowerCase().contains('clinic');
+    final facilityName = (_resolvedFacilityName ?? CurrentUserSession.workplace ?? '').trim();
+    Query query = FirebaseFirestore.instance.collection('emergencyCases');
+    if (isClinic) {
+      if (facilityName.isEmpty) return const Stream.empty();
+      query = query.where('assignedClinicName', isEqualTo: facilityName);
+    } else {
+      if (facilityName.isEmpty) return const Stream.empty();
+      query = query.where('assignedClinicName', isEqualTo: facilityName);
     }
-
-    Query query = FirebaseFirestore.instance
-        .collection('emergencyCases')
-        .where('assignedClinicId', isEqualTo: currentUserId);
 
     // Apply filter
     if (_selectedFilter == 'active') {
@@ -157,6 +190,25 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final role = (CurrentUserSession.role ?? '').toLowerCase();
+    final isAllowed = role.contains('clinic') || role.contains('admin');
+    if (!isAllowed) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Access denied: clinician-only screen.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
@@ -298,6 +350,11 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                   }
 
                   if (snapshot.hasError) {
+                    final errorText = '${snapshot.error}'.toLowerCase();
+                    final isMissingIndexError =
+                        errorText.contains('failed-precondition') ||
+                        errorText.contains('requires an index') ||
+                        errorText.contains('failed precondition');
                     return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -317,7 +374,10 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${snapshot.error}',
+                            isMissingIndexError
+                                ? 'A Firestore index is still building/deploying for clinic case queries. '
+                                  'Please deploy indexes and wait a few minutes.'
+                                : '${snapshot.error}',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,

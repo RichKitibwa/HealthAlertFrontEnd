@@ -417,14 +417,16 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                     .snapshots(),
                 builder: (context, snapshot) {
                   String status = 'pending';
-                  String? clinicianNotes;
                   Timestamp? updatedAt;
 
                   if (snapshot.hasData && snapshot.data!.exists) {
                     final data = snapshot.data!.data() as Map<String, dynamic>?;
                     if (data != null) {
                       status = data['status'] as String? ?? 'pending';
-                      clinicianNotes = data['clinicianNotes'] as String?;
+                      final dischargedAt = data['dischargedAt'] as Timestamp?;
+                      if (status == 'completed' && dischargedAt != null) {
+                        status = 'discharged';
+                      }
                       updatedAt = data['updatedAt'] as Timestamp?;
                     }
                   }
@@ -505,40 +507,7 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                           ),
                         ),
 
-                        // Clinician notes if available
-                        if (clinicianNotes != null && clinicianNotes.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l10n.clinicianNotes,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  clinicianNotes,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        // Privacy: clinician notes are not shown to VHTs.
 
                         // Last updated
                         if (updatedAt != null) ...[
@@ -651,6 +620,10 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
           final data = snapshot.data!.data() as Map<String, dynamic>?;
           if (data != null) {
             currentStatus = data['status'] as String? ?? 'pending';
+            final dischargedAt = data['dischargedAt'] as Timestamp?;
+            if (currentStatus == 'completed' && dischargedAt != null) {
+              currentStatus = 'discharged';
+            }
           }
         }
 
@@ -662,6 +635,8 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
           'inTransit',
           'delivered',
           'inTreatment',
+          'admitted',
+          'discharged',
           'completed',
         ];
         final currentIndex = statuses.indexOf(currentStatus);

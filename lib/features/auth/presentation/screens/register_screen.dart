@@ -952,7 +952,6 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
     required String firstName,
     required String lastName,
     required String phoneNumber,
-    required String specialty,
     required String workplace,
     required String camp,
   }) {
@@ -965,7 +964,6 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
             'lastName': lastName,
             'phoneNumber': phoneNumber,
             'role': widget.role,
-            'specialty': specialty,
             'workplace': workplace,
             'camp': camp,
           },
@@ -975,7 +973,6 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
             phoneNumber: phoneNumber,
             role: widget.role,
             pin: pin,
-            specialty: specialty,
             workplace: workplace,
             camp: camp,
           ),
@@ -990,7 +987,6 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
     required String phoneNumber,
     required String role,
     required String pin,
-    required String specialty,
     required String workplace,
     required String camp,
   }) async {
@@ -1007,7 +1003,6 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
         'phoneNumber': phoneNumber,
         'role': role,
         'pinHash': pinHash,
-        'specialty': specialty,
         'workplace': workplace,
         'camp': camp,
         'createdAt': DateTime.now().toIso8601String(),
@@ -1019,7 +1014,7 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
       CurrentUserSession.lastName = lastName;
       CurrentUserSession.phoneNumber = phoneNumber;
       CurrentUserSession.workplace = workplace;
-      CurrentUserSession.specialty = specialty;
+      CurrentUserSession.specialty = null;
       CurrentUserSession.camp = camp;
 
       // Save user data to device for future sessions
