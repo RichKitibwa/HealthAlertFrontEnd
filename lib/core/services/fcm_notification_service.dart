@@ -529,6 +529,48 @@ class FCMNotificationService {
     }
   }
 
+  Future<void> notifyCliniciansOfVhtFollowUp({
+    required String facilityName,
+    required String caseId,
+    required String patientName,
+    required String vhtName,
+    required String followUpMessage,
+    String? excludeUserId,
+  }) async {
+    final shortMsg = followUpMessage.length > 80 ? '${followUpMessage.substring(0, 80)}...' : followUpMessage;
+
+    try {
+      if (facilityName.trim().isEmpty) return;
+
+      final cliniciansQuery = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'Clinic Staff')
+          .where('workplace', isEqualTo: facilityName)
+          .get();
+
+      if (cliniciansQuery.docs.isEmpty) return;
+
+      // Notify each clinician with their own locale preferences.
+      await Future.wait(cliniciansQuery.docs.map((doc) async {
+        final clinicianId = doc.id;
+        if (clinicianId.isEmpty) return;
+        if (excludeUserId != null && excludeUserId.isNotEmpty && clinicianId == excludeUserId) return;
+
+        final l10n = await _l10nForUser(clinicianId);
+        await sendInAppNotification(
+          userId: clinicianId,
+          title: l10n.notificationVhtFollowUpUpdate,
+          message: l10n.notificationVhtFollowUpMessage(vhtName, patientName, shortMsg),
+          type: 'vht_follow_up',
+          caseId: caseId,
+          recipientRole: 'Clinician',
+        );
+      }));
+    } catch (e) {
+      debugPrint('notifyCliniciansOfVhtFollowUp failed: $e');
+    }
+  }
+
   /// Clinician advises VHT → VHT gets popup + in-app.
   Future<void> notifyVhtOfClinicianAdvice({
     required String vhtId,

@@ -8,7 +8,6 @@ class ClinicianRegistrationForm extends StatefulWidget {
     required String firstName,
     required String lastName,
     required String phoneNumber,
-    required String specialty,
     required String workplace,
     required String camp,
   }) onSubmit;
@@ -29,7 +28,6 @@ class _ClinicianRegistrationFormState extends State<ClinicianRegistrationForm> {
   final _lastNameController = TextEditingController();
   late final _phoneController = TextEditingController(text: widget.phoneNumber);
 
-  String? _selectedSpecialty;
   String? _selectedCamp;
   String? _selectedFacility;
 
@@ -52,7 +50,6 @@ class _ClinicianRegistrationFormState extends State<ClinicianRegistrationForm> {
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
-        specialty: _selectedSpecialty!,
         workplace: _selectedFacility!,
         camp: _selectedCamp!,
       );
@@ -124,25 +121,6 @@ class _ClinicianRegistrationFormState extends State<ClinicianRegistrationForm> {
             controller: _lastNameController,
             decoration: _inputDecoration(label: 'Last Name', icon: Icons.person_outline),
             validator: (v) => (v == null || v.isEmpty) ? 'Please enter your last name' : null,
-          ),
-          const SizedBox(height: 16),
-
-          // Profession / Specialty
-          DropdownButtonFormField<String>(
-            value: _selectedSpecialty,
-            isExpanded: true,
-            decoration: _inputDecoration(label: 'Profession', icon: Icons.medical_services),
-            style: _dropdownStyle,
-            icon: _dropdownIcon,
-            iconSize: 24,
-            borderRadius: BorderRadius.circular(12),
-            dropdownColor: Colors.white,
-            elevation: 8,
-            items: HealthFacilityConstants.clinicianSpecialties.map((s) {
-              return DropdownMenuItem<String>(value: s, child: Text(s));
-            }).toList(),
-            onChanged: (v) => setState(() => _selectedSpecialty = v),
-            validator: (v) => (v == null) ? 'Please select your profession' : null,
           ),
           const SizedBox(height: 16),
 

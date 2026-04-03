@@ -12,6 +12,7 @@ import '../../../auth/current_user_session.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/services/recent_cases_service.dart';
 
 // VHT Dashboard Screen
 // Main dashboard for Village Health Team members with emergency reporting
@@ -77,6 +78,129 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     final dt = ts.toDate();
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  String _formatTimeAgoFromDate(BuildContext context, DateTime ts) {
+    final l10n = AppLocalizations.of(context)!;
+    final diff = DateTime.now().difference(ts);
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${ts.day}/${ts.month}/${ts.year}';
+  }
+
+  Widget _buildRecentCasesSection() {
+    final l10n = AppLocalizations.of(context)!;
+    final uid = CurrentUserSession.uid;
+    if (uid == null || uid.isEmpty) return const SizedBox.shrink();
+
+    return FutureBuilder<List<RecentCaseEntry>>(
+      future: RecentCasesService.getRecentCasesForUser(uid),
+      builder: (context, snapshot) {
+        final entries = snapshot.data ?? const <RecentCaseEntry>[];
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Row(
+              children: [
+                SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                SizedBox(width: 12),
+                Text('Loading recent cases...'),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.recentCases,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (entries.isEmpty)
+                Text(
+                  l10n.noRecentCases,
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                )
+              else
+                Column(
+                  children: entries.map((e) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => VhtCaseDetailScreen(caseId: e.caseId)),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border.withAlpha(160)),
+                            color: AppColors.background.withAlpha(40),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      e.emergencyType.isNotEmpty ? e.emergencyType : l10n.unknown,
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      e.caseId.isNotEmpty ? 'Case: ${e.caseId.length > 6 ? e.caseId.substring(0, 6) : e.caseId}' : l10n.unknown,
+                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                _formatTimeAgoFromDate(context, e.viewedAt),
+                                style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(170)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Stream<QuerySnapshot> _getActiveCasesStream() {
@@ -192,6 +316,9 @@ class _VHTDashboardScreenState extends State<VHTDashboardScreen> {
 
                       // Active Cases Section
                       _buildActiveCasesSection(),
+                      const SizedBox(height: 20),
+                      // Recent Cases Section (Return-to-Case)
+                      _buildRecentCasesSection(),
                       const SizedBox(height: 20),
 
                       // Quick Actions header

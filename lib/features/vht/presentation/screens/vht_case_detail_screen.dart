@@ -11,6 +11,7 @@ import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/inline_voice_note_player.dart';
 import '../../../../core/services/fcm_notification_service.dart';
+import '../../../../core/services/recent_cases_service.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// VHT Case Detail Screen
@@ -30,6 +31,7 @@ class VhtCaseDetailScreen extends StatefulWidget {
 
 class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
   bool _isSendingFollowUp = false;
+  bool _hasMarkedRecentCase = false;
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -204,7 +206,12 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
     );
   }
 
-  Future<void> _sendFollowUpUpdate(String caseId, String currentStatus, {String? clinicianId, String? patientName}) async {
+  Future<void> _sendFollowUpUpdate(
+    String caseId,
+    String currentStatus, {
+    String? clinicName,
+    String? patientName,
+  }) async {
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
@@ -263,20 +270,14 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      if (clinicianId != null && clinicianId.isNotEmpty) {
-        try {
-          await FCMNotificationService().notifyClinicianOfVhtFollowUp(
-            clinicianId: clinicianId,
-            caseId: caseId,
-            patientName: patientName?.isNotEmpty == true ? patientName! : 'patient',
-            vhtName: vhtName,
-            followUpMessage: result,
-          );
-        } catch (e) {
-          if (mounted) {
-            debugPrint('Failed to notify clinician of follow-up: $e');
-          }
-        }
+      if (clinicName != null && clinicName.isNotEmpty) {
+        await FCMNotificationService().notifyCliniciansOfVhtFollowUp(
+          facilityName: clinicName,
+          caseId: caseId,
+          patientName: patientName?.isNotEmpty == true ? patientName! : 'patient',
+          vhtName: vhtName,
+          followUpMessage: result,
+        );
       }
 
       if (mounted) {
@@ -288,6 +289,110 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${AppLocalizations.of(context)!.failedToSendFollowUp}: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSendingFollowUp = false);
+    }
+  }
+
+  Future<void> _sendAmbulanceDelayUpdate(
+    String caseId, {
+    required String clinicName,
+    required String patientName,
+  }) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(AppLocalizations.of(ctx)!.sendFollowUpUpdate,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Ambulance response seems delayed. Request a quick update from the clinic.',
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: 'e.g. Ambulance dispatched but no arrival yet. Patient condition worsening...',
+                hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondary.withAlpha(120)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(ctx)!.cancel)),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) Navigator.pop(ctx, controller.text.trim());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.vhtAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(AppLocalizations.of(ctx)!.sendUpdate),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || result.isEmpty) return;
+    setState(() => _isSendingFollowUp = true);
+
+    try {
+      final vhtName = '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'.trim();
+      final message = 'Ambulance delayed: $result';
+
+      await FirebaseFirestore.instance.collection('emergencyCases').doc(caseId).collection('followUps').add({
+        'message': message,
+        'sentBy': CurrentUserSession.uid,
+        'sentByName': vhtName,
+        'sentByRole': 'VHT',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      await FirebaseFirestore.instance.collection('emergencyCases').doc(caseId).update({
+        'lastFollowUp': message,
+        'lastFollowUpBy': vhtName,
+        'lastFollowUpAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (clinicName.trim().isNotEmpty) {
+        await FCMNotificationService().notifyCliniciansOfVhtFollowUp(
+          facilityName: clinicName,
+          caseId: caseId,
+          patientName: patientName.isNotEmpty ? patientName : 'patient',
+          vhtName: vhtName,
+          followUpMessage: message,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.followUpUpdateSentSuccessfully),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.failedToSendFollowUp}: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -346,6 +451,10 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
             final emergencyType = data['emergencyType'] as String? ?? l10n.unknown;
             final urgency = data['urgencyLevel'] as String? ?? 'medium';
             final status = data['status'] as String? ?? 'pending';
+            final dischargedAt = data['dischargedAt'] as Timestamp?;
+            // Backend marks the case as `completed` even when the patient is discharged.
+            // For UI/traceability we show `discharged` when a discharge timestamp exists.
+            final effectiveStatus = (status == 'completed' && dischargedAt != null) ? 'discharged' : status;
             final patientId = data['patientId'] as String? ?? '';
             final patientFirstName = data['patientFirstName'] as String? ?? '';
             final patientLastName = data['patientLastName'] as String? ?? '';
@@ -355,12 +464,24 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
             final clinicName = data['assignedClinicName'] as String? ?? l10n.unknownClinic;
             final clinicianName = data['assignedClinicianName'] as String? ?? '';
             final clinicianNotes = data['clinicianNotes'] as String? ?? '';
+            final clinicianAdvice = data['clinicianAdvice'] as String? ?? '';
             final clinicianDecision = data['clinicianDecision'] as String? ?? '';
             final createdAt = data['createdAt'] as Timestamp?;
             final updatedAt = data['updatedAt'] as Timestamp?;
-            final statusColor = _getStatusColor(status);
-            final isAdvicePath = clinicianDecision == 'advise_vht' || status == 'advised';
+            final lastFollowUpAt = data['lastFollowUpAt'] as Timestamp?;
+            final statusColor = _getStatusColor(effectiveStatus);
+            final isAdvicePath = clinicianDecision == 'advise_vht' || effectiveStatus == 'advised';
             final isCaseOpen = status != 'completed' && status != 'cancelled';
+            final now = DateTime.now();
+            const ambulanceStaleThreshold = Duration(minutes: 15);
+            const followUpThrottleThreshold = Duration(minutes: 10);
+            final shouldShowAmbulanceDelayCommunication =
+                isCaseOpen &&
+                ['dispatched', 'enRoute', 'inTransit'].contains(status) &&
+                updatedAt != null &&
+                now.difference(updatedAt.toDate()) > ambulanceStaleThreshold &&
+                (lastFollowUpAt == null || now.difference(lastFollowUpAt.toDate()) > followUpThrottleThreshold);
+            final clinicianAdviceText = clinicianAdvice.isNotEmpty ? clinicianAdvice : clinicianNotes;
 
             // Additional fields for contacts and media
             final clinicianPhone = data['clinicianPhoneNumber'] as String? ?? '';
@@ -374,6 +495,24 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
             String patientDisplayName = '';
             if (patientFirstName.isNotEmpty || patientLastName.isNotEmpty) {
               patientDisplayName = '$patientFirstName $patientLastName'.trim();
+            }
+
+            // Record this case as "recent" for fast return from dashboards.
+            if (!_hasMarkedRecentCase) {
+              _hasMarkedRecentCase = true;
+              final uid = CurrentUserSession.uid;
+              if (uid != null && uid.isNotEmpty) {
+                final emergencyTypeForRecent = emergencyType;
+                Future.microtask(() async {
+                  try {
+                    await RecentCasesService.markCaseAsRecent(
+                      userId: uid,
+                      caseId: widget.caseId,
+                      emergencyType: emergencyTypeForRecent,
+                    );
+                  } catch (_) {}
+                });
+              }
             }
 
             return SingleChildScrollView(
@@ -417,15 +556,15 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(_getStatusIcon(status), color: statusColor, size: 28),
+                              Icon(_getStatusIcon(effectiveStatus), color: statusColor, size: 28),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(_getStatusLabel(context, status), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: statusColor)),
+                              Text(_getStatusLabel(context, effectiveStatus), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: statusColor)),
                               const SizedBox(height: 2),
-                              Text(_getStatusMessage(context, status), style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                              Text(_getStatusMessage(context, effectiveStatus), style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                             ],
                           ),
                         ),
@@ -434,8 +573,11 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 3. Clinician Advice (prominently displayed when advised)
-                  if (clinicianNotes.isNotEmpty && isAdvicePath) ...[
+                  // 3. Clinician Advice / Notes (privacy: content hidden for VHT)
+                  //
+                  // VHT can still see the case status progression, but clinician notes
+                  // are intentionally not displayed here.
+                  if (clinicianAdviceText.isNotEmpty && isAdvicePath) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -450,22 +592,24 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                             children: [
                               Icon(Icons.medical_information_rounded, size: 20, color: Colors.blue),
                               const SizedBox(width: 8),
-                              Text(l10n.clinicianAdvice, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.blue)),
+                              Text(
+                                l10n.clinicianAdvice,
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.blue),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Text(clinicianNotes, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.6)),
-                          if (clinicianName.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text('— Dr. $clinicianName', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textSecondary)),
-                          ],
+                          Text(
+                            clinicianAdviceText,
+                            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.6),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
                   ],
 
-                  // 4. Clinician Notes (for ambulance path, less prominent)
+                  // 4. Clinician Notes (privacy: content hidden for VHT)
                   if (clinicianNotes.isNotEmpty && !isAdvicePath && clinicianDecision.isNotEmpty) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
@@ -481,11 +625,17 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                             children: [
                               Icon(Icons.medical_information_outlined, size: 18, color: AppColors.clinicAccent),
                               const SizedBox(width: 8),
-                              Text(l10n.clinicianNotes, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.clinicAccent)),
+                              Text(
+                                l10n.clinicianNotes,
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.clinicAccent),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(clinicianNotes, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5)),
+                          Text(
+                            l10n.awaitingStatusUpdate,
+                            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5),
+                          ),
                         ],
                       ),
                     ),
@@ -505,7 +655,7 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                   // 6. Assigned clinic
                   _buildInfoCard(l10n.assignedFacility, [
                     _buildInfoRow(l10n.clinicLabel, clinicName),
-                    if (clinicianName.isNotEmpty) _buildInfoRow(l10n.clinicianLabel, clinicianName),
+                    // Clinician identity is not displayed to VHT (privacy).
                   ]),
                   const SizedBox(height: 12),
 
@@ -570,7 +720,37 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                             );
                           },
                         ),
-                      if (clinicianPhone.isEmpty && !(ambulanceDriverId.isNotEmpty && ['dispatched', 'enRoute'].contains(status)))
+                      if (shouldShowAmbulanceDelayCommunication)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _isSendingFollowUp
+                                  ? null
+                                  : () => _sendAmbulanceDelayUpdate(
+                                        widget.caseId,
+                                        clinicName: clinicName,
+                                        patientName: patientDisplayName.isNotEmpty ? patientDisplayName : 'patient',
+                                      ),
+                              icon: Icon(Icons.warning_amber_rounded, color: AppColors.vhtAccent),
+                              label: Text(
+                                'Ambulance delayed - message clinic',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.vhtAccent),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: AppColors.vhtAccent.withAlpha(160)),
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (clinicianPhone.isEmpty &&
+                          !(ambulanceDriverId.isNotEmpty && ['dispatched', 'enRoute'].contains(status)) &&
+                          !shouldShowAmbulanceDelayCommunication)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Text(l10n.noContactsAvailableYet, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
@@ -749,7 +929,7 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                                   onPressed: () => _sendFollowUpUpdate(
                                     widget.caseId,
                                     status,
-                                    clinicianId: data['assignedClinicId'] as String?,
+                                    clinicName: data['assignedClinicName'] as String?,
                                     patientName: '${data['patientFirstName'] ?? ''} ${data['patientLastName'] ?? ''}'.trim(),
                                   ),
                                   icon: Icon(Icons.message, size: 16, color: Colors.deepPurple),
@@ -789,7 +969,7 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                         onPressed: _isSendingFollowUp ? null : () => _sendFollowUpUpdate(
                         widget.caseId,
                         status,
-                        clinicianId: data['assignedClinicId'] as String?,
+                        clinicName: data['assignedClinicName'] as String?,
                         patientName: '${data['patientFirstName'] ?? ''} ${data['patientLastName'] ?? ''}'.trim(),
                       ),
                         icon: _isSendingFollowUp
@@ -811,7 +991,7 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                   ],
 
                   // 14. Progress Timeline
-                  _buildStatusTimeline(context, status, clinicianDecision),
+                  _buildStatusTimeline(context, effectiveStatus, clinicianDecision),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -868,8 +1048,20 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
     if (isAdvicePath) {
       statuses = ['pending', 'advised', 'completed'];
     } else if (clinicianDecision == 'dispatch_ambulance' ||
-        ['ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment'].contains(currentStatus)) {
-      statuses = ['pending', 'ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment', 'completed'];
+        ['ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment', 'admitted', 'discharged'].contains(currentStatus)) {
+      statuses = [
+        'pending',
+        'ambulanceRequested',
+        'dispatched',
+        'enRoute',
+        'arrived',
+        'inTransit',
+        'delivered',
+        'inTreatment',
+        'admitted',
+        'discharged',
+        'completed',
+      ];
     } else {
       // Default: show simple pending flow until clinician decides
       statuses = ['pending', 'completed'];

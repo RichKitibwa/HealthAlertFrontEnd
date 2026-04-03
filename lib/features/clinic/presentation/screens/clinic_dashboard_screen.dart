@@ -12,6 +12,7 @@ import '../../../common/presentation/screens/notifications_screen.dart';
 import '../../../common/presentation/screens/settings_screen.dart';
 import '../../../common/presentation/screens/learning_resources_screen.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/services/recent_cases_service.dart';
 
 
 class ClinicDashboardScreen extends StatefulWidget {
@@ -23,11 +24,13 @@ class ClinicDashboardScreen extends StatefulWidget {
 
 class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
   int _currentIndex = 0;
+  String? _resolvedFacilityName;
 
   @override
   void initState() {
     super.initState();
     UserLocationUpdateService.startUpdating();
+    _initializeFacilityContext();
   }
 
   @override
@@ -40,26 +43,62 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     if (index == _currentIndex) return;
   }
 
-  String get _currentUserId => CurrentUserSession.uid ?? '';
+  bool get _isClinicStaffRole => (CurrentUserSession.role ?? '').toLowerCase().contains('clinic');
+  String get _currentFacilityName => (_resolvedFacilityName ?? CurrentUserSession.workplace ?? '').trim();
+
+  Future<void> _initializeFacilityContext() async {
+    final role = (CurrentUserSession.role ?? '').toLowerCase();
+    if (!role.contains('clinic')) return;
+
+    final sessionFacility = (CurrentUserSession.workplace ?? '').trim();
+    if (sessionFacility.isNotEmpty) {
+      if (mounted) setState(() => _resolvedFacilityName = sessionFacility);
+      return;
+    }
+
+    final uid = CurrentUserSession.uid;
+    if (uid == null || uid.isEmpty) return;
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final workplace = (userDoc.data()?['workplace'] as String? ?? '').trim();
+      if (workplace.isNotEmpty && mounted) {
+        CurrentUserSession.workplace = workplace;
+        setState(() => _resolvedFacilityName = workplace);
+      }
+    } catch (_) {
+      // Keep UI functional; stream methods will return empty until facility is known.
+    }
+  }
 
   Stream<QuerySnapshot> _getPendingCasesStream() {
-    if (_currentUserId.isEmpty) return const Stream.empty();
-    return FirebaseFirestore.instance
-        .collection('emergencyCases')
-        .where('assignedClinicId', isEqualTo: _currentUserId)
-        .where('status', isEqualTo: 'pending')
-        .orderBy('createdAt', descending: true)
-        .snapshots();
+    final facilityName = _currentFacilityName;
+    if (_isClinicStaffRole && facilityName.isEmpty) return const Stream.empty();
+    Query query = FirebaseFirestore.instance.collection('emergencyCases');
+    if (facilityName.isNotEmpty) {
+      query = query.where('assignedClinicName', isEqualTo: facilityName);
+    }
+    query = query.where('status', isEqualTo: 'pending').orderBy('createdAt', descending: true);
+    return query.snapshots();
   }
 
   Stream<QuerySnapshot> _getActiveCasesStream() {
-    if (_currentUserId.isEmpty) return const Stream.empty();
-    return FirebaseFirestore.instance
-        .collection('emergencyCases')
-        .where('assignedClinicId', isEqualTo: _currentUserId)
-        .where('status', whereIn: ['pending', 'advised', 'ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit'])
-        .orderBy('createdAt', descending: true)
-        .snapshots();
+    final facilityName = _currentFacilityName;
+    if (_isClinicStaffRole && facilityName.isEmpty) return const Stream.empty();
+    Query query = FirebaseFirestore.instance.collection('emergencyCases');
+    if (facilityName.isNotEmpty) {
+      query = query.where('assignedClinicName', isEqualTo: facilityName);
+    }
+    query = query.where('status', whereIn: [
+      'pending',
+      'advised',
+      'ambulanceRequested',
+      'dispatched',
+      'enRoute',
+      'arrived',
+      'inTransit',
+    ]);
+    query = query.orderBy('createdAt', descending: true);
+    return query.snapshots();
   }
 
   Color _getUrgencyColor(String? u) {
@@ -81,6 +120,116 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
     final dt = ts.toDate();
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  String _formatTimeAgoFromDate(BuildContext context, DateTime dt) {
+    final l10n = AppLocalizations.of(context)!;
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  Widget _buildRecentCasesSection() {
+    final l10n = AppLocalizations.of(context)!;
+    final uid = CurrentUserSession.uid;
+    if (uid == null || uid.isEmpty) return const SizedBox.shrink();
+
+    return FutureBuilder<List<RecentCaseEntry>>(
+      future: RecentCasesService.getRecentCasesForUser(uid),
+      builder: (context, snapshot) {
+        final entries = snapshot.data ?? const <RecentCaseEntry>[];
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 72,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.recentCases,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 10),
+              if (entries.isEmpty)
+                Text(
+                  l10n.noRecentCases,
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                )
+              else
+                Column(
+                  children: entries.map((e) {
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => ClinicCaseDetailScreen(caseId: e.caseId)),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border.withAlpha(160)),
+                          color: AppColors.background.withAlpha(40),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    e.emergencyType.isNotEmpty ? e.emergencyType : l10n.unknown,
+                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    e.caseId.isNotEmpty ? 'Case: ${e.caseId.length > 6 ? e.caseId.substring(0, 6) : e.caseId}' : l10n.unknown,
+                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              _formatTimeAgoFromDate(context, e.viewedAt),
+                              style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(170)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   String _getUrgencyLabel(String? u, AppLocalizations l10n) {
@@ -107,11 +256,6 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
   String _getWelcomeMessage(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final firstName = CurrentUserSession.firstName ?? 'Doctor';
-    final specialty = CurrentUserSession.specialty?.toLowerCase() ?? '';
-    final shouldAddDrPrefix = specialty.contains('doctor') ||
-        specialty.contains('clinic officer') ||
-        specialty.contains('medical officer');
-    if (shouldAddDrPrefix) return l10n.welcomeBackDr(firstName);
     return l10n.welcomeBackName(firstName);
   }
 
@@ -119,6 +263,25 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final role = (CurrentUserSession.role ?? '').toLowerCase();
+    final isAllowed = role.contains('clinic') || role.contains('admin');
+    if (!isAllowed) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Access denied: clinician-only screen.',
+                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -177,6 +340,10 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // Recent Cases Section (Return-to-Case)
+              _buildRecentCasesSection(),
+              const SizedBox(height: 20),
 
               // Stats cards row
               StreamBuilder<QuerySnapshot>(
@@ -446,7 +613,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('emergencyCases')
-                    .where('assignedClinicId', isEqualTo: CurrentUserSession.uid)
+                    .where('assignedClinicName', isEqualTo: CurrentUserSession.workplace ?? '')
                     .where('status', whereIn: ['delivered', 'inTreatment', 'admitted'])
                     .orderBy('createdAt', descending: true)
                     .snapshots(),

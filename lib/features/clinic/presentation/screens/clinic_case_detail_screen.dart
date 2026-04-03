@@ -11,6 +11,7 @@ import '../../../../core/utils/drawer_helpers.dart';
 import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/fcm_notification_service.dart';
+import '../../../../core/services/recent_cases_service.dart';
 import '../../../../core/widgets/inline_voice_note_player.dart';
 
 /// Clinic Case Detail Screen
@@ -32,6 +33,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _treatmentController = TextEditingController();
   bool _isUpdating = false;
+  bool _hasMarkedRecentCase = false;
 
   @override
   void dispose() {
@@ -195,14 +197,26 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
     try {
       final notes = _notesController.text.trim();
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
+      final caseDocRef = FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId);
+      await caseDocRef.update({
         'status': 'ambulanceRequested',
         'updatedBy': CurrentUserSession.uid,
-        if (notes.isNotEmpty) 'clinicianNotes': notes,
+        'clinicianNotes': FieldValue.delete(),
         'clinicianDecision': 'dispatch_ambulance',
         'clinicianDecisionAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      if (notes.isNotEmpty) {
+        await caseDocRef.collection('clinicianPrivateNotes').doc('dispatch_ambulance').set({
+          'clinicianNotes': notes,
+          'clinicianId': CurrentUserSession.uid,
+          'clinicianName': CurrentUserSession.fullName,
+          'decision': 'dispatch_ambulance',
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
 
       // Notify nearest admin: popup + in-app
       try {
@@ -265,7 +279,9 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       final notes = _notesController.text.trim();
       await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
         'status': 'advised',
-        'clinicianNotes': notes,
+        // Advice content is shareable with VHT.
+        'clinicianAdvice': notes,
+        'clinicianNotes': FieldValue.delete(),
         'clinicianDecision': 'advise_vht',
         'clinicianDecisionAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -444,7 +460,6 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Note: Cloud Function handles notifications for inTreatment status
 
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
@@ -663,6 +678,25 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final role = (CurrentUserSession.role ?? '').toLowerCase();
+    final isAllowed = role.contains('clinic') || role.contains('admin');
+    if (!isAllowed) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Access denied: clinician-only screen.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: TopNavigationBar(
@@ -712,6 +746,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
             final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
             final urgency = data['urgencyLevel'] as String? ?? 'medium';
             final status = data['status'] as String? ?? 'pending';
+            final dischargedAt = data['dischargedAt'] as Timestamp?;
+           
+            final effectiveStatus =
+                (status == 'completed' && dischargedAt != null) ? 'discharged' : status;
             final patientId = data['patientId'] as String? ?? '';
             final patientFirstName = data['patientFirstName'] as String? ?? '';
             final patientLastName = data['patientLastName'] as String? ?? '';
@@ -722,6 +760,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
             final vhtPhone = data['vhtPhoneNumber'] as String? ?? '';
             final ambulanceDriverId = data['assignedAmbulanceId'] as String? ?? '';
             final clinicianNotes = data['clinicianNotes'] as String? ?? '';
+            final clinicianAdvice = data['clinicianAdvice'] as String? ?? '';
             final clinicianDecision = data['clinicianDecision'] as String? ?? '';
             final imageUrl = data['imageUrl'] as String? ?? '';
             final videoUrl = data['videoUrl'] as String? ?? '';
@@ -732,12 +771,30 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
             final isAmbulanceRequested = status == 'ambulanceRequested';
             final canRequestAmbulance = isPending || isAdvised || isAmbulanceRequested;
             final isAmbulancePath = clinicianDecision == 'dispatch_ambulance';
-            final statusColor = _getStatusColor(status);
+            final statusColor = _getStatusColor(effectiveStatus);
 
             // Build patient display name
             String patientDisplayName = '';
             if (patientFirstName.isNotEmpty || patientLastName.isNotEmpty) {
               patientDisplayName = '$patientFirstName $patientLastName'.trim();
+            }
+
+            // Record this case as "recent" for quick return from dashboards.
+            if (!_hasMarkedRecentCase) {
+              _hasMarkedRecentCase = true;
+              final uid = CurrentUserSession.uid;
+              if (uid != null && uid.isNotEmpty) {
+                final emergencyTypeForRecent = emergencyType;
+                Future.microtask(() async {
+                  try {
+                    await RecentCasesService.markCaseAsRecent(
+                      userId: uid,
+                      caseId: widget.caseId,
+                      emergencyType: emergencyTypeForRecent,
+                    );
+                  } catch (_) {}
+                });
+              }
             }
 
             final bottomInset = MediaQuery.of(context).viewInsets.bottom;
@@ -782,7 +839,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                             border: Border.all(color: statusColor.withAlpha(60)),
                           ),
                           child: Text(
-                            _getStatusLabel(status, l10n),
+                            _getStatusLabel(effectiveStatus, l10n),
                             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: statusColor),
                           ),
                         ),
@@ -1005,8 +1062,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     return <Widget>[];
                   }(),
 
-                  // Clinician notes (already provided — for non-pending cases)
-                  if (clinicianNotes.isNotEmpty && !isPending) ...[
+                  // Clinician notes/advice (already provided — for non-pending cases)
+                  if ((isAmbulancePath ? clinicianNotes : clinicianAdvice).isNotEmpty && !isPending) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -1028,7 +1085,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(clinicianNotes, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5)),
+                          Text(
+                            isAmbulancePath ? clinicianNotes : clinicianAdvice,
+                            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5),
+                          ),
                         ],
                       ),
                     ),
@@ -1037,7 +1097,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
                   // Progress Timeline
                   if (!isPending) ...[
-                    _buildProgressTimeline(l10n, status, clinicianDecision),
+                    _buildProgressTimeline(l10n, effectiveStatus, clinicianDecision),
                     const SizedBox(height: 16),
                   ],
 
@@ -1335,9 +1395,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
     final List<String> statuses;
     if (isAdvicePath) {
-      statuses = ['pending', 'advised', 'completed'];
+     
+      statuses = ['pending', 'advised', 'discharged', 'completed'];
     } else {
-      statuses = ['pending', 'ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment', 'admitted', 'completed'];
+      statuses = ['pending', 'ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment', 'admitted', 'discharged', 'completed'];
     }
 
     final currentIndex = statuses.indexOf(currentStatus);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import '../../current_user_session.dart';
 import '../../../../core/utils/pin_utils.dart';
@@ -275,25 +276,41 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // PIN is correct - populate session and navigate
-      final uid =
-          _userData!['uid'] as String? ?? _userData!['id'] as String? ?? '';
+      final phoneNumber = _phoneNumber ?? _phoneController.text.trim();
+      final functions = FirebaseFunctions.instance;
+      final loginCallable = functions.httpsCallable('loginUserWithPin');
 
-      CurrentUserSession.uid = uid;
-      CurrentUserSession.role = _userData!['role'] ?? 'VHT';
-      CurrentUserSession.firstName = _userData!['firstName'] as String?;
-      CurrentUserSession.lastName = _userData!['lastName'] as String?;
-      CurrentUserSession.phoneNumber = _userData!['phoneNumber'] as String?;
-      CurrentUserSession.profileImageUrl =
-          _userData!['profileImageUrl'] as String?;
-      CurrentUserSession.workplace = _userData!['workplace'] as String?;
-      CurrentUserSession.specialty = _userData!['specialty'] as String?;
-      CurrentUserSession.camp = _userData!['camp'] as String?;
-      CurrentUserSession.email = _userData!['email'] as String?;
+      final loginResult = await loginCallable.call({
+        'phoneNumber': phoneNumber,
+        'pin': pin,
+      });
+
+      final resultData = loginResult.data as Map<dynamic, dynamic>;
+      final customToken = resultData['customToken'] as String?;
+      final serverUser = Map<String, dynamic>.from(resultData['user'] as Map);
+
+      if (customToken == null || customToken.isEmpty) {
+        throw Exception('Missing custom token from login');
+      }
+
+      // Sign in so Firestore rules can enforce role-based confidentiality.
+      await FirebaseAuth.instance.signInWithCustomToken(customToken);
+
+      CurrentUserSession.uid = serverUser['id'] as String? ?? '';
+      CurrentUserSession.role = serverUser['role'] as String? ?? 'VHT';
+      CurrentUserSession.firstName = serverUser['firstName'] as String?;
+      CurrentUserSession.lastName = serverUser['lastName'] as String?;
+      CurrentUserSession.phoneNumber = serverUser['phoneNumber'] as String?;
+      CurrentUserSession.profileImageUrl = serverUser['profileImageUrl'] as String?;
+      CurrentUserSession.workplace = (serverUser['workplace'] as String?)?.trim();
+      CurrentUserSession.specialty = serverUser['specialty'] as String?;
+      CurrentUserSession.email = serverUser['email'] as String?;
+      CurrentUserSession.camp = serverUser['camp'] as String?;
 
       // Save user data to device for future logins
-      if (!_isRegisteredOnDevice && _phoneNumber != null) {
+      if (!_isRegisteredOnDevice && phoneNumber.isNotEmpty) {
         await DeviceStorageService.saveRegisteredUser(
-          phoneNumber: _phoneNumber!,
+          phoneNumber: phoneNumber,
           firstName: CurrentUserSession.firstName ?? '',
           lastName: CurrentUserSession.lastName ?? '',
         );

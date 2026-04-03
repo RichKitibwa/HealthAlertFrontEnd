@@ -187,14 +187,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                     if ((CurrentUserSession.role ?? '').toLowerCase().contains('clinic')) ...[
-                      if (CurrentUserSession.specialty != null) ...[
-                        Divider(height: 1, color: AppColors.divider),
-                        _buildListTile(
-                          icon: Icons.medical_services_outlined,
-                          title: l10n.specialtyProfession,
-                          subtitle: CurrentUserSession.specialty!,
-                        ),
-                      ],
                       if (CurrentUserSession.workplace != null) ...[
                         Divider(height: 1, color: AppColors.divider),
                         _buildListTile(
