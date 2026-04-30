@@ -6,17 +6,23 @@ class RecentCaseEntry {
   final String caseId;
   final String emergencyType;
   final DateTime viewedAt;
+  final String patientId;
+  final String patientName;
 
   RecentCaseEntry({
     required this.caseId,
     required this.emergencyType,
     required this.viewedAt,
+    this.patientId = '',
+    this.patientName = '',
   });
 
   Map<String, dynamic> toMap() => {
         'caseId': caseId,
         'emergencyType': emergencyType,
         'viewedAt': viewedAt.toIso8601String(),
+        'patientId': patientId,
+        'patientName': patientName,
       };
 
   static RecentCaseEntry fromMap(Map<String, dynamic> map) {
@@ -25,6 +31,8 @@ class RecentCaseEntry {
       caseId: map['caseId']?.toString() ?? '',
       emergencyType: map['emergencyType']?.toString() ?? '',
       viewedAt: viewedAtRaw != null ? DateTime.parse(viewedAtRaw) : DateTime.fromMillisecondsSinceEpoch(0),
+      patientId: map['patientId']?.toString() ?? '',
+      patientName: map['patientName']?.toString() ?? '',
     );
   }
 }
@@ -40,6 +48,8 @@ class RecentCasesService {
     required String userId,
     required String caseId,
     required String emergencyType,
+    String patientId = '',
+    String patientName = '',
   }) async {
     final trimmedUserId = userId.trim();
     final trimmedCaseId = caseId.trim();
@@ -69,6 +79,8 @@ class RecentCasesService {
         caseId: trimmedCaseId,
         emergencyType: emergencyType.trim(),
         viewedAt: now,
+        patientId: patientId.trim(),
+        patientName: patientName.trim(),
       ),
     );
 
@@ -95,6 +107,55 @@ class RecentCasesService {
     }
 
     return entries;
+  }
+
+  static Future<void> removeCaseFromRecent({
+    required String userId,
+    required String caseId,
+  }) async {
+    final trimmedUserId = userId.trim();
+    final trimmedCaseId = caseId.trim();
+    if (trimmedUserId.isEmpty || trimmedCaseId.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final key = _prefsKeyForUser(trimmedUserId);
+    final raw = prefs.getStringList(key) ?? <String>[];
+
+    final updated = raw.where((s) {
+      try {
+        final decoded = jsonDecode(s) as Map<String, dynamic>;
+        return decoded['caseId']?.toString() != trimmedCaseId;
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+
+    await prefs.setStringList(key, updated);
+  }
+
+  static Future<void> removeCompletedCases({
+    required String userId,
+    required Set<String> completedCaseIds,
+  }) async {
+    if (completedCaseIds.isEmpty) return;
+    final trimmedUserId = userId.trim();
+    if (trimmedUserId.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final key = _prefsKeyForUser(trimmedUserId);
+    final raw = prefs.getStringList(key) ?? <String>[];
+
+    final updated = raw.where((s) {
+      try {
+        final decoded = jsonDecode(s) as Map<String, dynamic>;
+        final id = decoded['caseId']?.toString() ?? '';
+        return !completedCaseIds.contains(id);
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+
+    await prefs.setStringList(key, updated);
   }
 }
 

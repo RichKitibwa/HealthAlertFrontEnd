@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-// Re-enable Firebase phone verification when Firebase Auth is properly configured
-// import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../../../core/utils/pin_utils.dart';
 import '../../../../core/services/device_storage_service.dart';
 import '../../current_user_session.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
-// Re-enable when Firebase phone verification is restored
-// import 'otp_verification_screen.dart';
 import 'login_screen.dart';
 import 'vht_details_form.dart';
 import 'ambulance_driver_details_form.dart';
@@ -560,6 +558,17 @@ class _VHTDetailsScreenState extends State<VHTDetailsScreen> {
         'createdAt': DateTime.now().toIso8601String(),
       });
 
+      try {
+        final loginResult = await FirebaseFunctions.instance
+            .httpsCallable('loginUserWithPin')
+            .call({'phoneNumber': phoneNumber, 'pin': pin});
+        final customToken = (loginResult.data as Map<dynamic, dynamic>)['customToken'] as String?;
+        if (customToken != null && customToken.isNotEmpty) {
+          await FirebaseAuth.instance.signInWithCustomToken(customToken);
+        }
+      } catch (_) {
+      }
+
       CurrentUserSession.uid = uid;
       CurrentUserSession.role = role;
       CurrentUserSession.firstName = firstName;
@@ -712,6 +721,17 @@ class _AmbulanceDriverDetailsScreenState
         'createdAt': DateTime.now().toIso8601String(),
       });
 
+      try {
+        final loginResult = await FirebaseFunctions.instance
+            .httpsCallable('loginUserWithPin')
+            .call({'phoneNumber': phoneNumber, 'pin': pin});
+        final customToken = (loginResult.data as Map<dynamic, dynamic>)['customToken'] as String?;
+        if (customToken != null && customToken.isNotEmpty) {
+          await FirebaseAuth.instance.signInWithCustomToken(customToken);
+        }
+      } catch (_) {
+      }
+
       CurrentUserSession.uid = uid;
       CurrentUserSession.role = role;
       CurrentUserSession.firstName = firstName;
@@ -861,6 +881,16 @@ class _AdminDetailsScreenState extends State<AdminDetailsScreen> {
         if (email != null) 'email': email,
         'createdAt': DateTime.now().toIso8601String(),
       });
+      try {
+        final loginResult = await FirebaseFunctions.instance
+            .httpsCallable('loginUserWithPin')
+            .call({'phoneNumber': phoneNumber, 'pin': pin});
+        final customToken = (loginResult.data as Map<dynamic, dynamic>)['customToken'] as String?;
+        if (customToken != null && customToken.isNotEmpty) {
+          await FirebaseAuth.instance.signInWithCustomToken(customToken);
+        }
+      } catch (_) {
+      }
 
       CurrentUserSession.uid = uid;
       CurrentUserSession.role = role;
@@ -1007,6 +1037,17 @@ class _ClinicianDetailsScreenState extends State<ClinicianDetailsScreen> {
         'camp': camp,
         'createdAt': DateTime.now().toIso8601String(),
       });
+
+      try {
+        final loginResult = await FirebaseFunctions.instance
+            .httpsCallable('loginUserWithPin')
+            .call({'phoneNumber': phoneNumber, 'pin': pin});
+        final customToken = (loginResult.data as Map<dynamic, dynamic>)['customToken'] as String?;
+        if (customToken != null && customToken.isNotEmpty) {
+          await FirebaseAuth.instance.signInWithCustomToken(customToken);
+        }
+      } catch (_) {
+      }
 
       CurrentUserSession.uid = uid;
       CurrentUserSession.role = role;

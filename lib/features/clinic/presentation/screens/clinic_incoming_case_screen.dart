@@ -175,6 +175,23 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
     }
   }
 
+  String _friendlyFirestoreError(Object? error) {
+    final msg = '$error'.toLowerCase();
+    if (msg.contains('permission-denied') || msg.contains('permission denied')) {
+      return 'You do not have access to these cases. Please sign out and sign back in, then try again.';
+    }
+    if (msg.contains('unavailable') || msg.contains('network')) {
+      return 'No internet connection. Please check your network and try again.';
+    }
+    if (msg.contains('not-found')) {
+      return 'The requested data could not be found.';
+    }
+    if (msg.contains('unauthenticated')) {
+      return 'Your session has expired. Please sign out and sign back in.';
+    }
+    return 'Something went wrong. Please try again or contact support if the problem persists.';
+  }
+
   String _formatTimeAgo(Timestamp? timestamp, AppLocalizations l10n) {
     if (timestamp == null) return '';
     final dt = timestamp.toDate();
@@ -355,36 +372,52 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                         errorText.contains('failed-precondition') ||
                         errorText.contains('requires an index') ||
                         errorText.contains('failed precondition');
+                    final friendlyMessage = isMissingIndexError
+                        ? l10n.errorLoadingCases
+                        : _friendlyFirestoreError(snapshot.error);
                     return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Colors.red.withAlpha(150),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            l10n.errorLoadingCases,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.wifi_off_rounded,
+                              size: 56,
+                              color: AppColors.textSecondary.withAlpha(100),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isMissingIndexError
-                                ? 'A Firestore index is still building/deploying for clinic case queries. '
-                                  'Please deploy indexes and wait a few minutes.'
-                                : '${snapshot.error}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
+                            const SizedBox(height: 16),
+                            Text(
+                              l10n.errorLoadingCases,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: AppColors.textPrimary,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              friendlyMessage,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                            OutlinedButton.icon(
+                              onPressed: () => setState(() {}),
+                              icon: const Icon(Icons.refresh_rounded, size: 18),
+                              label: const Text('Try Again'),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: AppColors.clinicAccent),
+                                foregroundColor: AppColors.clinicAccent,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }

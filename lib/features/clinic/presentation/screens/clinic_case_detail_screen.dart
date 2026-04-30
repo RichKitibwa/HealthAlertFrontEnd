@@ -42,6 +42,23 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     super.dispose();
   }
 
+  String _friendlyFirestoreError(Object? error) {
+    final msg = '$error'.toLowerCase();
+    if (msg.contains('permission-denied') || msg.contains('permission denied')) {
+      return 'You do not have permission to perform this action. Please sign out and sign back in, then try again.';
+    }
+    if (msg.contains('unavailable') || msg.contains('network')) {
+      return 'No internet connection. Please check your network and try again.';
+    }
+    if (msg.contains('not-found')) {
+      return 'This case could not be found. It may have been removed.';
+    }
+    if (msg.contains('unauthenticated')) {
+      return 'Your session has expired. Please sign out and sign back in.';
+    }
+    return 'Something went wrong. Please try again or contact support if the problem persists.';
+  }
+
   Color _getUrgencyColor(String? urgency) {
     switch (urgency?.toLowerCase()) {
       case 'critical': return Colors.red;
@@ -253,9 +270,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
+          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -316,9 +332,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
+          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -441,7 +456,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
+          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -469,9 +484,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
+          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -499,9 +513,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
+          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -637,7 +650,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorGeneric(e.toString())), backgroundColor: Colors.red),
+          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -738,6 +751,31 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.wifi_off_rounded, size: 56, color: AppColors.textSecondary.withAlpha(100)),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.errorLoadingCaseData,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _friendlyFirestoreError(snapshot.error),
+                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             if (!snapshot.hasData || !snapshot.data!.exists) {
               return Center(child: Text(l10n.caseNotFound));
             }
@@ -785,12 +823,18 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
               final uid = CurrentUserSession.uid;
               if (uid != null && uid.isNotEmpty) {
                 final emergencyTypeForRecent = emergencyType;
+                final patientIdForRecent = patientId;
+                final patientNameForRecent = patientDisplayName.isNotEmpty
+                    ? patientDisplayName
+                    : (patientId.isNotEmpty ? patientId : '');
                 Future.microtask(() async {
                   try {
                     await RecentCasesService.markCaseAsRecent(
                       userId: uid,
                       caseId: widget.caseId,
                       emergencyType: emergencyTypeForRecent,
+                      patientId: patientIdForRecent,
+                      patientName: patientNameForRecent,
                     );
                   } catch (_) {}
                 });

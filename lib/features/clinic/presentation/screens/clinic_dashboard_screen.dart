@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'clinic_case_detail_screen.dart';
 import 'clinic_navigation_bar.dart';
+import 'clinic_recent_cases_screen.dart';
 import '../../../common/presentation/screens/top_navigation_bar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../auth/current_user_session.dart';
@@ -12,7 +13,6 @@ import '../../../common/presentation/screens/notifications_screen.dart';
 import '../../../common/presentation/screens/settings_screen.dart';
 import '../../../common/presentation/screens/learning_resources_screen.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../core/services/recent_cases_service.dart';
 
 
 class ClinicDashboardScreen extends StatefulWidget {
@@ -122,113 +122,25 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
-  String _formatTimeAgoFromDate(BuildContext context, DateTime dt) {
+  Widget _buildRecentCasesButton() {
     final l10n = AppLocalizations.of(context)!;
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return l10n.justNow;
-    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
-    if (diff.inHours < 24) return l10n.hrAgo(diff.inHours);
-    return '${dt.day}/${dt.month}/${dt.year}';
-  }
-
-  Widget _buildRecentCasesSection() {
-    final l10n = AppLocalizations.of(context)!;
-    final uid = CurrentUserSession.uid;
-    if (uid == null || uid.isEmpty) return const SizedBox.shrink();
-
-    return FutureBuilder<List<RecentCaseEntry>>(
-      future: RecentCasesService.getRecentCasesForUser(uid),
-      builder: (context, snapshot) {
-        final entries = snapshot.data ?? const <RecentCaseEntry>[];
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            height: 72,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.recentCases,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 10),
-              if (entries.isEmpty)
-                Text(
-                  l10n.noRecentCases,
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                )
-              else
-                Column(
-                  children: entries.map((e) {
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => ClinicCaseDetailScreen(caseId: e.caseId)),
-                        );
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border.withAlpha(160)),
-                          color: AppColors.background.withAlpha(40),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    e.emergencyType.isNotEmpty ? e.emergencyType : l10n.unknown,
-                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    e.caseId.isNotEmpty ? 'Case: ${e.caseId.length > 6 ? e.caseId.substring(0, 6) : e.caseId}' : l10n.unknown,
-                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              _formatTimeAgoFromDate(context, e.viewedAt),
-                              style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(170)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-            ],
-          ),
-        );
-      },
+    return OutlinedButton.icon(
+      icon: const Icon(Icons.history_rounded, size: 20),
+      label: Text(
+        l10n.recentCases,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.clinicAccent,
+        side: BorderSide(color: AppColors.clinicAccent, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        minimumSize: const Size(double.infinity, 50),
+      ),
+      onPressed: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ClinicRecentCasesScreen()),
+      ),
     );
   }
 
@@ -341,8 +253,8 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Recent Cases Section (Return-to-Case)
-              _buildRecentCasesSection(),
+              // Recent Cases shortcut button
+              _buildRecentCasesButton(),
               const SizedBox(height: 20),
 
               // Stats cards row

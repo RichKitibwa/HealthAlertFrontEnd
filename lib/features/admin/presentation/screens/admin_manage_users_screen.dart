@@ -57,6 +57,7 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
     switch (role?.toLowerCase()) {
       case 'vht': return AppColors.vhtAccent;
       case 'ambulance driver': return AppColors.ambulanceAccent;
+      case 'clinic staff': return AppColors.clinicAccent;
       case 'clinician': return AppColors.clinicAccent;
       case 'admin': return AppColors.adminAccent;
       default: return AppColors.textSecondary;
@@ -156,7 +157,7 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
                     const SizedBox(width: 6),
                     _buildRoleChip(l10n.ambulance, 'Ambulance Driver'),
                     const SizedBox(width: 6),
-                    _buildRoleChip(l10n.clinicianLabel, 'Clinician'),
+                    _buildRoleChip(l10n.clinicianLabel, 'Clinic Staff'),
                   ],
                 ),
               ),
@@ -173,7 +174,29 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
                   }
 
                   if (snapshot.hasError) {
-                    return Center(child: Text(l10n.errorGeneric('${snapshot.error}')));
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textSecondary.withAlpha(100)),
+                            const SizedBox(height: 12),
+                            Text(
+                              l10n.errorLoadingUserData,
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.textPrimary),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Unable to load users. Please check your connection and try again.',
+                              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   }
 
                   final allDocs = snapshot.data?.docs ?? [];
