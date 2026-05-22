@@ -8,11 +8,13 @@ import '../../../auth/current_user_session.dart';
 
 /// Ambulance Active Cases Screen
 ///
-/// Lists active cases assigned to this ambulance driver.
-/// Filters client-side for status in [dispatched, enRoute, arrived, inTransit]
-/// to avoid composite index requirement.
+/// Lists cases assigned to this ambulance driver.
+/// Filters client-side to avoid composite index requirements.
 class AmbulanceActiveCasesScreen extends StatefulWidget {
-  const AmbulanceActiveCasesScreen({Key? key}) : super(key: key);
+  final bool showCompleted;
+
+  const AmbulanceActiveCasesScreen({Key? key, this.showCompleted = false})
+    : super(key: key);
 
   @override
   State<AmbulanceActiveCasesScreen> createState() =>
@@ -27,6 +29,7 @@ class _AmbulanceActiveCasesScreenState
     'arrived',
     'inTransit',
   ];
+  static const List<String> _completedStatuses = ['delivered', 'completed'];
 
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -111,6 +114,10 @@ class _AmbulanceActiveCasesScreenState
         return Colors.green;
       case 'intransit':
         return Colors.indigo;
+      case 'delivered':
+        return Colors.teal;
+      case 'completed':
+        return Colors.green.shade700;
       default:
         return AppColors.textSecondary;
     }
@@ -126,6 +133,10 @@ class _AmbulanceActiveCasesScreenState
         return l10n.arrived;
       case 'intransit':
         return l10n.patientInTransit;
+      case 'delivered':
+        return l10n.patientDelivered;
+      case 'completed':
+        return l10n.caseCompleted;
       default:
         return s ?? l10n.unknown;
     }
@@ -148,7 +159,7 @@ class _AmbulanceActiveCasesScreenState
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          l10n.activeCasesTitle,
+          widget.showCompleted ? l10n.completedCases : l10n.activeCasesTitle,
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -265,10 +276,13 @@ class _AmbulanceActiveCasesScreenState
                   }
 
                   final allDocs = snapshot.data?.docs ?? [];
+                  final allowedStatuses = widget.showCompleted
+                      ? _completedStatuses
+                      : _activeStatuses;
                   final filteredDocs = allDocs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     final status = data['status'] as String? ?? '';
-                    if (!_activeStatuses.contains(status)) return false;
+                    if (!allowedStatuses.contains(status)) return false;
                     return _matchesSearch(data);
                   }).toList();
 
@@ -296,7 +310,9 @@ class _AmbulanceActiveCasesScreenState
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            l10n.noActiveCases,
+                            widget.showCompleted
+                                ? l10n.noCompletedCases
+                                : l10n.noActiveCases,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -333,7 +349,11 @@ class _AmbulanceActiveCasesScreenState
     );
   }
 
-  Widget _buildCaseCard(BuildContext context, DocumentSnapshot doc, AppLocalizations l10n) {
+  Widget _buildCaseCard(
+    BuildContext context,
+    DocumentSnapshot doc,
+    AppLocalizations l10n,
+  ) {
     final data = doc.data() as Map<String, dynamic>;
     final caseId = doc.id;
     final emergencyType = data['emergencyType'] as String? ?? 'Unknown';

@@ -9,13 +9,12 @@ import '../../../../core/utils/logout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/current_user_session.dart';
 import '../../../common/presentation/screens/map_screen.dart';
-import '../../../../core/services/fcm_notification_service.dart';
 
 class AmbulanceEnRouteScreen extends StatefulWidget {
   final String caseId;
 
   const AmbulanceEnRouteScreen({Key? key, required this.caseId})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<AmbulanceEnRouteScreen> createState() => _AmbulanceEnRouteScreenState();
@@ -38,17 +37,28 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
 
   String _getStatusLabel(String status, AppLocalizations l10n) {
     switch (status) {
-      case 'pending': return l10n.pendingReview;
-      case 'dispatched': return l10n.dispatched;
-      case 'enRoute': return l10n.enRoute;
-      case 'arrived': return l10n.arrivedAtVht;
-      case 'inTransit': return l10n.patientInTransit;
-      case 'delivered': return l10n.deliveredToClinic;
-      case 'inTreatment': return l10n.patientInTreatment;
-      case 'admitted': return l10n.admitted;
-      case 'discharged': return l10n.discharged;
-      case 'completed': return l10n.caseCompleted;
-      default: return status;
+      case 'pending':
+        return l10n.pendingReview;
+      case 'dispatched':
+        return l10n.dispatched;
+      case 'enRoute':
+        return l10n.enRoute;
+      case 'arrived':
+        return l10n.arrivedAtVht;
+      case 'inTransit':
+        return l10n.patientInTransit;
+      case 'delivered':
+        return l10n.deliveredToClinic;
+      case 'inTreatment':
+        return l10n.patientInTreatment;
+      case 'admitted':
+        return l10n.admitted;
+      case 'discharged':
+        return l10n.discharged;
+      case 'completed':
+        return l10n.caseCompleted;
+      default:
+        return status;
     }
   }
 
@@ -69,75 +79,43 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
     return idx == -1 ? 0 : idx;
   }
 
-  Future<void> _updateCaseStatus(String newStatus, {String? vhtId, String? patientName}) async {
+  Future<void> _updateCaseStatus(
+    String newStatus, {
+    String? vhtId,
+    String? patientName,
+  }) async {
     if (_isUpdatingStatus) return;
     setState(() => _isUpdatingStatus = true);
 
     try {
-      // Fetch current case data before update (needed for notifications)
-      final caseDoc = await FirebaseFirestore.instance
-          .collection('emergencyCases')
-          .doc(widget.caseId)
-          .get();
-      final caseData = caseDoc.data() ?? {};
-
       await FirebaseFirestore.instance
           .collection('emergencyCases')
           .doc(widget.caseId)
           .update({
-        'status': newStatus,
-        'updatedBy': CurrentUserSession.uid,
-        'statusUpdatedAt': FieldValue.serverTimestamp(),
-        'statusHistory': FieldValue.arrayUnion([
-          {
             'status': newStatus,
             'updatedBy': CurrentUserSession.uid,
-            'updatedAt': Timestamp.now(),
-          }
-        ]),
-      });
-
-      // Notify parties when patient is delivered to clinic
-      if (newStatus == 'delivered') {
-        try {
-          final notifService = FCMNotificationService();
-          final fetchedVhtId = caseData['vhtId'] as String? ?? '';
-          final clinicianId = caseData['assignedClinicId'] as String? ?? '';
-          final patientFirst = caseData['patientFirstName'] as String? ?? '';
-          final patientLast = caseData['patientLastName'] as String? ?? '';
-          final patName = '$patientFirst $patientLast'.trim().isNotEmpty
-              ? '$patientFirst $patientLast'.trim()
-              : patientName ?? 'Unknown Patient';
-          final emergencyType = caseData['emergencyType'] as String? ?? 'Emergency';
-          final clinicName = caseData['assignedClinicName'] as String? ?? 'Clinic';
-          final driverName =
-              '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'.trim();
-          if (fetchedVhtId.isNotEmpty) {
-            await notifService.notifyOnPatientDelivered(
-              caseId: widget.caseId,
-              emergencyType: emergencyType,
-              patientName: patName,
-              vhtId: fetchedVhtId,
-              clinicianId: clinicianId,
-              clinicName: clinicName,
-              driverName: driverName.isNotEmpty ? driverName : 'the driver',
-            );
-          }
-        } catch (e) {
-          debugPrint('Failed to send delivery notifications: $e');
-        }
-      }
-      // No notifications for arrived, inTransit — just status updates
+            'statusUpdatedAt': FieldValue.serverTimestamp(),
+            'statusHistory': FieldValue.arrayUnion([
+              {
+                'status': newStatus,
+                'updatedBy': CurrentUserSession.uid,
+                'updatedAt': Timestamp.now(),
+              },
+            ]),
+          });
 
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.statusUpdatedTo(_getStatusLabel(newStatus, l10n))),
+            content: Text(
+              l10n.statusUpdatedTo(_getStatusLabel(newStatus, l10n)),
+            ),
             backgroundColor: AppColors.ambulanceAccent,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -149,8 +127,9 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             content: Text(l10n.failedToUpdateStatus(e.toString())),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -173,8 +152,9 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             content: Text(l10n.couldNotLaunchDialer(phoneNumber)),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -265,17 +245,30 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: AppColors.error,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         l10n.errorLoadingCaseData,
-                        style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -291,11 +284,20 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.search_off, size: 48, color: AppColors.textSecondary),
+                      Icon(
+                        Icons.search_off,
+                        size: 48,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         l10n.caseNotFound,
-                        style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ],
                   ),
@@ -313,7 +315,9 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             final patientNameConstructed = '$patientFirst $patientLast'.trim();
             final patientName = patientNameConstructed.isNotEmpty
                 ? patientNameConstructed
-                : (patientId.isNotEmpty ? 'Patient #$patientId' : 'Unknown patient');
+                : (patientId.isNotEmpty
+                      ? 'Patient #$patientId'
+                      : 'Unknown patient');
             final vhtId = caseData['vhtId'] as String?;
             final vhtName = caseData['vhtName'] as String?;
             final clinicId = caseData['assignedClinicId'] as String?;
@@ -322,10 +326,12 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             final currentStatusIndex = _statusIndex(currentStatus);
 
             // Coordinates for map navigation
-            final vhtLat = (caseData['vhtLatitude'] as num?)?.toDouble()
-                ?? (caseData['latitude'] as num?)?.toDouble();
-            final vhtLng = (caseData['vhtLongitude'] as num?)?.toDouble()
-                ?? (caseData['longitude'] as num?)?.toDouble();
+            final vhtLat =
+                (caseData['vhtLatitude'] as num?)?.toDouble() ??
+                (caseData['latitude'] as num?)?.toDouble();
+            final vhtLng =
+                (caseData['vhtLongitude'] as num?)?.toDouble() ??
+                (caseData['longitude'] as num?)?.toDouble();
             final clinicLat = (caseData['clinicLatitude'] as num?)?.toDouble();
             final clinicLng = (caseData['clinicLongitude'] as num?)?.toDouble();
 
@@ -373,11 +379,27 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                     const SizedBox(height: 20),
 
                     // Contact Buttons
-                    _buildContactButtons(vhtId: vhtId, clinicianId: clinicianId, clinicId: clinicId, vhtName: vhtName, clinicName: clinicName, currentStatus: currentStatus, vhtLat: vhtLat, vhtLng: vhtLng, clinicLat: clinicLat, clinicLng: clinicLng),
+                    _buildContactButtons(
+                      vhtId: vhtId,
+                      clinicianId: clinicianId,
+                      clinicId: clinicId,
+                      vhtName: vhtName,
+                      clinicName: clinicName,
+                      currentStatus: currentStatus,
+                      vhtLat: vhtLat,
+                      vhtLng: vhtLng,
+                      clinicLat: clinicLat,
+                      clinicLng: clinicLng,
+                    ),
                     const SizedBox(height: 20),
 
                     // Status Action Buttons (contextual)
-                    _buildStatusActions(l10n, currentStatus, vhtId: vhtId, patientName: patientName),
+                    _buildStatusActions(
+                      l10n,
+                      currentStatus,
+                      vhtId: vhtId,
+                      patientName: patientName,
+                    ),
                   ],
                 ),
               ),
@@ -402,10 +424,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.surface,
-            AppColors.surface.withAlpha(230),
-          ],
+          colors: [AppColors.surface, AppColors.surface.withAlpha(230)],
         ),
         boxShadow: [
           BoxShadow(
@@ -484,16 +503,36 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                   color: AppColors.ambulanceAccent.withAlpha(16),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.warning_amber_rounded, color: AppColors.ambulanceAccent, size: 20),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.ambulanceAccent,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(l10n.emergencyLabel, style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 11, color: AppColors.textSecondary)),
+                    Text(
+                      l10n.emergencyLabel,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(emergencyType, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                    Text(
+                      emergencyType,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -651,15 +690,20 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
             child: ElevatedButton.icon(
               onPressed: () {
                 // Route to VHT when dispatched/enRoute, to clinic when arrived/inTransit
-                final goingToVht = currentStatus == 'dispatched' || currentStatus == 'enRoute';
+                final goingToVht =
+                    currentStatus == 'dispatched' || currentStatus == 'enRoute';
                 final destLat = goingToVht ? vhtLat : clinicLat;
                 final destLng = goingToVht ? vhtLng : clinicLng;
-                final destLabel = goingToVht ? (vhtName ?? l10n.vht) : (clinicName ?? l10n.clinicLabel);
+                final destLabel = goingToVht
+                    ? (vhtName ?? l10n.vht)
+                    : (clinicName ?? l10n.clinicLabel);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => MapScreen(
-                      title: goingToVht ? l10n.navigationMap : l10n.navigationMap,
+                      title: goingToVht
+                          ? l10n.navigationMap
+                          : l10n.navigationMap,
                       destinationLabel: destLabel,
                       destinationType: goingToVht ? 'vht' : 'clinic',
                       destinationLat: destLat,
@@ -669,12 +713,20 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                 );
               },
               icon: const Icon(Icons.navigation_rounded, size: 18),
-              label: Text(l10n.openNavigationMap, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              label: Text(
+                l10n.openNavigationMap,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ),
@@ -702,7 +754,8 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                                   backgroundColor: AppColors.warning,
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
                               );
                             }
@@ -730,11 +783,14 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                               final innerL10n = AppLocalizations.of(context)!;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(innerL10n.clinicianPhoneNotAvailable),
+                                  content: Text(
+                                    innerL10n.clinicianPhoneNotAvailable,
+                                  ),
                                   backgroundColor: AppColors.warning,
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
                               );
                             }
@@ -750,35 +806,46 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
     );
   }
 
-  Widget _buildStatusActions(AppLocalizations l10n, String currentStatus, {String? vhtId, String? patientName}) {
+  Widget _buildStatusActions(
+    AppLocalizations l10n,
+    String currentStatus, {
+    String? vhtId,
+    String? patientName,
+  }) {
     // Determine which action buttons to show based on current status
     final List<_StatusAction> actions = [];
 
     switch (currentStatus) {
       case 'dispatched':
       case 'enRoute':
-        actions.add(_StatusAction(
-          label: l10n.arrivedAtVht,
-          icon: Icons.flag_outlined,
-          targetStatus: 'arrived',
-          color: AppColors.statusInProgress,
-        ));
+        actions.add(
+          _StatusAction(
+            label: l10n.arrivedAtVht,
+            icon: Icons.flag_outlined,
+            targetStatus: 'arrived',
+            color: AppColors.statusInProgress,
+          ),
+        );
         break;
       case 'arrived':
-        actions.add(_StatusAction(
-          label: l10n.patientPickedUp,
-          icon: Icons.transfer_within_a_station,
-          targetStatus: 'inTransit',
-          color: AppColors.ambulanceAccent,
-        ));
+        actions.add(
+          _StatusAction(
+            label: l10n.patientPickedUp,
+            icon: Icons.transfer_within_a_station,
+            targetStatus: 'inTransit',
+            color: AppColors.ambulanceAccent,
+          ),
+        );
         break;
       case 'inTransit':
-        actions.add(_StatusAction(
-          label: l10n.deliveredToClinic,
-          icon: Icons.local_hospital_outlined,
-          targetStatus: 'delivered',
-          color: AppColors.successDark,
-        ));
+        actions.add(
+          _StatusAction(
+            label: l10n.deliveredToClinic,
+            icon: Icons.local_hospital_outlined,
+            targetStatus: 'delivered',
+            color: AppColors.successDark,
+          ),
+        );
         break;
       case 'inTreatment':
       case 'admitted':
@@ -796,20 +863,34 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  Icon(Icons.check_circle, color: AppColors.successDark, size: 48),
+                  Icon(
+                    Icons.check_circle,
+                    color: AppColors.successDark,
+                    size: 48,
+                  ),
                   const SizedBox(height: 12),
                   Text(
-                    currentStatus == 'completed' ? l10n.caseCompleted
-                        : currentStatus == 'inTreatment' ? l10n.patientInTreatment
-                        : currentStatus == 'admitted' ? l10n.patientAdmitted
+                    currentStatus == 'completed'
+                        ? l10n.caseCompleted
+                        : currentStatus == 'inTreatment'
+                        ? l10n.patientInTreatment
+                        : currentStatus == 'admitted'
+                        ? l10n.patientAdmitted
                         : l10n.patientDeliveredSuccessfully,
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.successDark),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: AppColors.successDark,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     l10n.deliveryCompleteClinicHandles,
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -821,14 +902,26 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
               height: 50,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(context, '/ambulance-dashboard', (r) => false);
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/ambulance-dashboard',
+                    (r) => false,
+                  );
                 },
                 icon: const Icon(Icons.home_rounded),
-                label: Text(AppLocalizations.of(context)!.backToDashboard, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                label: Text(
+                  AppLocalizations.of(context)!.backToDashboard,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF0F766E),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -850,10 +943,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    action.color.withAlpha(235),
-                    action.color,
-                  ],
+                  colors: [action.color.withAlpha(235), action.color],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -874,7 +964,11 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                   borderRadius: BorderRadius.circular(14),
                   onTap: _isUpdatingStatus
                       ? null
-                      : () => _updateCaseStatus(action.targetStatus, vhtId: vhtId, patientName: patientName),
+                      : () => _updateCaseStatus(
+                          action.targetStatus,
+                          vhtId: vhtId,
+                          patientName: patientName,
+                        ),
                   child: Center(
                     child: _isUpdatingStatus
                         ? const SizedBox(
@@ -888,8 +982,7 @@ class _AmbulanceEnRouteScreenState extends State<AmbulanceEnRouteScreen> {
                         : Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(action.icon,
-                                  color: Colors.white, size: 20),
+                              Icon(action.icon, color: Colors.white, size: 20),
                               const SizedBox(width: 10),
                               Text(
                                 action.label,
@@ -1125,7 +1218,9 @@ class _ContactButton extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: effectiveColor.withAlpha(isDisabled ? 30 : 14),
-          border: Border.all(color: effectiveColor.withAlpha(isDisabled ? 40 : 50)),
+          border: Border.all(
+            color: effectiveColor.withAlpha(isDisabled ? 40 : 50),
+          ),
           boxShadow: isDisabled
               ? null
               : [

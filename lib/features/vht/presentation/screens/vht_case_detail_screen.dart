@@ -35,89 +35,150 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return Colors.orange;
-      case 'advised': return Colors.blue;
-      case 'ambulancerequested': return Colors.deepPurple;
-      case 'dispatched': return AppColors.clinicAccent;
-      case 'enroute': return Colors.blue;
-      case 'arrived': return Colors.green;
-      case 'intransit': return Colors.indigo;
-      case 'delivered': return Colors.teal;
-      case 'intreatment': return Colors.blue;
-      case 'admitted': return Colors.deepOrange;
-      case 'discharged': return Colors.green.shade700;
-      case 'completed': return Colors.green.shade700;
-      case 'cancelled': return Colors.red;
-      default: return AppColors.textSecondary;
+      case 'pending':
+        return Colors.orange;
+      case 'advised':
+        return Colors.blue;
+      case 'ambulancerequested':
+        return Colors.deepPurple;
+      case 'dispatched':
+        return AppColors.clinicAccent;
+      case 'enroute':
+        return Colors.blue;
+      case 'arrived':
+        return Colors.green;
+      case 'intransit':
+        return Colors.indigo;
+      case 'delivered':
+        return Colors.teal;
+      case 'intreatment':
+        return Colors.blue;
+      case 'admitted':
+        return Colors.deepOrange;
+      case 'discharged':
+        return Colors.green.shade700;
+      case 'completed':
+        return Colors.green.shade700;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   String _getStatusLabel(BuildContext context, String status) {
     final l10n = AppLocalizations.of(context)!;
     switch (status.toLowerCase()) {
-      case 'pending': return l10n.pendingReview;
-      case 'advised': return l10n.clinicianAdvised;
-      case 'ambulancerequested': return l10n.ambulanceRequested;
-      case 'dispatched': return l10n.ambulanceDispatched;
-      case 'enroute': return l10n.ambulanceEnRoute;
-      case 'arrived': return l10n.ambulanceArrived;
-      case 'intransit': return l10n.patientInTransit;
-      case 'delivered': return l10n.patientDelivered;
-      case 'intreatment': return l10n.inTreatment;
-      case 'admitted': return l10n.admitted;
-      case 'discharged': return l10n.discharged;
-      case 'completed': return l10n.caseCompleted;
-      case 'cancelled': return l10n.caseCancelled;
-      default: return status;
+      case 'pending':
+        return l10n.pendingReview;
+      case 'advised':
+        return l10n.clinicianAdvised;
+      case 'ambulancerequested':
+        return l10n.ambulanceRequested;
+      case 'dispatched':
+        return l10n.ambulanceDispatched;
+      case 'enroute':
+        return l10n.ambulanceEnRoute;
+      case 'arrived':
+        return l10n.ambulanceArrived;
+      case 'intransit':
+        return l10n.patientInTransit;
+      case 'delivered':
+        return l10n.patientDelivered;
+      case 'intreatment':
+        return l10n.inTreatment;
+      case 'admitted':
+        return l10n.admitted;
+      case 'discharged':
+        return l10n.discharged;
+      case 'completed':
+        return l10n.caseCompleted;
+      case 'cancelled':
+        return l10n.caseCancelled;
+      default:
+        return status;
     }
   }
 
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return Icons.hourglass_top_rounded;
-      case 'advised': return Icons.message_rounded;
-      case 'ambulancerequested': return Icons.local_shipping_outlined;
-      case 'dispatched': return Icons.local_shipping_rounded;
-      case 'enroute': return Icons.directions_car_rounded;
-      case 'arrived': return Icons.location_on_rounded;
-      case 'intransit': return Icons.transfer_within_a_station_rounded;
-      case 'delivered': return Icons.check_circle_rounded;
-      case 'intreatment': return Icons.medical_services_rounded;
-      case 'admitted': return Icons.local_hotel_rounded;
-      case 'discharged': return Icons.exit_to_app_rounded;
-      case 'completed': return Icons.verified_rounded;
-      case 'cancelled': return Icons.cancel_rounded;
-      default: return Icons.info_rounded;
+      case 'pending':
+        return Icons.hourglass_top_rounded;
+      case 'advised':
+        return Icons.message_rounded;
+      case 'ambulancerequested':
+        return Icons.local_shipping_outlined;
+      case 'dispatched':
+        return Icons.local_shipping_rounded;
+      case 'enroute':
+        return Icons.directions_car_rounded;
+      case 'arrived':
+        return Icons.location_on_rounded;
+      case 'intransit':
+        return Icons.transfer_within_a_station_rounded;
+      case 'delivered':
+        return Icons.check_circle_rounded;
+      case 'intreatment':
+        return Icons.medical_services_rounded;
+      case 'admitted':
+        return Icons.local_hotel_rounded;
+      case 'discharged':
+        return Icons.exit_to_app_rounded;
+      case 'completed':
+        return Icons.verified_rounded;
+      case 'cancelled':
+        return Icons.cancel_rounded;
+      default:
+        return Icons.info_rounded;
     }
   }
 
   String _getStatusMessage(BuildContext context, String status) {
     final l10n = AppLocalizations.of(context)!;
     switch (status.toLowerCase()) {
-      case 'pending': return l10n.statusMsgPending;
-      case 'advised': return l10n.statusMsgAdvised;
-      case 'ambulancerequested': return l10n.statusMsgAmbRequested;
-      case 'dispatched': return l10n.statusMsgDispatched;
-      case 'enroute': return l10n.statusMsgEnRoute;
-      case 'arrived': return l10n.statusMsgArrived;
-      case 'intransit': return l10n.statusMsgInTransit;
-      case 'delivered': return l10n.statusMsgDelivered;
-      case 'intreatment': return l10n.statusMsgInTreatment;
-      case 'admitted': return l10n.statusMsgAdmitted;
-      case 'discharged': return l10n.statusMsgDischarged;
-      case 'completed': return l10n.statusMsgCompleted;
-      case 'cancelled': return l10n.statusMsgCancelled;
-      default: return l10n.awaitingStatusUpdate;
+      case 'pending':
+        return l10n.statusMsgPending;
+      case 'advised':
+        return l10n.statusMsgAdvised;
+      case 'ambulancerequested':
+        return l10n.statusMsgAmbRequested;
+      case 'dispatched':
+        return l10n.statusMsgDispatched;
+      case 'enroute':
+        return l10n.statusMsgEnRoute;
+      case 'arrived':
+        return l10n.statusMsgArrived;
+      case 'intransit':
+        return l10n.statusMsgInTransit;
+      case 'delivered':
+        return l10n.statusMsgDelivered;
+      case 'intreatment':
+        return l10n.statusMsgInTreatment;
+      case 'admitted':
+        return l10n.statusMsgAdmitted;
+      case 'discharged':
+        return l10n.statusMsgDischarged;
+      case 'completed':
+        return l10n.statusMsgCompleted;
+      case 'cancelled':
+        return l10n.statusMsgCancelled;
+      default:
+        return l10n.awaitingStatusUpdate;
     }
   }
 
   Color _getUrgencyColor(String? urgency) {
     switch (urgency?.toLowerCase()) {
-      case 'critical': return Colors.red;
-      case 'high': return Colors.deepOrange;
-      case 'medium': return Colors.orange;
-      case 'low': return Colors.green;
-      default: return AppColors.textSecondary;
+      case 'critical':
+        return Colors.red;
+      case 'high':
+        return Colors.deepOrange;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
@@ -142,7 +203,9 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
         final dob = DateTime.parse(dobStr);
         final now = DateTime.now();
         int age = now.year - dob.year;
-        if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) age--;
+        if (now.month < dob.month ||
+            (now.month == dob.month && now.day < dob.day))
+          age--;
         return age;
       } catch (_) {}
     }
@@ -156,7 +219,12 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.couldNotOpenDialer(phone)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.couldNotOpenDialer(phone),
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -181,13 +249,21 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.noAdminContactFound), backgroundColor: Colors.orange),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.noAdminContactFound),
+            backgroundColor: Colors.orange,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)!.errorFindingAdmin}: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)!.errorFindingAdmin}: $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -199,8 +275,15 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
       MaterialPageRoute(
         builder: (_) => Scaffold(
           backgroundColor: Colors.black,
-          appBar: AppBar(backgroundColor: Colors.black, iconTheme: const IconThemeData(color: Colors.white)),
-          body: Center(child: InteractiveViewer(child: Image.network(url, fit: BoxFit.contain))),
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              child: Image.network(url, fit: BoxFit.contain),
+            ),
+          ),
         ),
       ),
     );
@@ -217,33 +300,64 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(AppLocalizations.of(ctx)!.sendFollowUpUpdate, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+        title: Text(
+          AppLocalizations.of(ctx)!.sendFollowUpUpdate,
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppLocalizations.of(ctx)!.provideUpdateOnCondition, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            Text(
+              AppLocalizations.of(ctx)!.provideUpdateOnCondition,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: 'e.g. Patient condition worsening, needs urgent attention...',
-                hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondary.withAlpha(120)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                hintText:
+                    'e.g. Patient condition worsening, needs urgent attention...',
+                hintStyle: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary.withAlpha(120),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 contentPadding: const EdgeInsets.all(12),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(ctx)!.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(AppLocalizations.of(ctx)!.cancel, maxLines: 1),
+            ),
+          ),
           ElevatedButton(
             onPressed: () {
-              if (controller.text.trim().isNotEmpty) Navigator.pop(ctx, controller.text.trim());
+              if (controller.text.trim().isNotEmpty)
+                Navigator.pop(ctx, controller.text.trim());
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.vhtAccent, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            child: Text(AppLocalizations.of(ctx)!.sendUpdate),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.vhtAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(AppLocalizations.of(ctx)!.sendUpdate, maxLines: 1),
+            ),
           ),
         ],
       ),
@@ -253,28 +367,39 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
     setState(() => _isSendingFollowUp = true);
 
     try {
-      final vhtName = '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'.trim();
+      final vhtName =
+          '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'
+              .trim();
 
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(caseId).collection('followUps').add({
-        'message': result,
-        'sentBy': CurrentUserSession.uid,
-        'sentByName': vhtName,
-        'sentByRole': 'VHT',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(caseId)
+          .collection('followUps')
+          .add({
+            'message': result,
+            'sentBy': CurrentUserSession.uid,
+            'sentByName': vhtName,
+            'sentByRole': 'VHT',
+            'timestamp': FieldValue.serverTimestamp(),
+          });
 
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(caseId).update({
-        'lastFollowUp': result,
-        'lastFollowUpBy': vhtName,
-        'lastFollowUpAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(caseId)
+          .update({
+            'lastFollowUp': result,
+            'lastFollowUpBy': vhtName,
+            'lastFollowUpAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (clinicName != null && clinicName.isNotEmpty) {
         await FCMNotificationService().notifyCliniciansOfVhtFollowUp(
           facilityName: clinicName,
           caseId: caseId,
-          patientName: patientName?.isNotEmpty == true ? patientName! : 'patient',
+          patientName: patientName?.isNotEmpty == true
+              ? patientName!
+              : 'patient',
           vhtName: vhtName,
           followUpMessage: result,
         );
@@ -282,13 +407,23 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.followUpUpdateSentSuccessfully), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.followUpUpdateSentSuccessfully,
+            ),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)!.failedToSendFollowUp}: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)!.failedToSendFollowUp}: $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -306,41 +441,64 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(AppLocalizations.of(ctx)!.sendFollowUpUpdate,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+        title: Text(
+          AppLocalizations.of(ctx)!.sendFollowUpUpdate,
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Ambulance response seems delayed. Request a quick update from the clinic.',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: 'e.g. Ambulance dispatched but no arrival yet. Patient condition worsening...',
-                hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondary.withAlpha(120)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                hintText:
+                    'e.g. Ambulance dispatched but no arrival yet. Patient condition worsening...',
+                hintStyle: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary.withAlpha(120),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 contentPadding: const EdgeInsets.all(12),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(ctx)!.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(AppLocalizations.of(ctx)!.cancel, maxLines: 1),
+            ),
+          ),
           ElevatedButton(
             onPressed: () {
-              if (controller.text.trim().isNotEmpty) Navigator.pop(ctx, controller.text.trim());
+              if (controller.text.trim().isNotEmpty)
+                Navigator.pop(ctx, controller.text.trim());
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.vhtAccent,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: Text(AppLocalizations.of(ctx)!.sendUpdate),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(AppLocalizations.of(ctx)!.sendUpdate, maxLines: 1),
+            ),
           ),
         ],
       ),
@@ -350,23 +508,32 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
     setState(() => _isSendingFollowUp = true);
 
     try {
-      final vhtName = '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'.trim();
+      final vhtName =
+          '${CurrentUserSession.firstName ?? ''} ${CurrentUserSession.lastName ?? ''}'
+              .trim();
       final message = 'Ambulance delayed: $result';
 
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(caseId).collection('followUps').add({
-        'message': message,
-        'sentBy': CurrentUserSession.uid,
-        'sentByName': vhtName,
-        'sentByRole': 'VHT',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(caseId)
+          .collection('followUps')
+          .add({
+            'message': message,
+            'sentBy': CurrentUserSession.uid,
+            'sentByName': vhtName,
+            'sentByRole': 'VHT',
+            'timestamp': FieldValue.serverTimestamp(),
+          });
 
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(caseId).update({
-        'lastFollowUp': message,
-        'lastFollowUpBy': vhtName,
-        'lastFollowUpAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(caseId)
+          .update({
+            'lastFollowUp': message,
+            'lastFollowUpBy': vhtName,
+            'lastFollowUpAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (clinicName.trim().isNotEmpty) {
         await FCMNotificationService().notifyCliniciansOfVhtFollowUp(
@@ -381,7 +548,9 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.followUpUpdateSentSuccessfully),
+            content: Text(
+              AppLocalizations.of(context)!.followUpUpdateSentSuccessfully,
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -390,7 +559,9 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)!.failedToSendFollowUp}: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)!.failedToSendFollowUp}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -417,60 +588,85 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
           }
         },
         onDashboard: () {
-          Navigator.pushNamedAndRemoveUntil(context, '/vht-dashboard', (r) => false);
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/vht-dashboard',
+            (r) => false,
+          );
         },
         onSettings: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
         },
         onLearningResources: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LearningResourcesScreen()),
+          );
         },
       ),
-      endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/vht-dashboard'),
+      endDrawer: buildStandardDrawer(
+        context: context,
+        dashboardRoute: '/vht-dashboard',
+      ),
       bottomNavigationBar: VhtNavigationBar(
         currentIndex: 0,
         onItemSelected: (index) {
           if (index == 0) {
-            Navigator.pushNamedAndRemoveUntil(context, '/vht-dashboard', (r) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/vht-dashboard',
+              (r) => false,
+            );
           }
         },
       ),
       body: SafeArea(
         child: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('emergencyCases')
+              .doc(widget.caseId)
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
             if (!snapshot.hasData || !snapshot.data!.exists) {
-              return Center(child: Text(AppLocalizations.of(context)!.caseNotFound));
+              return Center(
+                child: Text(AppLocalizations.of(context)!.caseNotFound),
+              );
             }
 
             final l10n = AppLocalizations.of(context)!;
             final data = snapshot.data!.data() as Map<String, dynamic>;
-            final emergencyType = data['emergencyType'] as String? ?? l10n.unknown;
+            final emergencyType =
+                data['emergencyType'] as String? ?? l10n.unknown;
             final urgency = data['urgencyLevel'] as String? ?? 'medium';
             final status = data['status'] as String? ?? 'pending';
-            final dischargedAt = data['dischargedAt'] as Timestamp?;
-            // Backend marks the case as `completed` even when the patient is discharged.
-            // For UI/traceability we show `discharged` when a discharge timestamp exists.
-            final effectiveStatus = (status == 'completed' && dischargedAt != null) ? 'discharged' : status;
+            final effectiveStatus = status;
             final patientId = data['patientId'] as String? ?? '';
             final patientFirstName = data['patientFirstName'] as String? ?? '';
             final patientLastName = data['patientLastName'] as String? ?? '';
             final patientGender = data['patientGender'] as String? ?? '';
             final patientAge = data['patientAge'] as int?;
             final notes = data['notes'] as String? ?? '';
-            final clinicName = data['assignedClinicName'] as String? ?? l10n.unknownClinic;
-            final clinicianName = data['assignedClinicianName'] as String? ?? '';
+            final clinicName =
+                data['assignedClinicName'] as String? ?? l10n.unknownClinic;
+            final clinicianName =
+                data['assignedClinicianName'] as String? ?? '';
             final clinicianNotes = data['clinicianNotes'] as String? ?? '';
             final clinicianAdvice = data['clinicianAdvice'] as String? ?? '';
-            final clinicianDecision = data['clinicianDecision'] as String? ?? '';
+            final clinicianDecision =
+                data['clinicianDecision'] as String? ?? '';
             final createdAt = data['createdAt'] as Timestamp?;
             final updatedAt = data['updatedAt'] as Timestamp?;
             final lastFollowUpAt = data['lastFollowUpAt'] as Timestamp?;
             final statusColor = _getStatusColor(effectiveStatus);
-            final isAdvicePath = clinicianDecision == 'advise_vht' || effectiveStatus == 'advised';
+            final isAdvicePath =
+                clinicianDecision == 'advise_vht' ||
+                effectiveStatus == 'advised';
             final isCaseOpen = status != 'completed' && status != 'cancelled';
             final now = DateTime.now();
             const ambulanceStaleThreshold = Duration(minutes: 15);
@@ -480,12 +676,18 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                 ['dispatched', 'enRoute', 'inTransit'].contains(status) &&
                 updatedAt != null &&
                 now.difference(updatedAt.toDate()) > ambulanceStaleThreshold &&
-                (lastFollowUpAt == null || now.difference(lastFollowUpAt.toDate()) > followUpThrottleThreshold);
-            final clinicianAdviceText = clinicianAdvice.isNotEmpty ? clinicianAdvice : clinicianNotes;
+                (lastFollowUpAt == null ||
+                    now.difference(lastFollowUpAt.toDate()) >
+                        followUpThrottleThreshold);
+            final clinicianAdviceText = clinicianAdvice.isNotEmpty
+                ? clinicianAdvice
+                : clinicianNotes;
 
             // Additional fields for contacts and media
-            final clinicianPhone = data['clinicianPhoneNumber'] as String? ?? '';
-            final ambulanceDriverId = data['assignedAmbulanceId'] as String? ?? '';
+            final clinicianPhone =
+                data['clinicianPhoneNumber'] as String? ?? '';
+            final ambulanceDriverId =
+                data['assignedAmbulanceId'] as String? ?? '';
             final imageUrl = data['imageUrl'] as String? ?? '';
             final videoUrl = data['videoUrl'] as String? ?? '';
             final voiceNoteUrl = data['voiceNoteUrl'] as String? ?? '';
@@ -509,6 +711,8 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                       userId: uid,
                       caseId: widget.caseId,
                       emergencyType: emergencyTypeForRecent,
+                      patientId: patientId,
+                      patientName: patientDisplayName,
                     );
                   } catch (_) {}
                 });
@@ -524,24 +728,51 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.vhtAccent.withAlpha(20),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(emergencyType, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.vhtAccent)),
+                        child: Text(
+                          emergencyType,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: AppColors.vhtAccent,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: _getUrgencyColor(urgency).withAlpha(20),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(urgency.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: _getUrgencyColor(urgency))),
+                        child: Text(
+                          urgency.toUpperCase(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: _getUrgencyColor(urgency),
+                          ),
+                        ),
                       ),
                       const Spacer(),
-                      if (createdAt != null) Text(_formatTimestamp(context, createdAt), style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      if (createdAt != null)
+                        Text(
+                          _formatTimestamp(context, createdAt),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -556,15 +787,32 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                     ),
                     child: Row(
                       children: [
-                              Icon(_getStatusIcon(effectiveStatus), color: statusColor, size: 28),
+                        Icon(
+                          _getStatusIcon(effectiveStatus),
+                          color: statusColor,
+                          size: 28,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(_getStatusLabel(context, effectiveStatus), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: statusColor)),
+                              Text(
+                                _getStatusLabel(context, effectiveStatus),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: statusColor,
+                                ),
+                              ),
                               const SizedBox(height: 2),
-                              Text(_getStatusMessage(context, effectiveStatus), style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                              Text(
+                                _getStatusMessage(context, effectiveStatus),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -590,18 +838,30 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.medical_information_rounded, size: 20, color: Colors.blue),
+                              Icon(
+                                Icons.medical_information_rounded,
+                                size: 20,
+                                color: Colors.blue,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 l10n.clinicianAdvice,
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.blue),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                  color: Colors.blue,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 10),
                           Text(
                             clinicianAdviceText,
-                            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.6),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                              height: 1.6,
+                            ),
                           ),
                         ],
                       ),
@@ -610,31 +870,47 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                   ],
 
                   // 4. Clinician Notes (privacy: content hidden for VHT)
-                  if (clinicianNotes.isNotEmpty && !isAdvicePath && clinicianDecision.isNotEmpty) ...[
+                  if (clinicianNotes.isNotEmpty &&
+                      !isAdvicePath &&
+                      clinicianDecision.isNotEmpty) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: AppColors.clinicAccent.withAlpha(8),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.clinicAccent.withAlpha(30)),
+                        border: Border.all(
+                          color: AppColors.clinicAccent.withAlpha(30),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.medical_information_outlined, size: 18, color: AppColors.clinicAccent),
+                              Icon(
+                                Icons.medical_information_outlined,
+                                size: 18,
+                                color: AppColors.clinicAccent,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 l10n.clinicianNotes,
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.clinicAccent),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: AppColors.clinicAccent,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Text(
                             l10n.awaitingStatusUpdate,
-                            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -644,11 +920,18 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
 
                   // 5. Patient details (with calculated age)
                   _buildInfoCard(l10n.patientInformation, [
-                    if (patientDisplayName.isNotEmpty) _buildInfoRow(l10n.name, patientDisplayName),
-                    if (patientId.isNotEmpty) _buildInfoRow(l10n.patientIdLabel, patientId),
+                    if (patientDisplayName.isNotEmpty)
+                      _buildInfoRow(l10n.name, patientDisplayName),
+                    if (patientId.isNotEmpty)
+                      _buildInfoRow(l10n.patientIdLabel, patientId),
                     if (patientGender.isNotEmpty)
-                      _buildInfoRow(l10n.gender, patientGender[0].toUpperCase() + patientGender.substring(1)),
-                    if (calculatedAge != null) _buildInfoRow(l10n.age, l10n.ageYears(calculatedAge)),
+                      _buildInfoRow(
+                        l10n.gender,
+                        patientGender[0].toUpperCase() +
+                            patientGender.substring(1),
+                      ),
+                    if (calculatedAge != null)
+                      _buildInfoRow(l10n.age, l10n.ageYears(calculatedAge)),
                   ]),
                   const SizedBox(height: 12),
 
@@ -669,51 +952,107 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 6),
                             child: Row(
                               children: [
-                                Icon(Icons.phone, color: Colors.green, size: 20),
+                                Icon(
+                                  Icons.phone,
+                                  color: Colors.green,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(l10n.callClinician, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                                      Text(
+                                        l10n.callClinician,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
                                       if (clinicianName.isNotEmpty)
-                                        Text(clinicianName, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                        Text(
+                                          clinicianName,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),
-                                Icon(Icons.chevron_right, size: 18, color: AppColors.textSecondary),
+                                Icon(
+                                  Icons.chevron_right,
+                                  size: 18,
+                                  color: AppColors.textSecondary,
+                                ),
                               ],
                             ),
                           ),
                         ),
-                      if (ambulanceDriverId.isNotEmpty && ['dispatched', 'enRoute'].contains(status))
+                      if (ambulanceDriverId.isNotEmpty &&
+                          ['dispatched', 'enRoute'].contains(status))
                         FutureBuilder<DocumentSnapshot>(
-                          future: FirebaseFirestore.instance.collection('users').doc(ambulanceDriverId).get(),
+                          future: FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(ambulanceDriverId)
+                              .get(),
                           builder: (context, driverSnap) {
-                            if (!driverSnap.hasData || !driverSnap.data!.exists) return const SizedBox.shrink();
-                            final driverData = driverSnap.data!.data() as Map<String, dynamic>;
-                            final driverPhone = driverData['phoneNumber'] as String? ?? '';
-                            final driverName = '${driverData['firstName'] ?? ''} ${driverData['lastName'] ?? ''}'.trim();
-                            if (driverPhone.isEmpty) return const SizedBox.shrink();
+                            if (!driverSnap.hasData || !driverSnap.data!.exists)
+                              return const SizedBox.shrink();
+                            final driverData =
+                                driverSnap.data!.data() as Map<String, dynamic>;
+                            final driverPhone =
+                                driverData['phoneNumber'] as String? ?? '';
+                            final driverName =
+                                '${driverData['firstName'] ?? ''} ${driverData['lastName'] ?? ''}'
+                                    .trim();
+                            if (driverPhone.isEmpty)
+                              return const SizedBox.shrink();
                             return InkWell(
                               onTap: () => _callPhone(driverPhone),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 6,
+                                ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.phone, color: Colors.blue, size: 20),
+                                    Icon(
+                                      Icons.phone,
+                                      color: Colors.blue,
+                                      size: 20,
+                                    ),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(l10n.callAmbulanceDriver, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                                          Text(
+                                            l10n.callAmbulanceDriver,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
                                           if (driverName.isNotEmpty)
-                                            Text(driverName, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                            Text(
+                                              driverName,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ),
-                                    Icon(Icons.chevron_right, size: 18, color: AppColors.textSecondary),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      size: 18,
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -729,31 +1068,54 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                               onPressed: _isSendingFollowUp
                                   ? null
                                   : () => _sendAmbulanceDelayUpdate(
-                                        widget.caseId,
-                                        clinicName: clinicName,
-                                        patientName: patientDisplayName.isNotEmpty ? patientDisplayName : 'patient',
-                                      ),
-                              icon: Icon(Icons.warning_amber_rounded, color: AppColors.vhtAccent),
+                                      widget.caseId,
+                                      clinicName: clinicName,
+                                      patientName: patientDisplayName.isNotEmpty
+                                          ? patientDisplayName
+                                          : 'patient',
+                                    ),
+                              icon: Icon(
+                                Icons.warning_amber_rounded,
+                                color: AppColors.vhtAccent,
+                              ),
                               label: Text(
                                 'Ambulance delayed - message clinic',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.vhtAccent),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.vhtAccent,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: AppColors.vhtAccent.withAlpha(160)),
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                side: BorderSide(
+                                  color: AppColors.vhtAccent.withAlpha(160),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                  horizontal: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       if (clinicianPhone.isEmpty &&
-                          !(ambulanceDriverId.isNotEmpty && ['dispatched', 'enRoute'].contains(status)) &&
+                          !(ambulanceDriverId.isNotEmpty &&
+                              ['dispatched', 'enRoute'].contains(status)) &&
                           !shouldShowAmbulanceDelayCommunication)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Text(l10n.noContactsAvailableYet, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          child: Text(
+                            l10n.noContactsAvailableYet,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ),
                     ]),
                     const SizedBox(height: 12),
@@ -764,14 +1126,23 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                     _buildInfoCard(l10n.vhtNotes, [
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(notes, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5)),
+                        child: Text(
+                          notes,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                            height: 1.5,
+                          ),
+                        ),
                       ),
                     ]),
                     const SizedBox(height: 12),
                   ],
 
                   // 9. Media Attachments section (images, videos, voice notes)
-                  if (imageUrl.isNotEmpty || videoUrl.isNotEmpty || voiceNoteUrl.isNotEmpty) ...[
+                  if (imageUrl.isNotEmpty ||
+                      videoUrl.isNotEmpty ||
+                      voiceNoteUrl.isNotEmpty) ...[
                     _buildInfoCard(l10n.attachments, [
                       if (imageUrl.isNotEmpty) ...[
                         const SizedBox(height: 4),
@@ -791,7 +1162,8 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                                   alignment: Alignment.center,
                                   child: CircularProgressIndicator(
                                     value: progress.expectedTotalBytes != null
-                                        ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                                        ? progress.cumulativeBytesLoaded /
+                                              progress.expectedTotalBytes!
                                         : null,
                                   ),
                                 );
@@ -799,13 +1171,25 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                               errorBuilder: (ctx, err, stack) => Container(
                                 height: 80,
                                 alignment: Alignment.center,
-                                decoration: BoxDecoration(color: Colors.grey.withAlpha(20), borderRadius: BorderRadius.circular(10)),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.broken_image, color: AppColors.textSecondary),
+                                    Icon(
+                                      Icons.broken_image,
+                                      color: AppColors.textSecondary,
+                                    ),
                                     const SizedBox(height: 4),
-                                    Text(l10n.couldNotLoadImage, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                    Text(
+                                      l10n.couldNotLoadImage,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -813,37 +1197,74 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(l10n.tapImageToViewFullScreen, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        Text(
+                          l10n.tapImageToViewFullScreen,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ],
                       if (videoUrl.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         InkWell(
                           onTap: () async {
                             final uri = Uri.parse(videoUrl);
-                            if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            if (await canLaunchUrl(uri))
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
                           },
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.blue.withAlpha(10),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.blue.withAlpha(30)),
+                              border: Border.all(
+                                color: Colors.blue.withAlpha(30),
+                              ),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.videocam_rounded, color: Colors.blue, size: 24),
+                                Icon(
+                                  Icons.videocam_rounded,
+                                  color: Colors.blue,
+                                  size: 24,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(l10n.videoAttached, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.blue)),
-                                      Text(l10n.tapToPlayVideo, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                      Text(
+                                        l10n.videoAttached,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      Text(
+                                        l10n.tapToPlayVideo,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                Icon(Icons.open_in_new, color: Colors.blue, size: 18),
+                                Icon(
+                                  Icons.open_in_new,
+                                  color: Colors.blue,
+                                  size: 18,
+                                ),
                               ],
                             ),
                           ),
@@ -871,16 +1292,43 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.update_rounded, size: 18, color: Colors.blue),
+                              Icon(
+                                Icons.update_rounded,
+                                size: 18,
+                                color: Colors.blue,
+                              ),
                               const SizedBox(width: 8),
-                              Text(l10n.latestFollowUp, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.blue)),
+                              Text(
+                                l10n.latestFollowUp,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Colors.blue,
+                                ),
+                              ),
                               const Spacer(),
                               if (data['lastFollowUpAt'] != null)
-                                Text(_formatTimestamp(context, data['lastFollowUpAt'] as Timestamp?), style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                Text(
+                                  _formatTimestamp(
+                                    context,
+                                    data['lastFollowUpAt'] as Timestamp?,
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(data['lastFollowUp'] as String, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5)),
+                          Text(
+                            data['lastFollowUp'] as String,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                              height: 1.5,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -888,38 +1336,78 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                   ],
 
                   // 11. Contact Admin section (when dispatch requested)
-                  if (['ambulanceRequested', 'dispatched', 'enRoute'].contains(status)) ...[
+                  if ([
+                    'ambulanceRequested',
+                    'dispatched',
+                    'enRoute',
+                  ].contains(status)) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.deepPurple.withAlpha(8),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.deepPurple.withAlpha(30)),
+                        border: Border.all(
+                          color: Colors.deepPurple.withAlpha(30),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.admin_panel_settings, size: 18, color: Colors.deepPurple),
+                              Icon(
+                                Icons.admin_panel_settings,
+                                size: 18,
+                                color: Colors.deepPurple,
+                              ),
                               const SizedBox(width: 8),
-                              Text(l10n.needHelpWithDispatch, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.deepPurple)),
+                              Text(
+                                l10n.needHelpWithDispatch,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Colors.deepPurple,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(l10n.contactAdminForDispatch, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          Text(
+                            l10n.contactAdminForDispatch,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                           const SizedBox(height: 10),
                           Row(
                             children: [
                               Expanded(
                                 child: OutlinedButton.icon(
                                   onPressed: () => _callAdmin(),
-                                  icon: Icon(Icons.phone, size: 16, color: Colors.deepPurple),
-                                  label: Text(l10n.callAdmin, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.deepPurple)),
+                                  icon: Icon(
+                                    Icons.phone,
+                                    size: 16,
+                                    color: Colors.deepPurple,
+                                  ),
+                                  label: Text(
+                                    l10n.callAdmin,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.deepPurple,
+                                    ),
+                                  ),
                                   style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: Colors.deepPurple.withAlpha(60)),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    side: BorderSide(
+                                      color: Colors.deepPurple.withAlpha(60),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -929,15 +1417,35 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                                   onPressed: () => _sendFollowUpUpdate(
                                     widget.caseId,
                                     status,
-                                    clinicName: data['assignedClinicName'] as String?,
-                                    patientName: '${data['patientFirstName'] ?? ''} ${data['patientLastName'] ?? ''}'.trim(),
+                                    clinicName:
+                                        data['assignedClinicName'] as String?,
+                                    patientName:
+                                        '${data['patientFirstName'] ?? ''} ${data['patientLastName'] ?? ''}'
+                                            .trim(),
                                   ),
-                                  icon: Icon(Icons.message, size: 16, color: Colors.deepPurple),
-                                  label: Text(l10n.message, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.deepPurple)),
+                                  icon: Icon(
+                                    Icons.message,
+                                    size: 16,
+                                    color: Colors.deepPurple,
+                                  ),
+                                  label: Text(
+                                    l10n.message,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.deepPurple,
+                                    ),
+                                  ),
                                   style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: Colors.deepPurple.withAlpha(60)),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    side: BorderSide(
+                                      color: Colors.deepPurple.withAlpha(60),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -955,7 +1463,10 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         '${l10n.lastUpdated}: ${_formatTimestamp(context, updatedAt)}',
-                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(150)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary.withAlpha(150),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -966,24 +1477,45 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: _isSendingFollowUp ? null : () => _sendFollowUpUpdate(
-                        widget.caseId,
-                        status,
-                        clinicName: data['assignedClinicName'] as String?,
-                        patientName: '${data['patientFirstName'] ?? ''} ${data['patientLastName'] ?? ''}'.trim(),
-                      ),
+                        onPressed: _isSendingFollowUp
+                            ? null
+                            : () => _sendFollowUpUpdate(
+                                widget.caseId,
+                                status,
+                                clinicName:
+                                    data['assignedClinicName'] as String?,
+                                patientName:
+                                    '${data['patientFirstName'] ?? ''} ${data['patientLastName'] ?? ''}'
+                                        .trim(),
+                              ),
                         icon: _isSendingFollowUp
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Icon(Icons.edit_note_rounded),
                         label: Text(
-                          _isSendingFollowUp ? l10n.sending : l10n.sendFollowUpUpdate,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                          _isSendingFollowUp
+                              ? l10n.sending
+                              : l10n.sendFollowUpUpdate,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.vhtAccent,
-                          side: BorderSide(color: AppColors.vhtAccent, width: 1.5),
+                          side: BorderSide(
+                            color: AppColors.vhtAccent,
+                            width: 1.5,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -991,7 +1523,11 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                   ],
 
                   // 14. Progress Timeline
-                  _buildStatusTimeline(context, effectiveStatus, clinicianDecision),
+                  _buildStatusTimeline(
+                    context,
+                    effectiveStatus,
+                    clinicianDecision,
+                  ),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -1013,7 +1549,14 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.vhtAccent)),
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: AppColors.vhtAccent,
+            ),
+          ),
           const SizedBox(height: 8),
           ...children,
         ],
@@ -1029,26 +1572,55 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
         children: [
           SizedBox(
             width: 90,
-            child: Text(label, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary)),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusTimeline(BuildContext context, String currentStatus, String clinicianDecision) {
+  Widget _buildStatusTimeline(
+    BuildContext context,
+    String currentStatus,
+    String clinicianDecision,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     // Determine which workflow path
-    final isAdvicePath = clinicianDecision == 'advise_vht' || currentStatus == 'advised';
+    final isAdvicePath =
+        clinicianDecision == 'advise_vht' || currentStatus == 'advised';
 
     final List<String> statuses;
     if (isAdvicePath) {
       statuses = ['pending', 'advised', 'completed'];
     } else if (clinicianDecision == 'dispatch_ambulance' ||
-        ['ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment', 'admitted', 'discharged'].contains(currentStatus)) {
+        [
+          'ambulanceRequested',
+          'dispatched',
+          'enRoute',
+          'arrived',
+          'inTransit',
+          'delivered',
+          'inTreatment',
+          'admitted',
+          'discharged',
+        ].contains(currentStatus)) {
       statuses = [
         'pending',
         'ambulanceRequested',
@@ -1081,7 +1653,11 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
         children: [
           Text(
             isAdvicePath ? l10n.adviceProgress : l10n.caseProgress,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
           ...List.generate(statuses.length, (index) {
@@ -1099,15 +1675,32 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                       height: 22,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isCompleted ? (isCurrent ? _getStatusColor(s) : Colors.green) : AppColors.border,
-                        border: isCurrent ? Border.all(color: _getStatusColor(s).withAlpha(80), width: 2) : null,
+                        color: isCompleted
+                            ? (isCurrent ? _getStatusColor(s) : Colors.green)
+                            : AppColors.border,
+                        border: isCurrent
+                            ? Border.all(
+                                color: _getStatusColor(s).withAlpha(80),
+                                width: 2,
+                              )
+                            : null,
                       ),
                       child: isCompleted
-                          ? Icon(isCurrent ? _getStatusIcon(s) : Icons.check, size: 12, color: Colors.white)
+                          ? Icon(
+                              isCurrent ? _getStatusIcon(s) : Icons.check,
+                              size: 12,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
                     if (index < statuses.length - 1)
-                      Container(width: 2, height: 18, color: isCompleted && index < currentIndex ? Colors.green : AppColors.border),
+                      Container(
+                        width: 2,
+                        height: 18,
+                        color: isCompleted && index < currentIndex
+                            ? Colors.green
+                            : AppColors.border,
+                      ),
                   ],
                 ),
                 const SizedBox(width: 10),
@@ -1118,8 +1711,12 @@ class _VhtCaseDetailScreenState extends State<VhtCaseDetailScreen> {
                       _getStatusLabel(context, s),
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-                        color: isCompleted ? AppColors.textPrimary : AppColors.textSecondary.withAlpha(100),
+                        fontWeight: isCurrent
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: isCompleted
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary.withAlpha(100),
                       ),
                     ),
                   ),

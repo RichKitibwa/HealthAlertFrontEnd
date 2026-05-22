@@ -54,29 +54,42 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
 
   Color _urgencyColor(String? u) {
     switch (u?.toLowerCase()) {
-      case 'critical': return Colors.red;
-      case 'high': return Colors.deepOrange;
-      case 'medium': return Colors.orange;
-      case 'low': return Colors.green;
-      default: return AppColors.textSecondary;
+      case 'critical':
+        return Colors.red;
+      case 'high':
+        return Colors.deepOrange;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   IconData _emergencyIcon(String? type) {
     switch (type?.toLowerCase()) {
-      case 'birth': return Icons.pregnant_woman_rounded;
-      case 'trauma': return Icons.local_hospital_rounded;
-      case 'infection': return Icons.coronavirus_rounded;
-      default: return Icons.warning_amber_rounded;
+      case 'birth':
+        return Icons.pregnant_woman_rounded;
+      case 'trauma':
+        return Icons.local_hospital_rounded;
+      case 'infection':
+        return Icons.coronavirus_rounded;
+      default:
+        return Icons.warning_amber_rounded;
     }
   }
 
   Color _emergencyIconColor(String? type) {
     switch (type?.toLowerCase()) {
-      case 'birth': return Colors.pink;
-      case 'trauma': return Colors.red;
-      case 'infection': return Colors.orange;
-      default: return Colors.amber;
+      case 'birth':
+        return Colors.pink;
+      case 'trauma':
+        return Colors.red;
+      case 'infection':
+        return Colors.orange;
+      default:
+        return Colors.amber;
     }
   }
 
@@ -108,16 +121,25 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
         },
         onDashboard: () {},
         onSettings: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
         },
       ),
       endDrawer: AppDrawer(
         onDashboard: () {},
         onNotifications: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          );
         },
         onSettings: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
         },
         onLogout: () async {
           await LogoutUtils.logout();
@@ -142,7 +164,9 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                   children: [
                     // Welcome message
                     Text(
-                      l10n.welcomeName(CurrentUserSession.firstName ?? l10n.user),
+                      l10n.welcomeName(
+                        CurrentUserSession.firstName ?? l10n.user,
+                      ),
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
@@ -174,10 +198,16 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                             : (() {
                                 final sorted = List.of(allDocs)
                                   ..sort((a, b) {
-                                    final aData = a.data() as Map<String, dynamic>;
-                                    final bData = b.data() as Map<String, dynamic>;
-                                    final aT = aData['dispatchedAt'] as Timestamp? ?? aData['createdAt'] as Timestamp?;
-                                    final bT = bData['dispatchedAt'] as Timestamp? ?? bData['createdAt'] as Timestamp?;
+                                    final aData =
+                                        a.data() as Map<String, dynamic>;
+                                    final bData =
+                                        b.data() as Map<String, dynamic>;
+                                    final aT =
+                                        aData['dispatchedAt'] as Timestamp? ??
+                                        aData['createdAt'] as Timestamp?;
+                                    final bT =
+                                        bData['dispatchedAt'] as Timestamp? ??
+                                        bData['createdAt'] as Timestamp?;
                                     if (aT == null && bT == null) return 0;
                                     if (aT == null) return 1;
                                     if (bT == null) return -1;
@@ -196,8 +226,11 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.check_circle_outline_rounded,
-                                    color: Colors.green.shade400, size: 22),
+                                Icon(
+                                  Icons.check_circle_outline_rounded,
+                                  color: Colors.green.shade400,
+                                  size: 22,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
@@ -214,23 +247,33 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
 
                         final data = doc.data() as Map<String, dynamic>;
                         final caseId = doc.id;
-                        final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
-                        final urgency = data['urgencyLevel'] as String? ?? 'medium';
-                        final patientFirst = data['patientFirstName'] as String? ?? '';
-                        final patientLast = data['patientLastName'] as String? ?? '';
+                        final emergencyType =
+                            data['emergencyType'] as String? ?? 'Unknown';
+                        final urgency =
+                            data['urgencyLevel'] as String? ?? 'medium';
+                        final patientFirst =
+                            data['patientFirstName'] as String? ?? '';
+                        final patientLast =
+                            data['patientLastName'] as String? ?? '';
                         final patientAge = data['patientAge'] as int?;
-                        final patientGender = data['patientGender'] as String? ?? '';
+                        final patientGender =
+                            data['patientGender'] as String? ?? '';
                         final vhtName = data['vhtName'] as String? ?? '';
-                        final clinicName = data['assignedClinicName'] as String? ?? '';
+                        final clinicName =
+                            data['assignedClinicName'] as String? ?? '';
                         final dispatchedAt = data['dispatchedAt'] as Timestamp?;
                         final patientName = '$patientFirst $patientLast'.trim();
 
                         String patientDesc = '';
                         if (patientGender.isNotEmpty) {
-                          patientDesc = patientGender[0].toUpperCase() + patientGender.substring(1);
+                          patientDesc =
+                              patientGender[0].toUpperCase() +
+                              patientGender.substring(1);
                         }
                         if (patientAge != null) {
-                          patientDesc += patientDesc.isNotEmpty ? ', $patientAge yrs' : '$patientAge yrs';
+                          patientDesc += patientDesc.isNotEmpty
+                              ? ', $patientAge yrs'
+                              : '$patientAge yrs';
                         }
                         if (patientDesc.isEmpty) patientDesc = 'Unknown';
 
@@ -238,16 +281,23 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => AmbulanceIncomingDispatchScreen(caseId: caseId),
+                              builder: (_) => AmbulanceIncomingDispatchScreen(
+                                caseId: caseId,
+                              ),
                             ),
                           ),
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: _urgencyColor(urgency).withAlpha(50)),
+                              border: Border.all(
+                                color: _urgencyColor(urgency).withAlpha(50),
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withAlpha(6),
@@ -279,10 +329,17 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                                       ),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: _urgencyColor(urgency).withAlpha(20),
-                                        borderRadius: BorderRadius.circular(999),
+                                        color: _urgencyColor(
+                                          urgency,
+                                        ).withAlpha(20),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
                                       ),
                                       child: Text(
                                         urgency.toUpperCase(),
@@ -308,7 +365,10 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                                   ),
                                 Text(
                                   patientDesc,
-                                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
@@ -316,14 +376,26 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                                     if (vhtName.isNotEmpty)
                                       Text(
                                         'VHT: $vhtName',
-                                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
                                       ),
                                     if (clinicName.isNotEmpty) ...[
-                                      Text(' • ', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                      Text(
+                                        ' • ',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
                                       Flexible(
                                         child: Text(
                                           '${l10n.destination}: $clinicName',
-                                          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.textSecondary,
+                                          ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
@@ -334,7 +406,8 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                                         _timeAgo(dispatchedAt, l10n),
                                         style: TextStyle(
                                           fontSize: 10,
-                                          color: AppColors.textSecondary.withAlpha(150),
+                                          color: AppColors.textSecondary
+                                              .withAlpha(150),
                                         ),
                                       ),
                                   ],
@@ -356,12 +429,16 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AmbulanceAllIncomingRequestsScreen(),
+                              builder: (_) =>
+                                  const AmbulanceAllIncomingRequestsScreen(),
                             ),
                           );
                         },
-                        icon: Icon(Icons.list_alt_rounded, size: 20,
-                            color: AppColors.ambulanceAccent),
+                        icon: Icon(
+                          Icons.list_alt_rounded,
+                          size: 20,
+                          color: AppColors.ambulanceAccent,
+                        ),
                         label: Text(
                           l10n.viewAllRequests,
                           style: TextStyle(
@@ -398,7 +475,8 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AmbulanceActiveCasesScreen(),
+                              builder: (_) =>
+                                  const AmbulanceActiveCasesScreen(),
                             ),
                           );
                         },
@@ -419,6 +497,42 @@ class _AmbulanceDashboardScreenState extends State<AmbulanceDashboardScreen> {
                             side: BorderSide(color: AppColors.border),
                           ),
                           elevation: 0,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AmbulanceActiveCasesScreen(
+                                showCompleted: true,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.history_rounded, size: 20),
+                        label: Text(
+                          l10n.completedCases,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ambulanceAccent,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.ambulanceAccent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          side: BorderSide(
+                            color: AppColors.ambulanceAccent.withAlpha(150),
+                          ),
                         ),
                       ),
                     ),

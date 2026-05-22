@@ -16,7 +16,9 @@ import '../utils/location_utils.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint('FCM background message received: ${message.notification?.title ?? message.data['title']}');
+  debugPrint(
+    'FCM background message received: ${message.notification?.title ?? message.data['title']}',
+  );
 
   if (message.notification == null) {
     final title = message.data['title'] ?? 'Emergency Alert';
@@ -28,6 +30,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           body: body,
           payload: message.data['caseId'],
           role: message.data['recipientRole'],
+          notificationKey: message.messageId ?? message.data['notifDocId'],
         );
       } catch (e) {
         debugPrint('Background handler notification error: $e');
@@ -45,12 +48,14 @@ class FCMNotificationService {
   static bool _channelsRegistered = false;
 
   static final Set<String> _shownNotificationIds = {};
+  static final Set<String> _shownPopupKeys = {};
 
   // Prevent registering multiple onMessage / onMessageOpenedApp listeners.
   static bool _foregroundListenerSetup = false;
 
   // Firestore real-time listener for new notifications.
-  StreamSubscription<QuerySnapshot>? _notificationListener;
+  static StreamSubscription<QuerySnapshot>? _notificationListener;
+  static String? _notificationListenerUserId;
 
   static const Map<String, AndroidNotificationChannel> _roleChannels = {
     'ambulance': AndroidNotificationChannel(
@@ -102,17 +107,16 @@ class FCMNotificationService {
   /// Fallback channel when role is unknown (e.g. background FCM). Uses loud alert.
   static const AndroidNotificationChannel _emergencyChannel =
       AndroidNotificationChannel(
-    'emergency_alerts_v3',
-    'Emergency Alerts',
-    description: 'Notifications for emergency cases and status updates',
-    importance: Importance.max,
-    playSound: true,
-    enableVibration: true,
-    sound: RawResourceAndroidNotificationSound('vht_alert'),
-    enableLights: true,
-    audioAttributesUsage: AudioAttributesUsage.alarm,
-  );
-
+        'emergency_alerts_v3',
+        'Emergency Alerts',
+        description: 'Notifications for emergency cases and status updates',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        sound: RawResourceAndroidNotificationSound('vht_alert'),
+        enableLights: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      );
 
   static void registerBackgroundHandler() {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -127,10 +131,10 @@ class FCMNotificationService {
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
@@ -144,9 +148,10 @@ class FCMNotificationService {
       },
     );
 
-    final androidPlugin =
-        _localNotifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin != null) {
       await androidPlugin.requestNotificationsPermission();
       await androidPlugin.createNotificationChannel(_emergencyChannel);
@@ -179,8 +184,15 @@ class FCMNotificationService {
     String? payload,
     String? role,
     String? tapToViewSuffix,
+    String? notificationKey,
   }) async {
     await _initializeLocalNotifications();
+
+    final popupKey = notificationKey?.trim();
+    if (popupKey != null && popupKey.isNotEmpty) {
+      if (_shownPopupKeys.contains(popupKey)) return;
+      _shownPopupKeys.add(popupKey);
+    }
 
     String displayBody = body.trim();
     if (tapToViewSuffix != null && tapToViewSuffix.isNotEmpty) {
@@ -191,8 +203,9 @@ class FCMNotificationService {
 
     final String channelKey = _channelKeyForRole(role);
     final bool isAmbulance = channelKey == 'ambulance';
-    final AndroidNotificationChannel? roleChannel =
-        channelKey.isNotEmpty ? _roleChannels[channelKey] : null;
+    final AndroidNotificationChannel? roleChannel = channelKey.isNotEmpty
+        ? _roleChannels[channelKey]
+        : null;
     final AndroidNotificationChannel activeChannel =
         roleChannel ?? _emergencyChannel;
     final String channelId = activeChannel.id;
@@ -204,25 +217,26 @@ class FCMNotificationService {
         ? Int64List.fromList([0, 600, 200, 600, 200, 600])
         : Int64List.fromList([0, 400, 200, 400]);
 
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      channelId,
-      channelName,
-      channelDescription: channelDescription,
-      importance: Importance.max,
-      priority: Priority.max,
-      playSound: true,
-      enableVibration: true,
-      vibrationPattern: vibrationPattern,
-      icon: '@mipmap/ic_launcher',
-      // Ambulance: fullscreen takeover + persistent until tapped
-      fullScreenIntent: isAmbulance,
-      ongoing: isAmbulance,
-      autoCancel: true,
-      visibility: NotificationVisibility.public,
-      category: isAmbulance
-          ? AndroidNotificationCategory.alarm
-          : AndroidNotificationCategory.reminder,
-    );
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          channelId,
+          channelName,
+          channelDescription: channelDescription,
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          enableVibration: true,
+          vibrationPattern: vibrationPattern,
+          icon: '@mipmap/ic_launcher',
+          // Ambulance: fullscreen takeover + persistent until tapped
+          fullScreenIntent: isAmbulance,
+          ongoing: isAmbulance,
+          autoCancel: true,
+          visibility: NotificationVisibility.public,
+          category: isAmbulance
+              ? AndroidNotificationCategory.alarm
+              : AndroidNotificationCategory.reminder,
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -236,9 +250,12 @@ class FCMNotificationService {
       iOS: iosDetails,
     );
 
-    // Use a unique ID based on current time to avoid overwriting
+    final notificationId = popupKey != null && popupKey.isNotEmpty
+        ? popupKey.hashCode & 0x7FFFFFFF
+        : DateTime.now().millisecondsSinceEpoch ~/ 1000 & 0x7FFFFFFF;
+
     await _localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000 & 0x7FFFFFFF,
+      notificationId,
       title,
       displayBody,
       details,
@@ -246,14 +263,12 @@ class FCMNotificationService {
     );
   }
 
-
   /// Initialize FCM: request permissions, get token, save to Firestore, setup listeners.
   Future<void> initialize() async {
     try {
       await _initializeLocalNotifications();
 
-      final NotificationSettings settings =
-          await _messaging.requestPermission(
+      final NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -286,13 +301,15 @@ class FCMNotificationService {
       if (uid == null || uid.isEmpty) return;
 
       final l10n = lookupAppLocalizations(CurrentAppLocale.current);
-      final String title = message.notification?.title
-          ?? message.data['title']
-          ?? l10n.notificationFallbackTitle;
-      final String body = message.notification?.body
-          ?? message.data['body']
-          ?? message.data['message']
-          ?? '';
+      final String title =
+          message.notification?.title ??
+          message.data['title'] ??
+          l10n.notificationFallbackTitle;
+      final String body =
+          message.notification?.body ??
+          message.data['body'] ??
+          message.data['message'] ??
+          '';
       final String? caseId = message.data['caseId'];
 
       // Deduplicate with Firestore listener: if we already showed for this doc, skip.
@@ -304,13 +321,17 @@ class FCMNotificationService {
 
       // Show local popup for foreground FCM messages (role-based sound).
       // In background/terminated, Android shows the notification automatically.
-      final tapToView = lookupAppLocalizations(CurrentAppLocale.current).tapToViewCase;
+      final tapToView = lookupAppLocalizations(
+        CurrentAppLocale.current,
+      ).tapToViewCase;
       showLocalPopup(
         title: title,
         body: body,
         payload: caseId,
         role: CurrentUserSession.role,
         tapToViewSuffix: tapToView,
+        notificationKey:
+            notifDocId ?? message.messageId ?? '$caseId:${message.sentTime}',
       );
     });
   }
@@ -351,8 +372,15 @@ class FCMNotificationService {
   /// popups even if FCM is delayed or not sent). Deduplication with FCM via
   /// _shownNotificationIds so we do not show twice when both Firestore and FCM fire.
   void startNotificationListener(String userId) {
+    if (_notificationListener != null &&
+        _notificationListenerUserId == userId) {
+      return;
+    }
+
     _notificationListener?.cancel();
+    _notificationListenerUserId = userId;
     _shownNotificationIds.clear();
+    _shownPopupKeys.clear();
     bool isFirstSnapshot = true;
 
     _notificationListener = _firestore
@@ -361,49 +389,58 @@ class FCMNotificationService {
         .where('read', isEqualTo: false)
         .snapshots()
         .listen(
-      (snapshot) {
-        if (isFirstSnapshot) {
-          for (final doc in snapshot.docs) {
-            _shownNotificationIds.add(doc.id);
-          }
-          isFirstSnapshot = false;
-          return;
-        }
+          (snapshot) {
+            if (isFirstSnapshot) {
+              for (final doc in snapshot.docs) {
+                _shownNotificationIds.add(doc.id);
+              }
+              isFirstSnapshot = false;
+              return;
+            }
 
-        for (final change in snapshot.docChanges) {
-          if (change.type == DocumentChangeType.added) {
-            final docId = change.doc.id;
-            if (_shownNotificationIds.contains(docId)) continue;
-            _shownNotificationIds.add(docId);
-            final data = change.doc.data() as Map<String, dynamic>? ?? {};
-            final title = data['title'] as String? ?? 'Notification';
-            final body = data['message'] as String? ?? data['body'] as String? ?? '';
-            final caseId = data['caseId'] as String?;
-            final role = data['recipientRole'] as String? ?? CurrentUserSession.role;
-            final tapToView = lookupAppLocalizations(CurrentAppLocale.current).tapToViewCase;
-            showLocalPopup(
-              title: title,
-              body: body,
-              payload: caseId,
-              role: role,
-              tapToViewSuffix: tapToView,
-            );
-          }
-        }
-      },
-      onError: (e) {
-        debugPrint('Notification listener error (non-fatal): $e');
-      },
-    );
+            for (final change in snapshot.docChanges) {
+              if (change.type == DocumentChangeType.added) {
+                final docId = change.doc.id;
+                if (_shownNotificationIds.contains(docId)) continue;
+                _shownNotificationIds.add(docId);
+                final rawData = change.doc.data();
+                final data = rawData is Map<String, dynamic>
+                    ? rawData
+                    : <String, dynamic>{};
+                final title = data['title'] as String? ?? 'Notification';
+                final body =
+                    data['message'] as String? ?? data['body'] as String? ?? '';
+                final caseId = data['caseId'] as String?;
+                final role =
+                    data['recipientRole'] as String? ?? CurrentUserSession.role;
+                final tapToView = lookupAppLocalizations(
+                  CurrentAppLocale.current,
+                ).tapToViewCase;
+                showLocalPopup(
+                  title: title,
+                  body: body,
+                  payload: caseId,
+                  role: role,
+                  tapToViewSuffix: tapToView,
+                  notificationKey: docId,
+                );
+              }
+            }
+          },
+          onError: (e) {
+            debugPrint('Notification listener error (non-fatal): $e');
+          },
+        );
   }
 
   /// Stop the notification listener (call on logout).
   void stopNotificationListener() {
     _notificationListener?.cancel();
     _notificationListener = null;
+    _notificationListenerUserId = null;
     _shownNotificationIds.clear();
+    _shownPopupKeys.clear();
   }
-
 
   /// Get localized strings for a user's preferred locale.
   Future<AppLocalizations> _l10nForUser(String userId) async {
@@ -418,22 +455,42 @@ class FCMNotificationService {
 
   static String _urgencyLabel(String? u, AppLocalizations l10n) {
     switch (u?.toLowerCase()) {
-      case 'critical': return l10n.critical;
-      case 'high': return l10n.high;
-      case 'medium': return l10n.moderate;
-      case 'low': return l10n.low;
-      default: return u ?? l10n.unknown;
+      case 'critical':
+        return l10n.critical;
+      case 'high':
+        return l10n.high;
+      case 'medium':
+        return l10n.moderate;
+      case 'low':
+        return l10n.low;
+      default:
+        return u ?? l10n.unknown;
     }
   }
 
   static String _emergencyTypeLabel(String? t, AppLocalizations l10n) {
     switch (t?.toLowerCase()) {
-      case 'birth': return l10n.birth;
-      case 'trauma': return l10n.trauma;
-      case 'infection': return l10n.infection;
-      case 'other': return l10n.other;
-      default: return t ?? l10n.unknown;
+      case 'birth':
+        return l10n.birth;
+      case 'trauma':
+        return l10n.trauma;
+      case 'infection':
+        return l10n.infection;
+      case 'other':
+        return l10n.other;
+      default:
+        return t ?? l10n.unknown;
     }
+  }
+
+  static String _notificationDocId({
+    required String userId,
+    required String type,
+    required String message,
+    String? caseId,
+  }) {
+    final raw = '$userId|$type|${caseId ?? ''}|$message';
+    return Uri.encodeComponent(raw).replaceAll('.', '%2E');
   }
 
   /// Create an in-app notification document in Firestore.
@@ -451,7 +508,17 @@ class FCMNotificationService {
       return;
     }
     try {
-      await _firestore.collection('notifications').add({
+      final docId = _notificationDocId(
+        userId: userId,
+        type: type,
+        message: message,
+        caseId: caseId,
+      );
+      final docRef = _firestore.collection('notifications').doc(docId);
+      final existing = await docRef.get();
+      if (existing.exists) return;
+
+      await docRef.set({
         'userId': userId,
         'title': title,
         'message': message,
@@ -465,7 +532,6 @@ class FCMNotificationService {
       debugPrint('Failed to send in-app notification: $e');
     }
   }
-
 
   /// VHT creates a case → notify clinician (popup via listener + in-app)
   /// and VHT themselves (in-app only).
@@ -489,7 +555,12 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: clinicianId,
         title: clinicianL10n.notificationNewEmergencyCase,
-        message: clinicianL10n.notificationNewEmergencyCaseMessage(typeLabelC, vhtName, patientName, urgencyLabelC),
+        message: clinicianL10n.notificationNewEmergencyCaseMessage(
+          typeLabelC,
+          vhtName,
+          patientName,
+          urgencyLabelC,
+        ),
         type: 'new_case',
         caseId: caseId,
         recipientRole: 'Clinician',
@@ -500,7 +571,11 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: vhtId,
         title: vhtL10n.notificationCaseSubmittedSuccessfully,
-        message: vhtL10n.notificationCaseSubmittedMessage(typeLabelV, patientName, clinicName),
+        message: vhtL10n.notificationCaseSubmittedMessage(
+          typeLabelV,
+          patientName,
+          clinicName,
+        ),
         type: 'case_submitted',
         caseId: caseId,
         recipientRole: 'VHT',
@@ -516,12 +591,18 @@ class FCMNotificationService {
     required String followUpMessage,
   }) async {
     final l10n = await _l10nForUser(clinicianId);
-    final shortMsg = followUpMessage.length > 80 ? '${followUpMessage.substring(0, 80)}...' : followUpMessage;
+    final shortMsg = followUpMessage.length > 80
+        ? '${followUpMessage.substring(0, 80)}...'
+        : followUpMessage;
     if (clinicianId.isNotEmpty) {
       await sendInAppNotification(
         userId: clinicianId,
         title: l10n.notificationVhtFollowUpUpdate,
-        message: l10n.notificationVhtFollowUpMessage(vhtName, patientName, shortMsg),
+        message: l10n.notificationVhtFollowUpMessage(
+          vhtName,
+          patientName,
+          shortMsg,
+        ),
         type: 'vht_follow_up',
         caseId: caseId,
         recipientRole: 'Clinician',
@@ -537,7 +618,9 @@ class FCMNotificationService {
     required String followUpMessage,
     String? excludeUserId,
   }) async {
-    final shortMsg = followUpMessage.length > 80 ? '${followUpMessage.substring(0, 80)}...' : followUpMessage;
+    final shortMsg = followUpMessage.length > 80
+        ? '${followUpMessage.substring(0, 80)}...'
+        : followUpMessage;
 
     try {
       if (facilityName.trim().isEmpty) return;
@@ -551,21 +634,31 @@ class FCMNotificationService {
       if (cliniciansQuery.docs.isEmpty) return;
 
       // Notify each clinician with their own locale preferences.
-      await Future.wait(cliniciansQuery.docs.map((doc) async {
-        final clinicianId = doc.id;
-        if (clinicianId.isEmpty) return;
-        if (excludeUserId != null && excludeUserId.isNotEmpty && clinicianId == excludeUserId) return;
+      await Future.wait(
+        cliniciansQuery.docs.map((doc) async {
+          final clinicianId = doc.id;
+          if (clinicianId.isEmpty) return;
+          if (excludeUserId != null &&
+              excludeUserId.isNotEmpty &&
+              clinicianId == excludeUserId) {
+            return;
+          }
 
-        final l10n = await _l10nForUser(clinicianId);
-        await sendInAppNotification(
-          userId: clinicianId,
-          title: l10n.notificationVhtFollowUpUpdate,
-          message: l10n.notificationVhtFollowUpMessage(vhtName, patientName, shortMsg),
-          type: 'vht_follow_up',
-          caseId: caseId,
-          recipientRole: 'Clinician',
-        );
-      }));
+          final l10n = await _l10nForUser(clinicianId);
+          await sendInAppNotification(
+            userId: clinicianId,
+            title: l10n.notificationVhtFollowUpUpdate,
+            message: l10n.notificationVhtFollowUpMessage(
+              vhtName,
+              patientName,
+              shortMsg,
+            ),
+            type: 'vht_follow_up',
+            caseId: caseId,
+            recipientRole: 'Clinician',
+          );
+        }),
+      );
     } catch (e) {
       debugPrint('notifyCliniciansOfVhtFollowUp failed: $e');
     }
@@ -580,12 +673,18 @@ class FCMNotificationService {
     required String advice,
   }) async {
     final l10n = await _l10nForUser(vhtId);
-    final shortAdvice = advice.length > 80 ? '${advice.substring(0, 80)}...' : advice;
+    final shortAdvice = advice.length > 80
+        ? '${advice.substring(0, 80)}...'
+        : advice;
     if (vhtId.isNotEmpty) {
       await sendInAppNotification(
         userId: vhtId,
         title: l10n.notificationClinicianAdviceReceived,
-        message: l10n.notificationClinicianAdviceMessage(clinicianName, patientName, shortAdvice),
+        message: l10n.notificationClinicianAdviceMessage(
+          clinicianName,
+          patientName,
+          shortAdvice,
+        ),
         type: 'clinician_advice',
         caseId: caseId,
         recipientRole: 'VHT',
@@ -594,7 +693,6 @@ class FCMNotificationService {
   }
 
   /// Clinician requests ambulance → nearest admin gets popup + in-app.
-  /// ALL ambulance drivers also get a standby notification.
   /// [vhtLatitude] / [vhtLongitude] are the VHT's GPS coordinates used to
   /// find the nearest admin. If omitted, all admins are notified.
   Future<void> notifyAdminsOfAmbulanceRequest({
@@ -623,13 +721,19 @@ class FCMNotificationService {
             final adminLng = (data['longitude'] as num?)?.toDouble();
             final distance = (adminLat != null && adminLng != null)
                 ? LocationUtils.calculateDistance(
-                    vhtLatitude, vhtLongitude, adminLat, adminLng)
+                    vhtLatitude,
+                    vhtLongitude,
+                    adminLat,
+                    adminLng,
+                  )
                 : double.maxFinite;
             return {'id': doc.id, 'distance': distance};
           }).toList();
 
           withDistances.sort(
-              (a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
+            (a, b) =>
+                (a['distance'] as double).compareTo(b['distance'] as double),
+          );
 
           // Notify only the nearest admin.
           targetAdminIds = [withDistances.first['id'] as String];
@@ -644,7 +748,8 @@ class FCMNotificationService {
           return sendInAppNotification(
             userId: adminId,
             title: l10n.notificationAmbulanceDispatchRequired,
-            message: '${l10n.clinicianLabel} $clinicianName — $typeLabel. ${l10n.patientLabel}: $patientName.',
+            message:
+                '${l10n.clinicianLabel} $clinicianName — $typeLabel. ${l10n.patientLabel}: $patientName.',
             type: 'dispatch_request',
             caseId: caseId,
             recipientRole: 'Admin',
@@ -653,38 +758,10 @@ class FCMNotificationService {
 
         await Future.wait(adminFutures);
       }
-
-      // Notify ALL ambulance drivers so they can be ready for dispatch
-      try {
-        final driversQuery = await _firestore
-            .collection('users')
-            .where('role', isEqualTo: 'Ambulance Driver')
-            .get();
-
-        final driverFutures = driversQuery.docs.map((driverDoc) async {
-          final driverId = driverDoc.id;
-          if (driverId.isEmpty) return;
-          final l10n = await _l10nForUser(driverId);
-          final typeLabel = _emergencyTypeLabel(emergencyType, l10n);
-          await sendInAppNotification(
-            userId: driverId,
-            title: l10n.notificationAmbulanceRequestStandby,
-            message: l10n.notificationAmbulanceRequestStandbyMessage(clinicianName, typeLabel, patientName),
-            type: 'ambulance_request_standby',
-            caseId: caseId,
-            recipientRole: 'Ambulance Driver',
-          );
-        });
-
-        await Future.wait(driverFutures);
-      } catch (e) {
-        debugPrint('Failed to notify drivers of ambulance request: $e');
-      }
     } catch (e) {
       debugPrint('Failed to notify admins of ambulance request: $e');
     }
   }
-
 
   /// Ambulance dispatched → notify VHT (popup+inapp), clinic (popup+inapp), driver (popup+inapp).
   Future<void> notifyOnAmbulanceDispatched({
@@ -708,7 +785,10 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: vhtId,
         title: vhtL10n.notificationAmbulanceOnTheWay,
-        message: vhtL10n.notificationAmbulanceOnTheWayMessage(driverName, patientName),
+        message: vhtL10n.notificationAmbulanceOnTheWayMessage(
+          driverName,
+          patientName,
+        ),
         type: 'ambulance_dispatched',
         caseId: caseId,
         recipientRole: 'VHT',
@@ -719,7 +799,11 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: clinicianId,
         title: clinicianL10n.notificationAmbulanceDispatched,
-        message: clinicianL10n.notificationAmbulanceDispatchedMessage(driverName, typeC, patientName),
+        message: clinicianL10n.notificationAmbulanceDispatchedMessage(
+          driverName,
+          typeC,
+          patientName,
+        ),
         type: 'ambulance_dispatched',
         caseId: caseId,
         recipientRole: 'Clinician',
@@ -730,7 +814,12 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: driverId,
         title: driverL10n.notificationNewDispatchAssignment,
-        message: driverL10n.notificationNewDispatchMessage(typeD, vhtName, clinicName, patientName),
+        message: driverL10n.notificationNewDispatchMessage(
+          typeD,
+          vhtName,
+          clinicName,
+          patientName,
+        ),
         type: 'dispatch_assigned',
         caseId: caseId,
         recipientRole: 'Ambulance Driver',
@@ -757,7 +846,12 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: vhtId,
         title: vhtL10n.notificationPatientDelivered,
-        message: vhtL10n.notificationPatientDeliveredMessage(patientName, typeV, clinicName, driverName),
+        message: vhtL10n.notificationPatientDeliveredMessage(
+          patientName,
+          typeV,
+          clinicName,
+          driverName,
+        ),
         type: 'patient_delivered',
         caseId: caseId,
         recipientRole: 'VHT',
@@ -775,7 +869,12 @@ class FCMNotificationService {
         await sendInAppNotification(
           userId: adminDoc.id,
           title: l10n.notificationPatientDelivered,
-          message: l10n.notificationPatientDeliveredMessage(patientName, typeLabel, clinicName, driverName),
+          message: l10n.notificationPatientDeliveredMessage(
+            patientName,
+            typeLabel,
+            clinicName,
+            driverName,
+          ),
           type: 'patient_delivered',
           caseId: caseId,
           recipientRole: 'Admin',
@@ -790,7 +889,11 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: clinicianId,
         title: clinicianL10n.notificationPatientArriving,
-        message: clinicianL10n.notificationPatientArrivingMessage(patientName, typeC, driverName),
+        message: clinicianL10n.notificationPatientArrivingMessage(
+          patientName,
+          typeC,
+          driverName,
+        ),
         type: 'patient_arriving',
         caseId: caseId,
         recipientRole: 'Clinician',
@@ -814,7 +917,11 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: vhtId,
         title: vhtL10n.notificationPatientDischarged,
-        message: vhtL10n.notificationPatientDischargedMessage(patientName, typeV, clinicName),
+        message: vhtL10n.notificationPatientDischargedMessage(
+          patientName,
+          typeV,
+          clinicName,
+        ),
         type: 'patient_discharged',
         caseId: caseId,
         recipientRole: 'VHT',
@@ -832,7 +939,12 @@ class FCMNotificationService {
         await sendInAppNotification(
           userId: adminDoc.id,
           title: l10n.notificationCaseCompleted,
-          message: l10n.notificationCaseCompletedMessage(patientName, typeLabel, clinicName, clinicianName),
+          message: l10n.notificationCaseCompletedMessage(
+            patientName,
+            typeLabel,
+            clinicName,
+            clinicianName,
+          ),
           type: 'case_completed',
           caseId: caseId,
           recipientRole: 'Admin',
@@ -857,14 +969,17 @@ class FCMNotificationService {
       await sendInAppNotification(
         userId: vhtId,
         title: l10n.notificationCaseClosed,
-        message: l10n.notificationCaseClosedMessage(clinicianName, patientName, typeLabel),
+        message: l10n.notificationCaseClosedMessage(
+          clinicianName,
+          patientName,
+          typeLabel,
+        ),
         type: 'case_closed',
         caseId: caseId,
         recipientRole: 'VHT',
       );
     }
   }
-
 
   /// Notify clinician of a new emergency case (legacy - use [notifyOnCaseCreated] instead).
   Future<void> notifyClinicianOfEmergency({
@@ -878,7 +993,12 @@ class FCMNotificationService {
     final l10n = await _l10nForUser(clinicianId);
     final typeLabel = _emergencyTypeLabel(emergencyType, l10n);
     final urgencyLabel = _urgencyLabel(urgencyLevel, l10n);
-    final message = l10n.notificationNewEmergencyCaseMessage(typeLabel, vhtName, patientName, urgencyLabel);
+    final message = l10n.notificationNewEmergencyCaseMessage(
+      typeLabel,
+      vhtName,
+      patientName,
+      urgencyLabel,
+    );
     await sendInAppNotification(
       userId: clinicianId,
       title: l10n.notificationNewEmergencyCase,
@@ -897,7 +1017,11 @@ class FCMNotificationService {
   }) async {
     final l10n = await _l10nForUser(userId);
     final typeLabel = _emergencyTypeLabel(emergencyType, l10n);
-    final message = l10n.notificationAmbulanceDispatchedMessage('…', typeLabel, patientName);
+    final message = l10n.notificationAmbulanceDispatchedMessage(
+      '…',
+      typeLabel,
+      patientName,
+    );
     await sendInAppNotification(
       userId: userId,
       title: l10n.notificationAmbulanceDispatched,
@@ -934,7 +1058,12 @@ class FCMNotificationService {
   }) async {
     final l10n = await _l10nForUser(driverId);
     final typeLabel = _emergencyTypeLabel(emergencyType, l10n);
-    final message = l10n.notificationNewDispatchMessage(typeLabel, '…', clinicName, patientName);
+    final message = l10n.notificationNewDispatchMessage(
+      typeLabel,
+      '…',
+      clinicName,
+      patientName,
+    );
     await sendInAppNotification(
       userId: driverId,
       title: l10n.notificationNewDispatchAssignment,

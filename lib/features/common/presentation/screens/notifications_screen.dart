@@ -32,7 +32,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)!.failedToMarkAsRead}: $e')),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)!.failedToMarkAsRead}: $e',
+            ),
+          ),
         );
       }
     }
@@ -57,13 +61,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.allNotificationsMarkedAsRead)),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.allNotificationsMarkedAsRead,
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)!.failedToMarkAllAsRead}: $e')),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)!.failedToMarkAllAsRead}: $e',
+            ),
+          ),
         );
       }
     }
@@ -129,41 +141,98 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   /// Navigate to the relevant screen based on notification type and user role.
-  void _handleNotificationTap(BuildContext context, String docId, Map<String, dynamic> data) {
+  Future<void> _handleNotificationTap(
+    BuildContext context,
+    String docId,
+    Map<String, dynamic> data,
+  ) async {
     // Mark as read first
     _markAsRead(docId);
 
     final caseId = data['caseId'] as String?;
-    final type = data['type'] as String?;
     final role = CurrentUserSession.role ?? '';
 
     if (caseId == null || caseId.isEmpty) return;
 
     // Route based on role
     if (role == 'VHT') {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => VhtCaseDetailScreen(caseId: caseId),
-      ));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => VhtCaseDetailScreen(caseId: caseId)),
+      );
     } else if (role == 'Ambulance Driver' || role == 'Ambulance') {
-      // For dispatch assignment / standby → show incoming dispatch screen
-      // For already en route cases → show en route screen
-      if (type == 'dispatch_assigned' || type == 'ambulance_request_standby') {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => AmbulanceIncomingDispatchScreen(caseId: caseId),
-        ));
-      } else {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => AmbulanceEnRouteScreen(caseId: caseId),
-        ));
+      try {
+        final caseDoc = await FirebaseFirestore.instance
+            .collection('emergencyCases')
+            .doc(caseId)
+            .get();
+        if (!context.mounted) return;
+        if (!caseDoc.exists) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.caseNotFound)),
+          );
+          return;
+        }
+
+        final caseData = caseDoc.data() ?? {};
+        final status = caseData['status'] as String? ?? '';
+        final assignedAmbulanceId =
+            caseData['assignedAmbulanceId'] as String? ?? '';
+        final isAssignedToDriver =
+            assignedAmbulanceId == CurrentUserSession.uid;
+
+        if (!isAssignedToDriver) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.contactAdminForDispatch,
+              ),
+            ),
+          );
+          return;
+        }
+
+        if (status == 'dispatched') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AmbulanceIncomingDispatchScreen(caseId: caseId),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AmbulanceEnRouteScreen(caseId: caseId),
+            ),
+          );
+        }
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.contactAdminForDispatch,
+            ),
+          ),
+        );
       }
-    } else if (role == 'Clinic' || role == 'Clinic Staff' || role == 'Clinician') {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => ClinicCaseDetailScreen(caseId: caseId),
-      ));
+    } else if (role == 'Clinic' ||
+        role == 'Clinic Staff' ||
+        role == 'Clinician') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ClinicCaseDetailScreen(caseId: caseId),
+        ),
+      );
     } else if (role == 'Admin') {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => AdminCaseTimelineScreen(caseId: caseId),
-      ));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdminCaseTimelineScreen(caseId: caseId),
+        ),
+      );
     }
   }
 
@@ -179,8 +248,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
     final diff = DateTime.now().difference(dt);
     if (diff.inSeconds < 60) return AppLocalizations.of(context)!.justNow;
-    if (diff.inMinutes < 60) return AppLocalizations.of(context)!.minAgo(diff.inMinutes);
-    if (diff.inHours < 24) return AppLocalizations.of(context)!.hrAgo(diff.inHours);
+    if (diff.inMinutes < 60)
+      return AppLocalizations.of(context)!.minAgo(diff.inMinutes);
+    if (diff.inHours < 24)
+      return AppLocalizations.of(context)!.hrAgo(diff.inHours);
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
@@ -257,10 +328,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const SizedBox(height: 8),
                 Text(
                   l10n.notificationsWillAppearHere,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textTertiary,
-                  ),
+                  style: TextStyle(fontSize: 14, color: AppColors.textTertiary),
                 ),
               ],
             ),
@@ -272,7 +340,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           itemBuilder: (context, index) {
             final doc = sortedDocs[index];
             final data = doc.data() as Map<String, dynamic>;
-            final title = data['title'] as String? ?? l10n.notificationFallbackTitle;
+            final title =
+                data['title'] as String? ?? l10n.notificationFallbackTitle;
             final message = data['message'] as String? ?? '';
             final type = data['type'] as String?;
             final read = data['read'] as bool? ?? false;
@@ -304,7 +373,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           color: iconColor.withAlpha(18),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(_getIconForType(type), color: iconColor, size: 22),
+                        child: Icon(
+                          _getIconForType(type),
+                          color: iconColor,
+                          size: 22,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -317,7 +390,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   child: Text(
                                     title,
                                     style: TextStyle(
-                                      fontWeight: read ? FontWeight.w500 : FontWeight.w700,
+                                      fontWeight: read
+                                          ? FontWeight.w500
+                                          : FontWeight.w700,
                                       fontSize: 14,
                                       color: AppColors.textPrimary,
                                     ),
@@ -338,7 +413,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               const SizedBox(height: 3),
                               Text(
                                 message,
-                                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -348,13 +426,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               children: [
                                 Text(
                                   _formatTimeAgo(context, createdAt),
-                                  style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textTertiary,
+                                  ),
                                 ),
                                 if (hasAction) ...[
                                   const SizedBox(width: 8),
                                   Text(
                                     l10n.tapToViewCase,
-                                    style: TextStyle(fontSize: 11, color: iconColor, fontWeight: FontWeight.w600),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: iconColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ],
                               ],
@@ -364,7 +449,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                       if (hasAction) ...[
                         const SizedBox(width: 8),
-                        Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 18),
+                        Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textTertiary,
+                          size: 18,
+                        ),
                       ],
                     ],
                   ),
@@ -394,18 +483,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 } else {
                   final role = CurrentUserSession.role?.toLowerCase() ?? '';
                   String route = '/login';
-                  if (role == 'admin') route = '/admin-dashboard';
-                  else if (role == 'vht') route = '/vht-dashboard';
-                  else if (role.contains('clinic')) route = '/clinic-dashboard';
-                  else if (role.contains('ambulance')) route = '/ambulance-dashboard';
-                  Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+                  if (role == 'admin')
+                    route = '/admin-dashboard';
+                  else if (role == 'vht')
+                    route = '/vht-dashboard';
+                  else if (role.contains('clinic'))
+                    route = '/clinic-dashboard';
+                  else if (role.contains('ambulance'))
+                    route = '/ambulance-dashboard';
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    route,
+                    (r) => false,
+                  );
                 }
               },
             ),
             backgroundColor: AppColors.surface,
             foregroundColor: AppColors.textPrimary,
           ),
-          body: Center(child: Text(AppLocalizations.of(context)!.pleaseSignInToViewNotifications)),
+          body: Center(
+            child: Text(
+              AppLocalizations.of(context)!.pleaseSignInToViewNotifications,
+            ),
+          ),
         ),
       );
     }
@@ -435,7 +536,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         break;
       case 'Admin':
         bottomNav = AdminNavigationBar(
-          currentIndex: 1, // Admin nav: 0=Home, 1=Notifications, 2=Analytics, 3=Users
+          currentIndex:
+              1, // Admin nav: 0=Home, 1=Notifications, 2=Analytics, 3=Users
           onItemSelected: (index) {},
         );
         break;
@@ -445,44 +547,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     return BackHandlingPopScope(
       child: Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.notifications),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              final role = CurrentUserSession.role?.toLowerCase() ?? '';
-              String route = '/login';
-              if (role == 'admin') route = '/admin-dashboard';
-              else if (role == 'vht') route = '/vht-dashboard';
-              else if (role.contains('clinic')) route = '/clinic-dashboard';
-              else if (role.contains('ambulance')) route = '/ambulance-dashboard';
-              Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
-            }
-          },
-        ),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        surfaceTintColor: Colors.transparent,
-        actions: [
-          TextButton(
-            onPressed: _markAllAsRead,
-            child: Text(
-              AppLocalizations.of(context)!.markAllRead,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context)!.notifications),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                final role = CurrentUserSession.role?.toLowerCase() ?? '';
+                String route = '/login';
+                if (role == 'admin')
+                  route = '/admin-dashboard';
+                else if (role == 'vht')
+                  route = '/vht-dashboard';
+                else if (role.contains('clinic'))
+                  route = '/clinic-dashboard';
+                else if (role.contains('ambulance'))
+                  route = '/ambulance-dashboard';
+                Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+              }
+            },
+          ),
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
+          surfaceTintColor: Colors.transparent,
+          actions: [
+            TextButton(
+              onPressed: _markAllAsRead,
+              child: Text(
+                AppLocalizations.of(context)!.markAllRead,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: bottomNav,
+        body: _buildBody(context, uid),
       ),
-      bottomNavigationBar: bottomNav,
-      body: _buildBody(context, uid),
-    ),
     );
   }
 }

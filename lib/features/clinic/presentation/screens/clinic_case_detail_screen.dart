@@ -23,7 +23,8 @@ import '../../../../core/widgets/inline_voice_note_player.dart';
 class ClinicCaseDetailScreen extends StatefulWidget {
   final String caseId;
 
-  const ClinicCaseDetailScreen({Key? key, required this.caseId}) : super(key: key);
+  const ClinicCaseDetailScreen({Key? key, required this.caseId})
+    : super(key: key);
 
   @override
   State<ClinicCaseDetailScreen> createState() => _ClinicCaseDetailScreenState();
@@ -44,7 +45,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
   String _friendlyFirestoreError(Object? error) {
     final msg = '$error'.toLowerCase();
-    if (msg.contains('permission-denied') || msg.contains('permission denied')) {
+    if (msg.contains('permission-denied') ||
+        msg.contains('permission denied')) {
       return 'You do not have permission to perform this action. Please sign out and sign back in, then try again.';
     }
     if (msg.contains('unavailable') || msg.contains('network')) {
@@ -61,71 +63,121 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
   Color _getUrgencyColor(String? urgency) {
     switch (urgency?.toLowerCase()) {
-      case 'critical': return Colors.red;
-      case 'high': return Colors.deepOrange;
-      case 'medium': return Colors.orange;
-      case 'low': return Colors.green;
-      default: return AppColors.textSecondary;
+      case 'critical':
+        return Colors.red;
+      case 'high':
+        return Colors.deepOrange;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   Color _getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
-      case 'pending': return Colors.orange;
-      case 'advised': return Colors.blue;
-      case 'ambulancerequested': return Colors.deepPurple;
-      case 'dispatched': return AppColors.clinicAccent;
-      case 'enroute': return Colors.blue;
-      case 'arrived': return Colors.green;
-      case 'intransit': return Colors.indigo;
-      case 'delivered': return Colors.teal;
-      case 'intreatment': return Colors.blue;
-      case 'admitted': return Colors.deepOrange;
-      case 'discharged': return Colors.green.shade700;
-      case 'received': return Colors.teal.shade600;
-      case 'completed': return Colors.green.shade700;
-      case 'cancelled': return Colors.red;
-      default: return AppColors.textSecondary;
+      case 'pending':
+        return Colors.orange;
+      case 'advised':
+        return Colors.blue;
+      case 'ambulancerequested':
+        return Colors.deepPurple;
+      case 'dispatched':
+        return AppColors.clinicAccent;
+      case 'enroute':
+        return Colors.blue;
+      case 'arrived':
+        return Colors.green;
+      case 'intransit':
+        return Colors.indigo;
+      case 'delivered':
+        return Colors.teal;
+      case 'intreatment':
+        return Colors.blue;
+      case 'admitted':
+        return Colors.deepOrange;
+      case 'discharged':
+        return Colors.green.shade700;
+      case 'received':
+        return Colors.teal.shade600;
+      case 'completed':
+        return Colors.green.shade700;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   String _getStatusLabel(String? status, AppLocalizations l10n) {
     switch (status?.toLowerCase()) {
-      case 'pending': return l10n.pendingReview;
-      case 'advised': return l10n.adviceSent;
-      case 'ambulancerequested': return l10n.ambulanceRequested;
-      case 'dispatched': return l10n.ambulanceDispatched;
-      case 'enroute': return l10n.enRoute;
-      case 'arrived': return l10n.arrived;
-      case 'intransit': return l10n.patientInTransit;
-      case 'delivered': return l10n.patientDelivered;
-      case 'intreatment': return l10n.patientInTreatment;
-      case 'admitted': return l10n.admitted;
-      case 'discharged': return l10n.discharged;
-      case 'received': return l10n.patientReceived;
-      case 'completed': return l10n.caseCompleted;
-      case 'cancelled': return l10n.caseCancelled;
-      default: return status ?? l10n.unknown;
+      case 'pending':
+        return l10n.pendingReview;
+      case 'advised':
+        return l10n.adviceSent;
+      case 'ambulancerequested':
+        return l10n.ambulanceRequested;
+      case 'dispatched':
+        return l10n.ambulanceDispatched;
+      case 'enroute':
+        return l10n.enRoute;
+      case 'arrived':
+        return l10n.arrived;
+      case 'intransit':
+        return l10n.patientInTransit;
+      case 'delivered':
+        return l10n.patientDelivered;
+      case 'intreatment':
+        return l10n.patientInTreatment;
+      case 'admitted':
+        return l10n.admitted;
+      case 'discharged':
+        return l10n.discharged;
+      case 'received':
+        return l10n.patientReceived;
+      case 'completed':
+        return l10n.caseCompleted;
+      case 'cancelled':
+        return l10n.caseCancelled;
+      default:
+        return status ?? l10n.unknown;
     }
   }
 
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return Icons.hourglass_top_rounded;
-      case 'advised': return Icons.message_rounded;
-      case 'ambulancerequested': return Icons.local_shipping_outlined;
-      case 'dispatched': return Icons.local_shipping_rounded;
-      case 'enroute': return Icons.directions_car_rounded;
-      case 'arrived': return Icons.location_on_rounded;
-      case 'intransit': return Icons.transfer_within_a_station_rounded;
-      case 'delivered': return Icons.check_circle_rounded;
-      case 'intreatment': return Icons.medical_services_rounded;
-      case 'admitted': return Icons.local_hotel_rounded;
-      case 'discharged': return Icons.exit_to_app_rounded;
-      case 'received': return Icons.how_to_reg_rounded;
-      case 'completed': return Icons.verified_rounded;
-      case 'cancelled': return Icons.cancel_rounded;
-      default: return Icons.info_rounded;
+      case 'pending':
+        return Icons.hourglass_top_rounded;
+      case 'advised':
+        return Icons.message_rounded;
+      case 'ambulancerequested':
+        return Icons.local_shipping_outlined;
+      case 'dispatched':
+        return Icons.local_shipping_rounded;
+      case 'enroute':
+        return Icons.directions_car_rounded;
+      case 'arrived':
+        return Icons.location_on_rounded;
+      case 'intransit':
+        return Icons.transfer_within_a_station_rounded;
+      case 'delivered':
+        return Icons.check_circle_rounded;
+      case 'intreatment':
+        return Icons.medical_services_rounded;
+      case 'admitted':
+        return Icons.local_hotel_rounded;
+      case 'discharged':
+        return Icons.exit_to_app_rounded;
+      case 'received':
+        return Icons.how_to_reg_rounded;
+      case 'completed':
+        return Icons.verified_rounded;
+      case 'cancelled':
+        return Icons.cancel_rounded;
+      default:
+        return Icons.info_rounded;
     }
   }
 
@@ -141,7 +193,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
   }
 
   /// Request ambulance dispatch (sets status to ambulanceRequested for admin)
-  Future<void> _requestAmbulanceDispatch(Map<String, dynamic> caseData) async {
+  Future<void> _requestAmbulanceDispatch() async {
     final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
@@ -149,12 +201,19 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.local_shipping_rounded, color: AppColors.clinicAccent, size: 22),
+            Icon(
+              Icons.local_shipping_rounded,
+              color: AppColors.clinicAccent,
+              size: 22,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 l10n.requestAmbulanceDispatch,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -176,11 +235,17 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     onPressed: () => Navigator.pop(ctx, false),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: Text(l10n.cancel, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
+                      child: Text(
+                        l10n.cancel,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                      ),
                     ),
                   ),
                 ),
@@ -194,11 +259,17 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.clinicAccent,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: Text(l10n.dispatch, style: const TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
+                      child: Text(
+                        l10n.dispatch,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                      ),
                     ),
                   ),
                 ),
@@ -214,7 +285,9 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
     try {
       final notes = _notesController.text.trim();
-      final caseDocRef = FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId);
+      final caseDocRef = FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(widget.caseId);
       await caseDocRef.update({
         'status': 'ambulanceRequested',
         'updatedBy': CurrentUserSession.uid,
@@ -225,53 +298,35 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       });
 
       if (notes.isNotEmpty) {
-        await caseDocRef.collection('clinicianPrivateNotes').doc('dispatch_ambulance').set({
-          'clinicianNotes': notes,
-          'clinicianId': CurrentUserSession.uid,
-          'clinicianName': CurrentUserSession.fullName,
-          'decision': 'dispatch_ambulance',
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      }
-
-      // Notify nearest admin: popup + in-app
-      try {
-        final notifService = FCMNotificationService();
-        final emergencyType = caseData['emergencyType'] as String? ?? 'Unknown';
-        final patientFirst = caseData['patientFirstName'] as String? ?? '';
-        final patientLast = caseData['patientLastName'] as String? ?? '';
-        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
-            ? '$patientFirst $patientLast'.trim()
-            : 'Unknown';
-        final clinicianName = CurrentUserSession.fullName;
-        // Use VHT coordinates from the case to find the nearest admin.
-        final vhtLat = (caseData['vhtLatitude'] as num?)?.toDouble() ??
-            (caseData['latitude'] as num?)?.toDouble();
-        final vhtLng = (caseData['vhtLongitude'] as num?)?.toDouble() ??
-            (caseData['longitude'] as num?)?.toDouble();
-        await notifService.notifyAdminsOfAmbulanceRequest(
-          caseId: widget.caseId,
-          emergencyType: emergencyType,
-          patientName: patientName,
-          clinicianName: clinicianName,
-          vhtLatitude: vhtLat,
-          vhtLongitude: vhtLng,
-        );
-      } catch (e) {
-        debugPrint('Failed to notify admins: $e');
+        await caseDocRef
+            .collection('clinicianPrivateNotes')
+            .doc('dispatch_ambulance')
+            .set({
+              'clinicianNotes': notes,
+              'clinicianId': CurrentUserSession.uid,
+              'clinicianName': CurrentUserSession.fullName,
+              'decision': 'dispatch_ambulance',
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
       }
 
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.ambulanceDispatchRequested), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(l10n.ambulanceDispatchRequested),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(_friendlyFirestoreError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -284,7 +339,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     if (_notesController.text.trim().isEmpty) {
       final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.pleaseAddAdviceForVhtFirst), backgroundColor: Colors.orange),
+        SnackBar(
+          content: Text(l10n.pleaseAddAdviceForVhtFirst),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -293,15 +351,18 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
     try {
       final notes = _notesController.text.trim();
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
-        'status': 'advised',
-        // Advice content is shareable with VHT.
-        'clinicianAdvice': notes,
-        'clinicianNotes': FieldValue.delete(),
-        'clinicianDecision': 'advise_vht',
-        'clinicianDecisionAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(widget.caseId)
+          .update({
+            'status': 'advised',
+            // Advice content is shareable with VHT.
+            'clinicianAdvice': notes,
+            'clinicianNotes': FieldValue.delete(),
+            'clinicianDecision': 'advise_vht',
+            'clinicianDecisionAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       // Notify VHT: popup + in-app
       try {
@@ -309,7 +370,9 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         final vhtId = caseData['vhtId'] as String? ?? '';
         final patientFirst = caseData['patientFirstName'] as String? ?? '';
         final patientLast = caseData['patientLastName'] as String? ?? '';
-        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty ? '$patientFirst $patientLast'.trim() : 'Unknown Patient';
+        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
+            ? '$patientFirst $patientLast'.trim()
+            : 'Unknown Patient';
         final clinicianName = CurrentUserSession.fullName;
         if (vhtId.isNotEmpty) {
           await notifService.notifyVhtOfClinicianAdvice(
@@ -327,13 +390,19 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.adviceSentToVhtSuccessfully), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(l10n.adviceSentToVhtSuccessfully),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(_friendlyFirestoreError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -342,14 +411,16 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
   }
 
   /// Close / complete the case
-  Future<void> _closeCase(Map<String, dynamic> caseData) async {
+  Future<void> _closeCase() async {
     final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         final dialogL10n = AppLocalizations.of(ctx)!;
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
               Icon(Icons.check_circle_rounded, color: Colors.green, size: 22),
@@ -357,7 +428,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
               Expanded(
                 child: Text(
                   dialogL10n.closeCaseConfirmTitle,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -379,11 +453,17 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       onPressed: () => Navigator.pop(ctx, false),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(dialogL10n.cancel, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 1),
+                        child: Text(
+                          dialogL10n.cancel,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                        ),
                       ),
                     ),
                   ),
@@ -397,11 +477,17 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(dialogL10n.closeCase, style: const TextStyle(fontWeight: FontWeight.w700), maxLines: 1),
+                        child: Text(
+                          dialogL10n.closeCase,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          maxLines: 1,
+                        ),
                       ),
                     ),
                   ),
@@ -417,46 +503,31 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     setState(() => _isUpdating = true);
 
     try {
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
-        'status': 'completed',
-        'updatedBy': CurrentUserSession.uid,
-        'completedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // Notify VHT: popup + in-app (case closed via advice path)
-      try {
-        final notifService = FCMNotificationService();
-        final vhtId = caseData['vhtId'] as String? ?? '';
-        final patientFirst = caseData['patientFirstName'] as String? ?? '';
-        final patientLast = caseData['patientLastName'] as String? ?? '';
-        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
-            ? '$patientFirst $patientLast'.trim()
-            : 'Unknown Patient';
-        final clinicianName = CurrentUserSession.fullName;
-        final emergencyType = caseData['emergencyType'] as String? ?? 'Emergency';
-        if (vhtId.isNotEmpty) {
-          await notifService.notifyOnCaseClosed(
-            caseId: widget.caseId,
-            emergencyType: emergencyType,
-            patientName: patientName,
-            vhtId: vhtId,
-            clinicianName: clinicianName,
-          );
-        }
-      } catch (e) {
-        debugPrint('Failed to notify VHT of case closure: $e');
-      }
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(widget.caseId)
+          .update({
+            'status': 'completed',
+            'updatedBy': CurrentUserSession.uid,
+            'completedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.caseClosedSuccessfully), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(l10n.caseClosedSuccessfully),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(_friendlyFirestoreError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -468,24 +539,32 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
   Future<void> _receivePatient(Map<String, dynamic> data) async {
     setState(() => _isUpdating = true);
     try {
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
-        'status': 'inTreatment',
-        'updatedBy': CurrentUserSession.uid,
-        'receivedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(widget.caseId)
+          .update({
+            'status': 'inTreatment',
+            'updatedBy': CurrentUserSession.uid,
+            'receivedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.patientReceivedAddTreatmentNotes), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(l10n.patientReceivedAddTreatmentNotes),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(_friendlyFirestoreError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -497,24 +576,33 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
   Future<void> _admitPatient(Map<String, dynamic> data) async {
     setState(() => _isUpdating = true);
     try {
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
-        'status': 'admitted',
-        'updatedBy': CurrentUserSession.uid,
-        'admittedAt': FieldValue.serverTimestamp(),
-        'admittedBy': CurrentUserSession.uid,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(widget.caseId)
+          .update({
+            'status': 'admitted',
+            'updatedBy': CurrentUserSession.uid,
+            'admittedAt': FieldValue.serverTimestamp(),
+            'admittedBy': CurrentUserSession.uid,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.patientAdmittedAddNotesWhenReady), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(l10n.patientAdmittedAddNotesWhenReady),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(_friendlyFirestoreError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -528,7 +616,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     final treatmentNotes = _treatmentController.text.trim();
     if (treatmentNotes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.pleaseEnterTreatmentNotesBeforeDischarging), backgroundColor: Colors.orange),
+        SnackBar(
+          content: Text(l10n.pleaseEnterTreatmentNotesBeforeDischarging),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -538,12 +629,20 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       builder: (ctx) {
         final dialogL10n = AppLocalizations.of(ctx)!;
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
               Icon(Icons.exit_to_app_rounded, color: Colors.green, size: 22),
               const SizedBox(width: 10),
-              Text(dialogL10n.dischargePatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              Text(
+                dialogL10n.dischargePatient,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
           content: Text(
@@ -561,9 +660,18 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       onPressed: () => Navigator.pop(ctx, false),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      child: Text(dialogL10n.cancel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          dialogL10n.cancel,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -576,9 +684,18 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      child: Text(dialogL10n.discharge, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          dialogL10n.discharge,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          maxLines: 1,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -598,59 +715,42 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
           .doc(widget.caseId)
           .collection('treatments')
           .add({
-        'treatmentNotes': treatmentNotes,
-        'clinicianId': CurrentUserSession.uid,
-        'clinicianName': CurrentUserSession.fullName,
-        'treatedAt': FieldValue.serverTimestamp(),
-      });
+            'treatmentNotes': treatmentNotes,
+            'clinicianId': CurrentUserSession.uid,
+            'clinicianName': CurrentUserSession.fullName,
+            'treatedAt': FieldValue.serverTimestamp(),
+          });
 
       // Update case status to completed with treatment notes
-      await FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).update({
-        'status': 'completed',
-        'updatedBy': CurrentUserSession.uid,
-        'treatmentNotes': treatmentNotes,
-        'dischargedAt': FieldValue.serverTimestamp(),
-        'dischargedBy': CurrentUserSession.uid,
-        'completedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // Notify VHT (popup+inapp) and admin (popup+inapp) on discharge
-      try {
-        final notifService = FCMNotificationService();
-        final vhtId = data['vhtId'] as String? ?? '';
-        final patientFirst = data['patientFirstName'] as String? ?? '';
-        final patientLast = data['patientLastName'] as String? ?? '';
-        final patientName = '$patientFirst $patientLast'.trim().isNotEmpty
-            ? '$patientFirst $patientLast'.trim()
-            : 'Unknown Patient';
-        final clinicName = data['assignedClinicName'] as String? ?? 'Clinic';
-        final clinicianName = CurrentUserSession.fullName;
-        final emergencyType = data['emergencyType'] as String? ?? 'Emergency';
-        if (vhtId.isNotEmpty) {
-          await notifService.notifyOnPatientDischarged(
-            caseId: widget.caseId,
-            emergencyType: emergencyType,
-            patientName: patientName,
-            vhtId: vhtId,
-            clinicName: clinicName,
-            clinicianName: clinicianName,
-          );
-        }
-      } catch (e) {
-        debugPrint('Failed to send discharge notifications: $e');
-      }
+      await FirebaseFirestore.instance
+          .collection('emergencyCases')
+          .doc(widget.caseId)
+          .update({
+            'status': 'completed',
+            'updatedBy': CurrentUserSession.uid,
+            'treatmentNotes': treatmentNotes,
+            'dischargedAt': FieldValue.serverTimestamp(),
+            'dischargedBy': CurrentUserSession.uid,
+            'completedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (mounted) {
         _treatmentController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.patientDischargedCaseCompleted), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(l10n.patientDischargedCaseCompleted),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_friendlyFirestoreError(e)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(_friendlyFirestoreError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -667,7 +767,9 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         final dob = DateTime.parse(dobStr);
         final now = DateTime.now();
         int age = now.year - dob.year;
-        if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) age--;
+        if (now.month < dob.month ||
+            (now.month == dob.month && now.day < dob.day))
+          age--;
         return age;
       } catch (_) {}
     }
@@ -682,7 +784,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.couldNotOpenDialer(phone)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(l10n.couldNotOpenDialer(phone)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -702,7 +807,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'Access denied: clinician-only screen.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -721,32 +829,56 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         onSignOut: () async {
           await LogoutUtils.logout();
           if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
           }
         },
         onDashboard: () {
-          Navigator.pushNamedAndRemoveUntil(context, '/clinic-dashboard', (route) => false);
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/clinic-dashboard',
+            (route) => false,
+          );
         },
         onSettings: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
         },
         onLearningResources: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LearningResourcesScreen()),
+          );
         },
       ),
-      endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/clinic-dashboard'),
+      endDrawer: buildStandardDrawer(
+        context: context,
+        dashboardRoute: '/clinic-dashboard',
+      ),
       backgroundColor: AppColors.background,
       bottomNavigationBar: ClinicNavigationBar(
         currentIndex: 2,
         onItemSelected: (index) {
           if (index == 0) {
-            Navigator.pushNamedAndRemoveUntil(context, '/clinic-dashboard', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/clinic-dashboard',
+              (route) => false,
+            );
           }
         },
       ),
       body: SafeArea(
         child: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('emergencyCases').doc(widget.caseId).snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('emergencyCases')
+              .doc(widget.caseId)
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -758,17 +890,28 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.wifi_off_rounded, size: 56, color: AppColors.textSecondary.withAlpha(100)),
+                      Icon(
+                        Icons.wifi_off_rounded,
+                        size: 56,
+                        color: AppColors.textSecondary.withAlpha(100),
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         l10n.errorLoadingCaseData,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _friendlyFirestoreError(snapshot.error),
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -784,10 +927,7 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
             final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
             final urgency = data['urgencyLevel'] as String? ?? 'medium';
             final status = data['status'] as String? ?? 'pending';
-            final dischargedAt = data['dischargedAt'] as Timestamp?;
-           
-            final effectiveStatus =
-                (status == 'completed' && dischargedAt != null) ? 'discharged' : status;
+            final effectiveStatus = status;
             final patientId = data['patientId'] as String? ?? '';
             final patientFirstName = data['patientFirstName'] as String? ?? '';
             final patientLastName = data['patientLastName'] as String? ?? '';
@@ -796,10 +936,12 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
             final notes = data['notes'] as String? ?? '';
             final vhtName = data['vhtName'] as String? ?? 'Unknown VHT';
             final vhtPhone = data['vhtPhoneNumber'] as String? ?? '';
-            final ambulanceDriverId = data['assignedAmbulanceId'] as String? ?? '';
+            final ambulanceDriverId =
+                data['assignedAmbulanceId'] as String? ?? '';
             final clinicianNotes = data['clinicianNotes'] as String? ?? '';
             final clinicianAdvice = data['clinicianAdvice'] as String? ?? '';
-            final clinicianDecision = data['clinicianDecision'] as String? ?? '';
+            final clinicianDecision =
+                data['clinicianDecision'] as String? ?? '';
             final imageUrl = data['imageUrl'] as String? ?? '';
             final videoUrl = data['videoUrl'] as String? ?? '';
             final voiceNoteUrl = data['voiceNoteUrl'] as String? ?? '';
@@ -807,7 +949,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
             final isPending = status == 'pending';
             final isAdvised = status == 'advised';
             final isAmbulanceRequested = status == 'ambulanceRequested';
-            final canRequestAmbulance = isPending || isAdvised || isAmbulanceRequested;
+            final canRequestAmbulance =
+                isPending || isAdvised || isAmbulanceRequested;
             final isAmbulancePath = clinicianDecision == 'dispatch_ambulance';
             final statusColor = _getStatusColor(effectiveStatus);
 
@@ -850,11 +993,16 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                 children: [
                   // Status + Urgency Banner
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: _getUrgencyColor(urgency).withAlpha(15),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: _getUrgencyColor(urgency).withAlpha(40)),
+                      border: Border.all(
+                        color: _getUrgencyColor(urgency).withAlpha(40),
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -865,26 +1013,43 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                             children: [
                               Text(
                                 emergencyType,
-                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: _getUrgencyColor(urgency)),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                  color: _getUrgencyColor(urgency),
+                                ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 l10n.urgencyWithLevel(urgency.toUpperCase()),
-                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: _getUrgencyColor(urgency)),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: _getUrgencyColor(urgency),
+                                ),
                               ),
                             ],
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withAlpha(25),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: statusColor.withAlpha(60)),
+                            border: Border.all(
+                              color: statusColor.withAlpha(60),
+                            ),
                           ),
                           child: Text(
                             _getStatusLabel(effectiveStatus, l10n),
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: statusColor),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              color: statusColor,
+                            ),
                           ),
                         ),
                       ],
@@ -893,75 +1058,150 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   const SizedBox(height: 16),
 
                   // Patient Details Card
-                  _DetailCard(title: l10n.patientInformation, children: [
-                    if (patientDisplayName.isNotEmpty) _DetailRow(l10n.name, patientDisplayName),
-                    if (patientId.isNotEmpty) _DetailRow(l10n.patientIdLabel, patientId),
-                    _DetailRow(l10n.gender, patientGender.isNotEmpty ? (patientGender.toLowerCase() == 'male' ? l10n.male : (patientGender.toLowerCase() == 'female' ? l10n.female : patientGender)) : l10n.notSpecified),
-                    _DetailRow(l10n.age, patientAge != null ? l10n.ageYears(patientAge) : l10n.notSpecified),
-                  ]),
+                  _DetailCard(
+                    title: l10n.patientInformation,
+                    children: [
+                      if (patientDisplayName.isNotEmpty)
+                        _DetailRow(l10n.name, patientDisplayName),
+                      if (patientId.isNotEmpty)
+                        _DetailRow(l10n.patientIdLabel, patientId),
+                      _DetailRow(
+                        l10n.gender,
+                        patientGender.isNotEmpty
+                            ? (patientGender.toLowerCase() == 'male'
+                                  ? l10n.male
+                                  : (patientGender.toLowerCase() == 'female'
+                                        ? l10n.female
+                                        : patientGender))
+                            : l10n.notSpecified,
+                      ),
+                      _DetailRow(
+                        l10n.age,
+                        patientAge != null
+                            ? l10n.ageYears(patientAge)
+                            : l10n.notSpecified,
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
 
                   // VHT Info + Contact
-                  _DetailCard(title: l10n.reportingVht, children: [
-                    _DetailRow(l10n.name, vhtName),
-                    if (vhtPhone.isNotEmpty)
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 100,
-                            child: Text(l10n.phone, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary)),
-                          ),
-                          Expanded(
-                            child: Text(vhtPhone, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.phone, color: Colors.green, size: 20),
-                            onPressed: () => _callPhone(vhtPhone),
-                            tooltip: l10n.callVht,
-                            constraints: const BoxConstraints(),
-                            padding: EdgeInsets.zero,
-                          ),
-                        ],
-                      ),
-                  ]),
+                  _DetailCard(
+                    title: l10n.reportingVht,
+                    children: [
+                      _DetailRow(l10n.name, vhtName),
+                      if (vhtPhone.isNotEmpty)
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 100,
+                              child: Text(
+                                l10n.phone,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                vhtPhone,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.phone,
+                                color: Colors.green,
+                                size: 20,
+                              ),
+                              onPressed: () => _callPhone(vhtPhone),
+                              tooltip: l10n.callVht,
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
 
                   // Ambulance driver contact (when assigned)
                   if (ambulanceDriverId.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance.collection('users').doc(ambulanceDriverId).get(),
+                      future: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(ambulanceDriverId)
+                          .get(),
                       builder: (context, driverSnapshot) {
-                        if (!driverSnapshot.hasData || !driverSnapshot.data!.exists) {
+                        if (!driverSnapshot.hasData ||
+                            !driverSnapshot.data!.exists) {
                           return const SizedBox.shrink();
                         }
-                        final driverData = driverSnapshot.data!.data() as Map<String, dynamic>;
-                        final driverName = '${driverData['firstName'] ?? ''} ${driverData['lastName'] ?? ''}'.trim();
-                        final driverPhone = driverData['phoneNumber'] as String? ?? '';
+                        final driverData =
+                            driverSnapshot.data!.data() as Map<String, dynamic>;
+                        final driverName =
+                            '${driverData['firstName'] ?? ''} ${driverData['lastName'] ?? ''}'
+                                .trim();
+                        final driverPhone =
+                            driverData['phoneNumber'] as String? ?? '';
 
-                        if (driverName.isEmpty && driverPhone.isEmpty) return const SizedBox.shrink();
+                        if (driverName.isEmpty && driverPhone.isEmpty)
+                          return const SizedBox.shrink();
 
-                        return _DetailCard(title: l10n.ambulanceDriver, children: [
-                          _DetailRow(l10n.name, driverName.isNotEmpty ? driverName : l10n.unknownUser),
-                          if (driverPhone.isNotEmpty)
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 100,
-                                  child: Text(l10n.phone, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary)),
-                                ),
-                                Expanded(
-                                  child: Text(driverPhone, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.phone, color: Colors.green, size: 20),
-                                  onPressed: () => _callPhone(driverPhone),
-                                  tooltip: l10n.callDriver,
-                                  constraints: const BoxConstraints(),
-                                  padding: EdgeInsets.zero,
-                                ),
-                              ],
+                        return _DetailCard(
+                          title: l10n.ambulanceDriver,
+                          children: [
+                            _DetailRow(
+                              l10n.name,
+                              driverName.isNotEmpty
+                                  ? driverName
+                                  : l10n.unknownUser,
                             ),
-                        ]);
+                            if (driverPhone.isNotEmpty)
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 100,
+                                    child: Text(
+                                      l10n.phone,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 13,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      driverPhone,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.phone,
+                                      color: Colors.green,
+                                      size: 20,
+                                    ),
+                                    onPressed: () => _callPhone(driverPhone),
+                                    tooltip: l10n.callDriver,
+                                    constraints: const BoxConstraints(),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ],
+                              ),
+                          ],
+                        );
                       },
                     ),
                   ],
@@ -969,22 +1209,43 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
                   // VHT Notes
                   if (notes.isNotEmpty) ...[
-                    _DetailCard(title: l10n.vhtNotes, children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(notes, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5)),
-                      ),
-                    ]),
+                    _DetailCard(
+                      title: l10n.vhtNotes,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text(
+                            notes,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                   ],
 
                   // Media Attachments Section - always show
-                  _DetailCard(title: l10n.mediaFromVht, children: [
-                    if (imageUrl.isEmpty && videoUrl.isEmpty && voiceNoteUrl.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(l10n.noMediaAttachedByVht, style: TextStyle(fontSize: 13, color: Colors.grey[500], fontStyle: FontStyle.italic)),
-                      ),
+                  _DetailCard(
+                    title: l10n.mediaFromVht,
+                    children: [
+                      if (imageUrl.isEmpty &&
+                          videoUrl.isEmpty &&
+                          voiceNoteUrl.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            l10n.noMediaAttachedByVht,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
                       if (imageUrl.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         GestureDetector(
@@ -1003,7 +1264,8 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                                   alignment: Alignment.center,
                                   child: CircularProgressIndicator(
                                     value: progress.expectedTotalBytes != null
-                                        ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                                        ? progress.cumulativeBytesLoaded /
+                                              progress.expectedTotalBytes!
                                         : null,
                                   ),
                                 );
@@ -1018,9 +1280,18 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.broken_image, color: AppColors.textSecondary),
+                                    Icon(
+                                      Icons.broken_image,
+                                      color: AppColors.textSecondary,
+                                    ),
                                     const SizedBox(height: 4),
-                                    Text(l10n.couldNotLoadImage, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                    Text(
+                                      l10n.couldNotLoadImage,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -1028,7 +1299,13 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(l10n.tapImageToViewFullScreen, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        Text(
+                          l10n.tapImageToViewFullScreen,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ],
                       if (videoUrl.isNotEmpty) ...[
                         const SizedBox(height: 8),
@@ -1036,35 +1313,74 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                           onTap: () async {
                             try {
                               final uri = Uri.parse(videoUrl);
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
                             } catch (e) {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.couldNotOpenVideo), backgroundColor: Colors.red));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.couldNotOpenVideo,
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
                               }
                             }
                           },
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.blue.withAlpha(10),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.blue.withAlpha(30)),
+                              border: Border.all(
+                                color: Colors.blue.withAlpha(30),
+                              ),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.videocam_rounded, color: Colors.blue, size: 24),
+                                Icon(
+                                  Icons.videocam_rounded,
+                                  color: Colors.blue,
+                                  size: 24,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(l10n.videoAttached, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.blue)),
-                                      Text(l10n.tapToPlayVideo, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                      Text(
+                                        l10n.videoAttached,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      Text(
+                                        l10n.tapToPlayVideo,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                Icon(Icons.open_in_new, color: Colors.blue, size: 18),
+                                Icon(
+                                  Icons.open_in_new,
+                                  color: Colors.blue,
+                                  size: 18,
+                                ),
                               ],
                             ),
                           ),
@@ -1074,32 +1390,62 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                         const SizedBox(height: 8),
                         InlineVoiceNotePlayer(voiceNoteUrl: voiceNoteUrl),
                       ],
-                  ]),
+                    ],
+                  ),
                   const SizedBox(height: 12),
 
                   // Fallback: check attachmentUrls list
                   ...() {
-                    final attachmentUrls = (data['attachmentUrls'] as List<dynamic>?)?.cast<String>() ?? [];
-                    if (attachmentUrls.isNotEmpty && imageUrl.isEmpty && videoUrl.isEmpty && voiceNoteUrl.isEmpty) {
+                    final attachmentUrls =
+                        (data['attachmentUrls'] as List<dynamic>?)
+                            ?.cast<String>() ??
+                        [];
+                    if (attachmentUrls.isNotEmpty &&
+                        imageUrl.isEmpty &&
+                        videoUrl.isEmpty &&
+                        voiceNoteUrl.isEmpty) {
                       return <Widget>[
-                        _DetailCard(title: l10n.attachments, children: [
-                          ...attachmentUrls.map((url) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: InkWell(
-                              onTap: () async {
-                                final uri = Uri.parse(url);
-                                if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-                              },
-                              child: Row(
-                                children: [
-                                  Icon(Icons.attachment, color: AppColors.clinicAccent, size: 20),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: Text(l10n.viewAttachment, style: TextStyle(fontSize: 13, color: AppColors.clinicAccent, decoration: TextDecoration.underline))),
-                                ],
+                        _DetailCard(
+                          title: l10n.attachments,
+                          children: [
+                            ...attachmentUrls.map(
+                              (url) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: InkWell(
+                                  onTap: () async {
+                                    final uri = Uri.parse(url);
+                                    if (await canLaunchUrl(uri))
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.attachment,
+                                        color: AppColors.clinicAccent,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          l10n.viewAttachment,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: AppColors.clinicAccent,
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                          )),
-                        ]),
+                          ],
+                        ),
                         const SizedBox(height: 12),
                       ];
                     }
@@ -1107,31 +1453,49 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   }(),
 
                   // Clinician notes/advice (already provided — for non-pending cases)
-                  if ((isAmbulancePath ? clinicianNotes : clinicianAdvice).isNotEmpty && !isPending) ...[
+                  if ((isAmbulancePath ? clinicianNotes : clinicianAdvice)
+                          .isNotEmpty &&
+                      !isPending) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: AppColors.clinicAccent.withAlpha(8),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.clinicAccent.withAlpha(30)),
+                        border: Border.all(
+                          color: AppColors.clinicAccent.withAlpha(30),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.medical_information_outlined, size: 18, color: AppColors.clinicAccent),
+                              Icon(
+                                Icons.medical_information_outlined,
+                                size: 18,
+                                color: AppColors.clinicAccent,
+                              ),
                               const SizedBox(width: 8),
                               Text(
-                                isAmbulancePath ? l10n.yourNotes : l10n.yourAdviceToVht,
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.clinicAccent),
+                                isAmbulancePath
+                                    ? l10n.yourNotes
+                                    : l10n.yourAdviceToVht,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: AppColors.clinicAccent,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Text(
                             isAmbulancePath ? clinicianNotes : clinicianAdvice,
-                            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -1141,7 +1505,11 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
 
                   // Progress Timeline
                   if (!isPending) ...[
-                    _buildProgressTimeline(l10n, effectiveStatus, clinicianDecision),
+                    _buildProgressTimeline(
+                      l10n,
+                      effectiveStatus,
+                      clinicianDecision,
+                    ),
                     const SizedBox(height: 16),
                   ],
 
@@ -1151,7 +1519,10 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Text(
                         '${l10n.reportedAt(_formatTimestamp(createdAt, l10n))}',
-                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withAlpha(150)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary.withAlpha(150),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -1162,19 +1533,41 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   if (isPending) ...[
                     const Divider(),
                     const SizedBox(height: 12),
-                    Text(l10n.takeAction, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    Text(
+                      l10n.takeAction,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(l10n.addNotesAndDecide,
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    Text(
+                      l10n.addNotesAndDecide,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _notesController,
                       maxLines: 3,
                       decoration: InputDecoration(
                         hintText: l10n.addNotesAdviceForVhtHint,
-                        hintStyle: TextStyle(color: AppColors.textSecondary.withAlpha(150)),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.border)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.clinicAccent, width: 1.5)),
+                        hintStyle: TextStyle(
+                          color: AppColors.textSecondary.withAlpha(150),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.clinicAccent,
+                            width: 1.5,
+                          ),
+                        ),
                         contentPadding: const EdgeInsets.all(12),
                       ),
                     ),
@@ -1182,13 +1575,23 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     SizedBox(
                       height: 52,
                       child: ElevatedButton.icon(
-                        onPressed: _isUpdating ? null : () => _requestAmbulanceDispatch(data),
+                        onPressed: _isUpdating
+                            ? null
+                            : _requestAmbulanceDispatch,
                         icon: const Icon(Icons.local_shipping_rounded),
-                        label: Text(l10n.requestAmbulanceDispatch, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        label: Text(
+                          l10n.requestAmbulanceDispatch,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.clinicAccent,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -1197,11 +1600,23 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       height: 48,
                       child: OutlinedButton.icon(
                         onPressed: _isUpdating ? null : () => _adviseVHT(data),
-                        icon: Icon(Icons.message_outlined, color: AppColors.clinicAccent),
-                        label: Text(l10n.sendAdviceToVht, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.clinicAccent)),
+                        icon: Icon(
+                          Icons.message_outlined,
+                          color: AppColors.clinicAccent,
+                        ),
+                        label: Text(
+                          l10n.sendAdviceToVht,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: AppColors.clinicAccent,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: AppColors.clinicAccent),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -1215,13 +1630,23 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     SizedBox(
                       height: 52,
                       child: ElevatedButton.icon(
-                        onPressed: _isUpdating ? null : () => _requestAmbulanceDispatch(data),
+                        onPressed: _isUpdating
+                            ? null
+                            : _requestAmbulanceDispatch,
                         icon: const Icon(Icons.local_shipping_rounded),
-                        label: Text(l10n.requestAmbulanceDispatch, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        label: Text(
+                          l10n.requestAmbulanceDispatch,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.clinicAccent,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -1234,19 +1659,30 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     const SizedBox(height: 12),
                     Text(
                       l10n.youAdvisedVhtCloseCase,
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: _isUpdating ? null : () => _closeCase(data),
+                        onPressed: _isUpdating ? null : _closeCase,
                         icon: const Icon(Icons.check_circle_outline),
-                        label: Text(l10n.closeCasePatientOk, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        label: Text(
+                          l10n.closeCasePatientOk,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -1259,20 +1695,33 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                     const SizedBox(height: 12),
                     Text(
                       l10n.patientDeliveredReceiveNow,
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: _isUpdating ? null : () => _receivePatient(data),
+                        onPressed: _isUpdating
+                            ? null
+                            : () => _receivePatient(data),
                         icon: const Icon(Icons.check_circle_rounded),
-                        label: Text(l10n.receivePatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                        label: Text(
+                          l10n.receivePatient,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -1283,61 +1732,102 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                   if (status == 'inTreatment') ...[
                     const Divider(),
                     const SizedBox(height: 12),
-                    Text(l10n.patientInTreatment, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    Text(
+                      l10n.patientInTreatment,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(l10n.admitPatientInpatientOrDischarge,
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    Text(
+                      l10n.admitPatientInpatientOrDischarge,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     // Admit Patient button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: _isUpdating ? null : () => _admitPatient(data),
+                        onPressed: _isUpdating
+                            ? null
+                            : () => _admitPatient(data),
                         icon: const Icon(Icons.local_hotel_rounded),
-                        label: Text(l10n.admitPatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                        label: Text(
+                          l10n.admitPatient,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepOrange,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     // Treatment notes + Discharge
-                    _DetailCard(title: l10n.treatmentNotesDischarge, children: [
-                      TextField(
-                        controller: _treatmentController,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          hintText: l10n.treatmentNotesHint,
-                          hintStyle: TextStyle(color: AppColors.textSecondary.withAlpha(150)),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.green, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          contentPadding: const EdgeInsets.all(12),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: _isUpdating ? null : () => _dischargePatient(data),
-                          icon: const Icon(Icons.exit_to_app_rounded),
-                          label: Text(l10n.treatAndDischarge, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    _DetailCard(
+                      title: l10n.treatmentNotesDischarge,
+                      children: [
+                        TextField(
+                          controller: _treatmentController,
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            hintText: l10n.treatmentNotesHint,
+                            hintStyle: TextStyle(
+                              color: AppColors.textSecondary.withAlpha(150),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Colors.green,
+                                width: 1.5,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            contentPadding: const EdgeInsets.all(12),
                           ),
                         ),
-                      ),
-                    ]),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed: _isUpdating
+                                ? null
+                                : () => _dischargePatient(data),
+                            icon: const Icon(Icons.exit_to_app_rounded),
+                            label: Text(
+                              l10n.treatAndDischarge,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 20),
                   ],
 
@@ -1350,18 +1840,37 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       decoration: BoxDecoration(
                         color: Colors.deepOrange.withAlpha(10),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.deepOrange.withAlpha(40)),
+                        border: Border.all(
+                          color: Colors.deepOrange.withAlpha(40),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.local_hotel_rounded, color: Colors.deepOrange, size: 24),
+                          Icon(
+                            Icons.local_hotel_rounded,
+                            color: Colors.deepOrange,
+                            size: 24,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(l10n.patientAdmitted, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.deepOrange)),
-                                Text(l10n.addTreatmentNotesAndDischarge, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                Text(
+                                  l10n.patientAdmitted,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                    color: Colors.deepOrange,
+                                  ),
+                                ),
+                                Text(
+                                  l10n.addTreatmentNotesAndDischarge,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -1369,39 +1878,59 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _DetailCard(title: l10n.treatmentNotesDischarge, children: [
-                      TextField(
-                        controller: _treatmentController,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          hintText: l10n.treatmentNotesHint,
-                          hintStyle: TextStyle(color: AppColors.textSecondary.withAlpha(150)),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.green, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          contentPadding: const EdgeInsets.all(12),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: _isUpdating ? null : () => _dischargePatient(data),
-                          icon: const Icon(Icons.exit_to_app_rounded),
-                          label: Text(l10n.dischargePatient, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    _DetailCard(
+                      title: l10n.treatmentNotesDischarge,
+                      children: [
+                        TextField(
+                          controller: _treatmentController,
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            hintText: l10n.treatmentNotesHint,
+                            hintStyle: TextStyle(
+                              color: AppColors.textSecondary.withAlpha(150),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Colors.green,
+                                width: 1.5,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            contentPadding: const EdgeInsets.all(12),
                           ),
                         ),
-                      ),
-                    ]),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed: _isUpdating
+                                ? null
+                                : () => _dischargePatient(data),
+                            icon: const Icon(Icons.exit_to_app_rounded),
+                            label: Text(
+                              l10n.dischargePatient,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 20),
                   ],
                 ],
@@ -1433,16 +1962,32 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
     );
   }
 
-  Widget _buildProgressTimeline(AppLocalizations l10n, String currentStatus, String clinicianDecision) {
+  Widget _buildProgressTimeline(
+    AppLocalizations l10n,
+    String currentStatus,
+    String clinicianDecision,
+  ) {
     // Determine which workflow path to show
-    final isAdvicePath = clinicianDecision == 'advise_vht' || currentStatus == 'advised';
+    final isAdvicePath =
+        clinicianDecision == 'advise_vht' || currentStatus == 'advised';
 
     final List<String> statuses;
     if (isAdvicePath) {
-     
       statuses = ['pending', 'advised', 'discharged', 'completed'];
     } else {
-      statuses = ['pending', 'ambulanceRequested', 'dispatched', 'enRoute', 'arrived', 'inTransit', 'delivered', 'inTreatment', 'admitted', 'discharged', 'completed'];
+      statuses = [
+        'pending',
+        'ambulanceRequested',
+        'dispatched',
+        'enRoute',
+        'arrived',
+        'inTransit',
+        'delivered',
+        'inTreatment',
+        'admitted',
+        'discharged',
+        'completed',
+      ];
     }
 
     final currentIndex = statuses.indexOf(currentStatus);
@@ -1459,7 +2004,11 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
         children: [
           Text(
             isAdvicePath ? l10n.adviceProgress : l10n.caseProgress,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
           ...List.generate(statuses.length, (index) {
@@ -1477,15 +2026,32 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       height: 22,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isCompleted ? (isCurrent ? _getStatusColor(s) : Colors.green) : AppColors.border,
-                        border: isCurrent ? Border.all(color: _getStatusColor(s).withAlpha(80), width: 2) : null,
+                        color: isCompleted
+                            ? (isCurrent ? _getStatusColor(s) : Colors.green)
+                            : AppColors.border,
+                        border: isCurrent
+                            ? Border.all(
+                                color: _getStatusColor(s).withAlpha(80),
+                                width: 2,
+                              )
+                            : null,
                       ),
                       child: isCompleted
-                          ? Icon(isCurrent ? _getStatusIcon(s) : Icons.check, size: 12, color: Colors.white)
+                          ? Icon(
+                              isCurrent ? _getStatusIcon(s) : Icons.check,
+                              size: 12,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
                     if (index < statuses.length - 1)
-                      Container(width: 2, height: 18, color: isCompleted && index < currentIndex ? Colors.green : AppColors.border),
+                      Container(
+                        width: 2,
+                        height: 18,
+                        color: isCompleted && index < currentIndex
+                            ? Colors.green
+                            : AppColors.border,
+                      ),
                   ],
                 ),
                 const SizedBox(width: 10),
@@ -1496,8 +2062,12 @@ class _ClinicCaseDetailScreenState extends State<ClinicCaseDetailScreen> {
                       _getStatusLabel(s, l10n),
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-                        color: isCompleted ? AppColors.textPrimary : AppColors.textSecondary.withAlpha(100),
+                        fontWeight: isCurrent
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: isCompleted
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary.withAlpha(100),
                       ),
                     ),
                   ),
@@ -1525,12 +2095,26 @@ class _DetailCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 12, offset: const Offset(0, 6))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(6),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title.isNotEmpty) Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.clinicAccent)),
+          if (title.isNotEmpty)
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                color: AppColors.clinicAccent,
+              ),
+            ),
           const SizedBox(height: 8),
           ...children,
         ],
@@ -1554,10 +2138,24 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppColors.textSecondary)),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
         ],
       ),

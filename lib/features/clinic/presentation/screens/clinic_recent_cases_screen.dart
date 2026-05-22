@@ -16,23 +16,22 @@ class ClinicRecentCasesScreen extends StatefulWidget {
   const ClinicRecentCasesScreen({super.key});
 
   @override
-  State<ClinicRecentCasesScreen> createState() => _ClinicRecentCasesScreenState();
+  State<ClinicRecentCasesScreen> createState() =>
+      _ClinicRecentCasesScreenState();
 }
 
 class _ClinicRecentCasesScreenState extends State<ClinicRecentCasesScreen> {
-  static const _terminalStatuses = {'completed', 'cancelled', 'discharged'};
-
   late Future<List<RecentCaseEntry>> _entriesFuture;
 
   @override
   void initState() {
     super.initState();
-    _entriesFuture = _loadActiveEntries();
+    _entriesFuture = _loadEntries();
   }
 
-  void _reload() => setState(() => _entriesFuture = _loadActiveEntries());
+  void _reload() => setState(() => _entriesFuture = _loadEntries());
 
-  Future<List<RecentCaseEntry>> _loadActiveEntries() async {
+  Future<List<RecentCaseEntry>> _loadEntries() async {
     final uid = CurrentUserSession.uid;
     if (uid == null || uid.isEmpty) return const [];
 
@@ -49,43 +48,41 @@ class _ClinicRecentCasesScreenState extends State<ClinicRecentCasesScreen> {
       ),
     );
 
-    final completedIds = <String>{};
-    final active = <RecentCaseEntry>[];
+    final missingIds = <String>{};
+    final visible = <RecentCaseEntry>[];
 
     for (var i = 0; i < entries.length; i++) {
       final snap = snapshots[i];
       if (!snap.exists) {
-        // Document gone — treat as completed.
-        completedIds.add(entries[i].caseId);
+        missingIds.add(entries[i].caseId);
         continue;
       }
-      final data = snap.data();
-      final status = (data?['status'] as String? ?? '').toLowerCase();
-      if (_terminalStatuses.contains(status)) {
-        completedIds.add(entries[i].caseId);
-      } else {
-        active.add(entries[i]);
-      }
+      visible.add(entries[i]);
     }
 
     // Silently clean up local storage.
-    if (completedIds.isNotEmpty) {
+    if (missingIds.isNotEmpty) {
       await RecentCasesService.removeCompletedCases(
         userId: uid,
-        completedCaseIds: completedIds,
+        completedCaseIds: missingIds,
       );
     }
 
-    return active;
+    return visible;
   }
 
   Color _getUrgencyColor(String? urgency) {
     switch (urgency?.toLowerCase()) {
-      case 'critical': return Colors.red;
-      case 'high': return Colors.deepOrange;
-      case 'medium': return Colors.orange;
-      case 'low': return Colors.green;
-      default: return AppColors.textSecondary;
+      case 'critical':
+        return Colors.red;
+      case 'high':
+        return Colors.deepOrange;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
@@ -126,19 +123,33 @@ class _ClinicRecentCasesScreenState extends State<ClinicRecentCasesScreen> {
             Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
           }
         },
-        onDashboard: () =>
-            Navigator.pushNamedAndRemoveUntil(context, '/clinic-dashboard', (r) => false),
-        onSettings: () =>
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
-        onLearningResources: () =>
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen())),
+        onDashboard: () => Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/clinic-dashboard',
+          (r) => false,
+        ),
+        onSettings: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        ),
+        onLearningResources: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LearningResourcesScreen()),
+        ),
       ),
-      endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/clinic-dashboard'),
+      endDrawer: buildStandardDrawer(
+        context: context,
+        dashboardRoute: '/clinic-dashboard',
+      ),
       bottomNavigationBar: ClinicNavigationBar(
         currentIndex: 0,
         onItemSelected: (i) {
           if (i == 0) {
-            Navigator.pushNamedAndRemoveUntil(context, '/clinic-dashboard', (r) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/clinic-dashboard',
+              (r) => false,
+            );
           }
         },
       ),
@@ -157,21 +168,28 @@ class _ClinicRecentCasesScreenState extends State<ClinicRecentCasesScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.wifi_off_rounded, size: 56,
-                          color: AppColors.textSecondary.withAlpha(100)),
+                      Icon(
+                        Icons.wifi_off_rounded,
+                        size: 56,
+                        color: AppColors.textSecondary.withAlpha(100),
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         l10n.errorLoadingCases,
                         style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: AppColors.textPrimary),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Please check your connection and try again.',
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
@@ -183,7 +201,8 @@ class _ClinicRecentCasesScreenState extends State<ClinicRecentCasesScreen> {
                           side: BorderSide(color: AppColors.clinicAccent),
                           foregroundColor: AppColors.clinicAccent,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ],
@@ -201,21 +220,28 @@ class _ClinicRecentCasesScreenState extends State<ClinicRecentCasesScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.history_rounded, size: 64,
-                          color: AppColors.textSecondary.withAlpha(80)),
+                      Icon(
+                        Icons.history_rounded,
+                        size: 64,
+                        color: AppColors.textSecondary.withAlpha(80),
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         l10n.noRecentCases,
                         style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: AppColors.textPrimary),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Active cases you open will appear here for quick access.',
-                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -230,8 +256,11 @@ class _ClinicRecentCasesScreenState extends State<ClinicRecentCasesScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Text(
-                    '${entries.length} active case${entries.length == 1 ? '' : 's'}',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    '${entries.length} recent case${entries.length == 1 ? '' : 's'}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -338,8 +367,11 @@ class _RecentCaseCard extends StatelessWidget {
                   color: AppColors.clinicAccent.withAlpha(18),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.medical_services_outlined,
-                    color: AppColors.clinicAccent, size: 22),
+                child: Icon(
+                  Icons.medical_services_outlined,
+                  color: AppColors.clinicAccent,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -347,11 +379,14 @@ class _RecentCaseCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      entry.emergencyType.isNotEmpty ? entry.emergencyType : 'Emergency',
+                      entry.emergencyType.isNotEmpty
+                          ? entry.emergencyType
+                          : 'Emergency',
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: AppColors.textPrimary),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -359,7 +394,10 @@ class _RecentCaseCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: TextStyle(fontSize: 12, color: AppColors.clinicAccent),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.clinicAccent,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -368,15 +406,19 @@ class _RecentCaseCard extends StatelessWidget {
                     Text(
                       'Last viewed $timeAgo',
                       style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary.withAlpha(160)),
+                        fontSize: 11,
+                        color: AppColors.textSecondary.withAlpha(160),
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded,
-                  size: 20, color: AppColors.textSecondary),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: AppColors.textSecondary,
+              ),
             ],
           ),
         ),

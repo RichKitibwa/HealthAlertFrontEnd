@@ -102,18 +102,30 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
   String _getStatusLabel(BuildContext context, String status) {
     final l10n = AppLocalizations.of(context)!;
     switch (status.toLowerCase()) {
-      case 'pending': return l10n.pendingReview;
-      case 'dispatched': return l10n.ambulanceDispatched;
-      case 'enroute': return l10n.ambulanceEnRoute;
-      case 'arrived': return l10n.ambulanceArrived;
-      case 'intransit': return l10n.patientInTransit;
-      case 'delivered': return l10n.patientDelivered;
-      case 'intreatment': return l10n.inTreatment;
-      case 'admitted': return l10n.admitted;
-      case 'discharged': return l10n.discharged;
-      case 'completed': return l10n.caseCompleted;
-      case 'cancelled': return l10n.caseCancelled;
-      default: return status;
+      case 'pending':
+        return l10n.pendingReview;
+      case 'dispatched':
+        return l10n.ambulanceDispatched;
+      case 'enroute':
+        return l10n.ambulanceEnRoute;
+      case 'arrived':
+        return l10n.ambulanceArrived;
+      case 'intransit':
+        return l10n.patientInTransit;
+      case 'delivered':
+        return l10n.patientDelivered;
+      case 'intreatment':
+        return l10n.inTreatment;
+      case 'admitted':
+        return l10n.admitted;
+      case 'discharged':
+        return l10n.discharged;
+      case 'completed':
+        return l10n.caseCompleted;
+      case 'cancelled':
+        return l10n.caseCancelled;
+      default:
+        return status;
     }
   }
 
@@ -149,18 +161,30 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
   String _getStatusMessage(BuildContext context, String status) {
     final l10n = AppLocalizations.of(context)!;
     switch (status.toLowerCase()) {
-      case 'pending': return l10n.statusMsgPendingSubmitted;
-      case 'dispatched': return l10n.statusMsgDispatchedStay;
-      case 'enroute': return l10n.statusMsgEnRoutePrepare;
-      case 'arrived': return l10n.statusMsgArrivedHandOver;
-      case 'intransit': return l10n.statusMsgInTransit;
-      case 'delivered': return l10n.statusMsgDelivered;
-      case 'intreatment': return l10n.statusMsgInTreatment;
-      case 'admitted': return l10n.statusMsgAdmitted;
-      case 'discharged': return l10n.statusMsgDischarged;
-      case 'completed': return l10n.statusMsgCompletedTreated;
-      case 'cancelled': return l10n.statusMsgCancelled;
-      default: return l10n.awaitingStatusUpdate;
+      case 'pending':
+        return l10n.statusMsgPendingSubmitted;
+      case 'dispatched':
+        return l10n.statusMsgDispatchedStay;
+      case 'enroute':
+        return l10n.statusMsgEnRoutePrepare;
+      case 'arrived':
+        return l10n.statusMsgArrivedHandOver;
+      case 'intransit':
+        return l10n.statusMsgInTransit;
+      case 'delivered':
+        return l10n.statusMsgDelivered;
+      case 'intreatment':
+        return l10n.statusMsgInTreatment;
+      case 'admitted':
+        return l10n.statusMsgAdmitted;
+      case 'discharged':
+        return l10n.statusMsgDischarged;
+      case 'completed':
+        return l10n.statusMsgCompletedTreated;
+      case 'cancelled':
+        return l10n.statusMsgCancelled;
+      default:
+        return l10n.awaitingStatusUpdate;
     }
   }
 
@@ -207,13 +231,22 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
           );
         },
         onSettings: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
         },
         onLearningResources: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LearningResourcesScreen()),
+          );
         },
       ),
-      endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/vht-dashboard'),
+      endDrawer: buildStandardDrawer(
+        context: context,
+        dashboardRoute: '/vht-dashboard',
+      ),
       bottomNavigationBar: VhtNavigationBar(
         currentIndex: 0,
         onItemSelected: (index) {
@@ -318,7 +351,9 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: _getUrgencyColor(widget.urgencyLevel).withAlpha(20),
+                              color: _getUrgencyColor(
+                                widget.urgencyLevel,
+                              ).withAlpha(20),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -376,7 +411,11 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.cloud_off_rounded, color: Colors.orange, size: 24),
+                      const Icon(
+                        Icons.cloud_off_rounded,
+                        color: Colors.orange,
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -410,121 +449,121 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
 
               // Real-time Status Card (only show if online)
               if (!widget.isOffline)
-              StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('emergencyCases')
-                    .doc(widget.caseId)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  String status = 'pending';
-                  Timestamp? updatedAt;
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('emergencyCases')
+                      .doc(widget.caseId)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    String status = 'pending';
+                    Timestamp? updatedAt;
 
-                  if (snapshot.hasData && snapshot.data!.exists) {
-                    final data = snapshot.data!.data() as Map<String, dynamic>?;
-                    if (data != null) {
-                      status = data['status'] as String? ?? 'pending';
-                      final dischargedAt = data['dischargedAt'] as Timestamp?;
-                      if (status == 'completed' && dischargedAt != null) {
-                        status = 'discharged';
+                    if (snapshot.hasData && snapshot.data!.exists) {
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>?;
+                      if (data != null) {
+                        status = data['status'] as String? ?? 'pending';
+                        updatedAt = data['updatedAt'] as Timestamp?;
                       }
-                      updatedAt = data['updatedAt'] as Timestamp?;
                     }
-                  }
 
-                  final statusColor = _getStatusColor(status);
+                    final statusColor = _getStatusColor(status);
 
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: statusColor.withAlpha(8),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: statusColor.withAlpha(40)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Status Header
-                        Row(
-                          children: [
-                            Icon(
-                              _getStatusIcon(status),
-                              color: statusColor,
-                              size: 28,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.currentStatus,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _getStatusLabel(context, status),
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: statusColor,
-                                    ),
-                                  ),
-                                ],
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: statusColor.withAlpha(8),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: statusColor.withAlpha(40)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Status Header
+                          Row(
+                            children: [
+                              Icon(
+                                _getStatusIcon(status),
+                                color: statusColor,
+                                size: 28,
                               ),
-                            ),
-                            // Status badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: statusColor.withAlpha(20),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                status.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: statusColor,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n.currentStatus,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _getStatusLabel(context, status),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: statusColor,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              // Status badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  status.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: statusColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Status message
+                          Text(
+                            _getStatusMessage(context, status),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textSecondary,
+                              height: 1.5,
+                            ),
+                          ),
+
+                          // Privacy: clinician notes are not shown to VHTs.
+
+                          // Last updated
+                          if (updatedAt != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              '${l10n.lastUpdated}: ${_formatTimestamp(updatedAt)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary.withAlpha(150),
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Status message
-                        Text(
-                          _getStatusMessage(context, status),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary,
-                            height: 1.5,
-                          ),
-                        ),
-
-                        // Privacy: clinician notes are not shown to VHTs.
-
-                        // Last updated
-                        if (updatedAt != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            '${l10n.lastUpdated}: ${_formatTimestamp(updatedAt)}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary.withAlpha(150),
-                            ),
-                          ),
                         ],
-                      ],
-                    ),
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                ),
               if (!widget.isOffline) ...[
                 const SizedBox(height: 16),
 
@@ -620,10 +659,6 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
           final data = snapshot.data!.data() as Map<String, dynamic>?;
           if (data != null) {
             currentStatus = data['status'] as String? ?? 'pending';
-            final dischargedAt = data['dischargedAt'] as Timestamp?;
-            if (currentStatus == 'completed' && dischargedAt != null) {
-              currentStatus = 'discharged';
-            }
           }
         }
 
@@ -682,12 +717,14 @@ class _VhtCaseSubmittedScreenState extends State<VhtCaseSubmittedScreen>
                               shape: BoxShape.circle,
                               color: isCompleted
                                   ? (isCurrent
-                                      ? _getStatusColor(status)
-                                      : Colors.green)
+                                        ? _getStatusColor(status)
+                                        : Colors.green)
                                   : AppColors.border,
                               border: isCurrent
                                   ? Border.all(
-                                      color: _getStatusColor(status).withAlpha(80),
+                                      color: _getStatusColor(
+                                        status,
+                                      ).withAlpha(80),
                                       width: 3,
                                     )
                                   : null,

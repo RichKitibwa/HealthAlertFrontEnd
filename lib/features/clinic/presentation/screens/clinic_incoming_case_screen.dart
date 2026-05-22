@@ -19,7 +19,9 @@ import '../../../../core/theme/app_colors.dart';
 /// Query: emergencyCases where assignedClinicId == current user ID
 /// Orders by createdAt descending (newest first)
 class ClinicIncomingCaseScreen extends StatefulWidget {
-  const ClinicIncomingCaseScreen({super.key});
+  final String initialFilter;
+
+  const ClinicIncomingCaseScreen({super.key, this.initialFilter = 'active'});
 
   @override
   State<ClinicIncomingCaseScreen> createState() =>
@@ -27,7 +29,7 @@ class ClinicIncomingCaseScreen extends StatefulWidget {
 }
 
 class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
-  String _selectedFilter = 'active'; // 'active', 'all', 'completed'
+  late String _selectedFilter; // 'active', 'all', 'completed'
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   String? _resolvedFacilityName;
@@ -35,6 +37,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter;
     _initializeFacilityContext();
   }
 
@@ -57,7 +60,10 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
     final uid = CurrentUserSession.uid;
     if (uid == null || uid.isEmpty) return;
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       final workplace = (userDoc.data()?['workplace'] as String? ?? '').trim();
       if (workplace.isNotEmpty && mounted) {
         CurrentUserSession.workplace = workplace;
@@ -75,12 +81,17 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
     final patientId = (data['patientId'] as String? ?? '').toLowerCase();
     final firstName = (data['patientFirstName'] as String? ?? '').toLowerCase();
     final lastName = (data['patientLastName'] as String? ?? '').toLowerCase();
-    return patientId.contains(q) || firstName.contains(q) || lastName.contains(q);
+    return patientId.contains(q) ||
+        firstName.contains(q) ||
+        lastName.contains(q);
   }
 
   Stream<QuerySnapshot> _getCasesStream() {
-    final isClinic = (CurrentUserSession.role ?? '').toLowerCase().contains('clinic');
-    final facilityName = (_resolvedFacilityName ?? CurrentUserSession.workplace ?? '').trim();
+    final isClinic = (CurrentUserSession.role ?? '').toLowerCase().contains(
+      'clinic',
+    );
+    final facilityName =
+        (_resolvedFacilityName ?? CurrentUserSession.workplace ?? '').trim();
     Query query = FirebaseFirestore.instance.collection('emergencyCases');
     if (isClinic) {
       if (facilityName.isEmpty) return const Stream.empty();
@@ -92,17 +103,23 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
 
     // Apply filter
     if (_selectedFilter == 'active') {
-      query = query.where('status', whereIn: [
-        'pending',
-        'advised',
-        'ambulanceRequested',
-        'dispatched',
-        'enRoute',
-        'arrived',
-        'inTransit',
-      ]);
+      query = query.where(
+        'status',
+        whereIn: [
+          'pending',
+          'advised',
+          'ambulanceRequested',
+          'dispatched',
+          'enRoute',
+          'arrived',
+          'inTransit',
+          'delivered',
+          'inTreatment',
+          'admitted',
+        ],
+      );
     } else if (_selectedFilter == 'completed') {
-      query = query.where('status', whereIn: ['delivered', 'completed']);
+      query = query.where('status', isEqualTo: 'completed');
     }
 
     query = query.orderBy('createdAt', descending: true);
@@ -127,57 +144,96 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
 
   Color _getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
-      case 'pending': return Colors.orange;
-      case 'advised': return Colors.blue;
-      case 'ambulancerequested': return Colors.deepPurple;
-      case 'dispatched': return AppColors.clinicAccent;
-      case 'enroute': return Colors.blue;
-      case 'arrived': return Colors.green;
-      case 'intransit': return Colors.indigo;
-      case 'delivered': return Colors.teal;
-      case 'completed': return Colors.green.shade700;
-      case 'cancelled': return Colors.red;
-      default: return AppColors.textSecondary;
+      case 'pending':
+        return Colors.orange;
+      case 'advised':
+        return Colors.blue;
+      case 'ambulancerequested':
+        return Colors.deepPurple;
+      case 'dispatched':
+        return AppColors.clinicAccent;
+      case 'enroute':
+        return Colors.blue;
+      case 'arrived':
+        return Colors.green;
+      case 'intransit':
+        return Colors.indigo;
+      case 'delivered':
+        return Colors.teal;
+      case 'intreatment':
+        return Colors.blue;
+      case 'admitted':
+        return Colors.deepOrange;
+      case 'completed':
+        return Colors.green.shade700;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   String _getStatusLabel(String? status, AppLocalizations l10n) {
     switch (status?.toLowerCase()) {
-      case 'pending': return l10n.pendingReview;
-      case 'advised': return l10n.adviceSent;
-      case 'ambulancerequested': return l10n.ambulanceRequested;
-      case 'dispatched': return l10n.dispatched;
-      case 'enroute': return l10n.enRoute;
-      case 'arrived': return l10n.arrived;
-      case 'intransit': return l10n.patientInTransit;
-      case 'delivered': return l10n.patientDelivered;
-      case 'completed': return l10n.caseCompleted;
-      case 'cancelled': return l10n.caseCancelled;
-      default: return status ?? l10n.unknown;
+      case 'pending':
+        return l10n.pendingReview;
+      case 'advised':
+        return l10n.adviceSent;
+      case 'ambulancerequested':
+        return l10n.ambulanceRequested;
+      case 'dispatched':
+        return l10n.dispatched;
+      case 'enroute':
+        return l10n.enRoute;
+      case 'arrived':
+        return l10n.arrived;
+      case 'intransit':
+        return l10n.patientInTransit;
+      case 'delivered':
+        return l10n.patientDelivered;
+      case 'intreatment':
+        return l10n.inTreatment;
+      case 'admitted':
+        return l10n.admitted;
+      case 'completed':
+        return l10n.caseCompleted;
+      case 'cancelled':
+        return l10n.caseCancelled;
+      default:
+        return status ?? l10n.unknown;
     }
   }
 
   IconData _getEmergencyIcon(String? type) {
     switch (type?.toLowerCase()) {
-      case 'birth': return Icons.pregnant_woman_rounded;
-      case 'trauma': return Icons.local_hospital_rounded;
-      case 'infection': return Icons.coronavirus_rounded;
-      default: return Icons.warning_amber_rounded;
+      case 'birth':
+        return Icons.pregnant_woman_rounded;
+      case 'trauma':
+        return Icons.local_hospital_rounded;
+      case 'infection':
+        return Icons.coronavirus_rounded;
+      default:
+        return Icons.warning_amber_rounded;
     }
   }
 
   Color _getEmergencyIconColor(String? type) {
     switch (type?.toLowerCase()) {
-      case 'birth': return Colors.pink;
-      case 'trauma': return Colors.red;
-      case 'infection': return Colors.orange;
-      default: return Colors.amber;
+      case 'birth':
+        return Colors.pink;
+      case 'trauma':
+        return Colors.red;
+      case 'infection':
+        return Colors.orange;
+      default:
+        return Colors.amber;
     }
   }
 
   String _friendlyFirestoreError(Object? error) {
     final msg = '$error'.toLowerCase();
-    if (msg.contains('permission-denied') || msg.contains('permission denied')) {
+    if (msg.contains('permission-denied') ||
+        msg.contains('permission denied')) {
       return 'You do not have access to these cases. Please sign out and sign back in, then try again.';
     }
     if (msg.contains('unavailable') || msg.contains('network')) {
@@ -207,6 +263,13 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isCompletedCasesView = widget.initialFilter == 'completed';
+    final pageTitle = isCompletedCasesView
+        ? l10n.completedCases
+        : l10n.incomingCases;
+    final pageSubtitle = isCompletedCasesView
+        ? 'Review completed cases handled by your clinic.'
+        : l10n.reviewEmergenciesSubmittedByVhts;
     final role = (CurrentUserSession.role ?? '').toLowerCase();
     final isAllowed = role.contains('clinic') || role.contains('admin');
     if (!isAllowed) {
@@ -218,7 +281,10 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
               padding: const EdgeInsets.all(20),
               child: Text(
                 'Access denied: clinician-only screen.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -230,7 +296,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
       appBar: TopNavigationBar(
         role: CurrentUserSession.role ?? 'Clinic',
         profileImageUrl: CurrentUserSession.profileImageUrl,
-        pageTitle: l10n.incomingCases,
+        pageTitle: pageTitle,
         showBackButton: true,
         onBack: () {
           Navigator.pop(context);
@@ -253,13 +319,22 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
           );
         },
         onSettings: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
         },
         onLearningResources: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningResourcesScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LearningResourcesScreen()),
+          );
         },
       ),
-      endDrawer: buildStandardDrawer(context: context, dashboardRoute: '/clinic-dashboard'),
+      endDrawer: buildStandardDrawer(
+        context: context,
+        dashboardRoute: '/clinic-dashboard',
+      ),
       backgroundColor: AppColors.background,
       bottomNavigationBar: ClinicNavigationBar(
         currentIndex: 1,
@@ -277,7 +352,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l10n.incomingCases,
+                    pageTitle,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
@@ -286,7 +361,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    l10n.reviewEmergenciesSubmittedByVhts,
+                    pageSubtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w500,
@@ -305,7 +380,10 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: l10n.searchByPatientNameOrId,
-                  hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondary.withAlpha(150)),
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary.withAlpha(150),
+                  ),
                   prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -318,42 +396,62 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                       : null,
                   filled: true,
                   fillColor: AppColors.surface,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.border)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.clinicAccent, width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.clinicAccent,
+                      width: 1.5,
+                    ),
+                  ),
                 ),
-                onChanged: (value) => setState(() => _searchQuery = value.trim()),
+                onChanged: (value) =>
+                    setState(() => _searchQuery = value.trim()),
               ),
             ),
             const SizedBox(height: 10),
 
-            // Filter Chips
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _FilterChip(
-                    label: l10n.activeFilter,
-                    isSelected: _selectedFilter == 'active',
-                    onTap: () => setState(() => _selectedFilter = 'active'),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: l10n.allFilter,
-                    isSelected: _selectedFilter == 'all',
-                    onTap: () => setState(() => _selectedFilter = 'all'),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: l10n.completedFilter,
-                    isSelected: _selectedFilter == 'completed',
-                    onTap: () => setState(() => _selectedFilter = 'completed'),
-                  ),
-                ],
+            if (!isCompletedCasesView) ...[
+              // Filter Chips
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      label: l10n.activeFilter,
+                      isSelected: _selectedFilter == 'active',
+                      onTap: () => setState(() => _selectedFilter = 'active'),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: l10n.allFilter,
+                      isSelected: _selectedFilter == 'all',
+                      onTap: () => setState(() => _selectedFilter = 'all'),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: l10n.completedFilter,
+                      isSelected: _selectedFilter == 'completed',
+                      onTap: () =>
+                          setState(() => _selectedFilter = 'completed'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ] else
+              const SizedBox(height: 12),
 
             // Case List
             Expanded(
@@ -361,9 +459,7 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                 stream: _getCasesStream(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   if (snapshot.hasError) {
@@ -413,7 +509,9 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: AppColors.clinicAccent),
                                 foregroundColor: AppColors.clinicAccent,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
                           ],
@@ -443,8 +541,8 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                             _selectedFilter == 'active'
                                 ? l10n.noActiveCases
                                 : _selectedFilter == 'completed'
-                                    ? l10n.noCompletedCases
-                                    : l10n.noCasesFound,
+                                ? l10n.noCompletedCases
+                                : l10n.noCasesFound,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -469,34 +567,46 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: ListView.separated(
                       itemCount: docs.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final data = docs[index].data() as Map<String, dynamic>;
                         final caseId = docs[index].id;
-                        final emergencyType = data['emergencyType'] as String? ?? 'Unknown';
-                        final urgency = data['urgencyLevel'] as String? ?? 'medium';
+                        final emergencyType =
+                            data['emergencyType'] as String? ?? 'Unknown';
+                        final urgency =
+                            data['urgencyLevel'] as String? ?? 'medium';
                         final status = data['status'] as String? ?? 'pending';
                         final notes = data['notes'] as String? ?? '';
-                        final patientGender = data['patientGender'] as String? ?? '';
+                        final patientGender =
+                            data['patientGender'] as String? ?? '';
                         final patientAge = data['patientAge'] as int?;
                         final patientId = data['patientId'] as String? ?? '';
-                        final patientFirstName = data['patientFirstName'] as String? ?? '';
-                        final patientLastName = data['patientLastName'] as String? ?? '';
-                        final vhtName = data['vhtName'] as String? ?? 'Unknown VHT';
+                        final patientFirstName =
+                            data['patientFirstName'] as String? ?? '';
+                        final patientLastName =
+                            data['patientLastName'] as String? ?? '';
+                        final vhtName =
+                            data['vhtName'] as String? ?? 'Unknown VHT';
                         final createdAt = data['createdAt'] as Timestamp?;
 
                         // Build patient description
-                        final patientName = '$patientFirstName $patientLastName'.trim();
+                        final patientName = '$patientFirstName $patientLastName'
+                            .trim();
                         String patientDesc = '';
                         if (patientName.isNotEmpty) {
                           patientDesc = patientName;
                         }
                         if (patientGender.isNotEmpty) {
                           patientDesc += patientDesc.isNotEmpty ? ', ' : '';
-                          patientDesc += patientGender[0].toUpperCase() + patientGender.substring(1);
+                          patientDesc +=
+                              patientGender[0].toUpperCase() +
+                              patientGender.substring(1);
                         }
                         if (patientAge != null) {
-                          patientDesc += patientDesc.isNotEmpty ? ', $patientAge yrs' : '$patientAge yrs';
+                          patientDesc += patientDesc.isNotEmpty
+                              ? ', $patientAge yrs'
+                              : '$patientAge yrs';
                         }
                         if (patientDesc.isEmpty) {
                           patientDesc = '${l10n.patientLabel} $patientId';
@@ -507,9 +617,8 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ClinicCaseDetailScreen(
-                                  caseId: caseId,
-                                ),
+                                builder: (context) =>
+                                    ClinicCaseDetailScreen(caseId: caseId),
                               ),
                             );
                           },
@@ -540,7 +649,8 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                               children: [
                                 // Top row: Emergency type + Status badge
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Row(
@@ -548,7 +658,9 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                                           Icon(
                                             _getEmergencyIcon(emergencyType),
                                             size: 20,
-                                            color: _getEmergencyIconColor(emergencyType),
+                                            color: _getEmergencyIconColor(
+                                              emergencyType,
+                                            ),
                                           ),
                                           const SizedBox(width: 8),
                                           Flexible(
@@ -572,10 +684,16 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                                         vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: _getStatusColor(status).withAlpha(18),
-                                        borderRadius: BorderRadius.circular(999),
+                                        color: _getStatusColor(
+                                          status,
+                                        ).withAlpha(18),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
                                         border: Border.all(
-                                          color: _getStatusColor(status).withAlpha(40),
+                                          color: _getStatusColor(
+                                            status,
+                                          ).withAlpha(40),
                                         ),
                                       ),
                                       child: Text(
@@ -623,7 +741,9 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: _getUrgencyColor(urgency).withAlpha(20),
+                                        color: _getUrgencyColor(
+                                          urgency,
+                                        ).withAlpha(20),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -662,7 +782,9 @@ class _ClinicIncomingCaseScreenState extends State<ClinicIncomingCaseScreen> {
                                   style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 11,
-                                    color: AppColors.textSecondary.withAlpha(150),
+                                    color: AppColors.textSecondary.withAlpha(
+                                      150,
+                                    ),
                                   ),
                                 ),
                               ],
